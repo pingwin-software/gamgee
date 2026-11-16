@@ -61,7 +61,10 @@ jobs:
 
   frontend-e2e:
     name: Frontend (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest now resolves to 26.04, which Playwright only
+    # supports from 1.61.0. Return to ubuntu-latest once @playwright/test
+    # is upgraded past that.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
