@@ -153,6 +153,11 @@ app.include_router(templates.router, prefix="/api")
 # Seed any empty content tables on startup so a fresh dev DB or upgrade is
 # immediately usable. Existing rows are left alone (the seeder upserts by id
 # only for missing rows), so admin edits survive container restarts.
+#
+# `seed_if_empty()` brings the exercise catalogue up to date first (inserting
+# missing exercises and backfilling descriptions on rows that pre-date the
+# field), because `exercise_info` rows reference `exercises.id`. Keep that
+# order: content rows must never be inserted before the exercises they name.
 try:
     from . import content_seed
     content_seed.seed_if_empty()
@@ -162,16 +167,6 @@ except Exception as _exc:
     # operator runs `python -m app.content_seed` manually.
     import logging
     logging.getLogger(__name__).warning("Content seed skipped: %s", _exc)
-
-# Backfill exercise descriptions on existing rows so the description column
-# isn't full of NULLs on a database that pre-dates the field. New exercises are
-# only inserted if missing; existing rows keep their other columns untouched.
-try:
-    from . import seed as exercise_seed
-    exercise_seed.seed()
-except Exception as _exc:
-    import logging
-    logging.getLogger(__name__).warning("Exercise seed/backfill skipped: %s", _exc)
 
 
 @app.get("/health")
