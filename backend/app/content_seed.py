@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .database import SessionLocal
 from . import models
-from .seed import EXERCISES as _EXERCISES
+from .seed import seed as _seed_exercises
 
 # ── Quotes ───────────────────────────────────────────────────────────────────
 
@@ -634,19 +634,21 @@ def _load_motion_seed() -> list[dict]:
 
 # ── Seed driver ──────────────────────────────────────────────────────────────
 
-def seed_if_empty():
+def seed_if_empty(db=None):
     """Populate every content table that has zero rows.
 
     Designed to be called every app startup. Tables with existing rows are
     left untouched so admin edits survive container restarts."""
-    db = SessionLocal()
+    own_session = db is None
+    if own_session:
+        db = SessionLocal()
     try:
         # The exercise catalog is required by the regime generator and the
-        # workout wizards. Seed it before content tables so a fresh DB is
-        # immediately usable without running `python -m app.init_db`.
-        if db.query(models.Exercise).count() == 0:
-            db.add_all([models.Exercise(**ex) for ex in _EXERCISES])
-            db.commit()
+        # workout wizards, and `exercise_info` rows carry a foreign key to it.
+        # Bring it up to date first (insert-missing, not only when the table is
+        # empty) so that an existing database also has every exercise the
+        # content below references before those rows are inserted.
+        _seed_exercises(db)
 
         if db.query(models.Quote).count() == 0:
             rows: list[models.Quote] = []
@@ -745,7 +747,8 @@ def seed_if_empty():
             db.add_all(new_motions)
             db.commit()
     finally:
-        db.close()
+        if own_session:
+            db.close()
 
 
 if __name__ == "__main__":
