@@ -82,8 +82,12 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
   // Auto-expand whichever group contains the active tab so the user can see where they are.
   const groupForTab = (key: string) => sections.find(g => g.items.some(i => i.key === key))?.id;
   const currentSection = sections.find(g => g.id === groupForTab(tab)) ?? sections[0];
+  // A section's badge counts only what is waiting for the user (unread chat
+  // and alerts, a regime assigned to them), not how many
+  // workouts or PRs a page holds.
+  const WAITING = new Set(["chat", "notifications", "regimes"]);
   const badgeOf = (g: MenuGroup) =>
-    g.items.reduce((sum, i) => sum + (typeof tabByKey[i.key]?.badge === "number" ? (tabByKey[i.key].badge as number) : 0), 0);
+    g.items.reduce((sum, i) => sum + (WAITING.has(i.key) && typeof tabByKey[i.key]?.badge === "number" ? (tabByKey[i.key].badge as number) : 0), 0);
   // A section reopens on the page it was last left on.
   const openSection = (g: MenuGroup) => {
     if (g.id === currentSection.id) return;

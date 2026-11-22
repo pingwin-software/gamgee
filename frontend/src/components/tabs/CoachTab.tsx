@@ -114,7 +114,7 @@ export default function CoachTab({ history, overrides, onSetOverride, onUpdateSe
                           }} />
                         );
                       })}
-                      <span style={{ fontSize: 8, color: status.color, marginLeft: 5, alignSelf: "center", letterSpacing: 0.5 }}>{trendTxt}</span>
+                      <span style={{ fontSize: 11, color: status.color, marginLeft: 5, alignSelf: "center", letterSpacing: 0.5 }}>{trendTxt}</span>
                     </div>
                   )}
                   <div className="coach-row">
@@ -195,7 +195,7 @@ export default function CoachTab({ history, overrides, onSetOverride, onUpdateSe
                           }} />
                         );
                       })}
-                      <span style={{ fontSize: 8, color: status.color, marginLeft: 5, alignSelf: "center", letterSpacing: 0.5 }}>{trendTxt}</span>
+                      <span style={{ fontSize: 11, color: status.color, marginLeft: 5, alignSelf: "center", letterSpacing: 0.5 }}>{trendTxt}</span>
                     </div>
                   )}
                   <div className="coach-row">

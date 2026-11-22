@@ -184,7 +184,7 @@ export default function RegimeQuestionnairePanel({
                 }}
               >
                 <div style={{ fontWeight: 600 }}>{g.label}</div>
-                <div style={{ fontSize: 11, color: "var(--muted)" }}>{g.desc}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>{g.desc}</div>
               </button>
             ))}
           </div>
@@ -238,7 +238,7 @@ export default function RegimeQuestionnairePanel({
               );
             })}
           </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
             {availableDays.length} day{availableDays.length === 1 ? "" : "s"} available · rest days are placed on the days you skip.
           </div>
         </div>
@@ -368,7 +368,7 @@ export default function RegimeQuestionnairePanel({
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <strong>{WEEK_LABELS[key] || key.toUpperCase()}</strong>
-                  <span style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>{day.focus}</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase" }}>{day.focus}</span>
                 </div>
                 <div style={{ fontSize: 12, marginTop: 6, color: "var(--muted)" }}>
                   {day.enabled ? (

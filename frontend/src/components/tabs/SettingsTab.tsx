@@ -91,7 +91,7 @@ function ToneToggle({ toneMode, onToneChange }: { toneMode: ToneMode; onToneChan
   ];
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         App Tone
       </div>
       <div style={{ display: "flex", gap: 8 }}>
@@ -102,7 +102,7 @@ function ToneToggle({ toneMode, onToneChange }: { toneMode: ToneMode; onToneChan
               key={id}
               onClick={() => onToneChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "#000" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -140,7 +140,7 @@ function WizardTransitionCard({
   };
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         Wizard transition
       </div>
       <div style={{ display: "flex", gap: 8 }}>
@@ -151,7 +151,7 @@ function WizardTransitionCard({
               key={id}
               onClick={() => onChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "#000" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -163,7 +163,7 @@ function WizardTransitionCard({
           );
         })}
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
         {descriptions[value]}
       </div>
     </div>
@@ -196,7 +196,7 @@ function ThemeCard({
   };
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {t("Theme", "Theme", "Theme")}
       </div>
       <div style={{ display: "flex", gap: 8 }} role="group" aria-label="Theme">
@@ -209,7 +209,7 @@ function ThemeCard({
               aria-pressed={active}
               onClick={() => onChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "var(--on-accent, #000)" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -221,7 +221,7 @@ function ThemeCard({
           );
         })}
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
         {descriptions[value]}
       </div>
     </div>
@@ -243,7 +243,7 @@ function ReducedMotionCard({
           <div style={{ fontSize: 13, fontWeight: 600 }}>
             {t("Reduce motion", "Reduce motion", "Reduce motion")}
           </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
             {t(
               "Disable wizard transitions, back-gesture sweeps, and other decorative animations.",
               "Kill the shake, sweep, and other decorative animations.",
@@ -285,7 +285,7 @@ function ColorPicker({ color, onChange, token }: { color: string; onChange: (c: 
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {saving ? "Saving…" : t("Accent color", "Your vibe", "Your aura")}
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -611,7 +611,7 @@ function PushToggleCard({ authFetch }: { authFetch: Props["authFetch"] }) {
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Push notifications", "Push notifications", "Push notifications")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {pushSupported()
                 ? "Not enabled on this server"
                 : "Your browser doesn't support push"}
@@ -631,7 +631,7 @@ function PushToggleCard({ authFetch }: { authFetch: Props["authFetch"] }) {
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Push notifications", "Push notifications", "Push notifications")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {enabled
                 ? t("On for this device", "Lit on this device", "Live on this device")
                 : t("Get pinged when buddies lift, motivate, or set PRs",
@@ -711,7 +711,7 @@ function NotificationTypesCard({ authFetch }: { authFetch: Props["authFetch"] })
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         What to notify me about
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }} role="group" aria-label="Notification types">
@@ -810,11 +810,11 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
     <div className="profile-card">
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Timer size={14} style={{ color: "var(--primary)" }} />
-        <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
           {t("Rest timer presets", "Rest timer presets", "Rest timer presets")}
         </div>
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12, lineHeight: 1.45 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, lineHeight: 1.45 }}>
         {t(
           "Set how long each preset waits before the bar fills. Custom rest is always available on the timer itself.",
           "Pick your default rest windows. You can still punch in a custom rest mid-workout.",
@@ -829,7 +829,7 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
       {err && <p className="auth-err" style={{ marginTop: 8, marginBottom: 0 }}>{err}</p>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
         <button type="button" className="auth-toggle" onClick={resetDefaults}>Reset to defaults</button>
-        {saved && <span style={{ color: "var(--green)", fontSize: 11 }}>Saved.</span>}
+        {saved && <span style={{ color: "var(--green)", fontSize: 12 }}>Saved.</span>}
       </div>
     </div>
   );
@@ -848,7 +848,7 @@ function OnboardingCard() {
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {t("Tour & hints", "Tour & hints", "Tour & hints")}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -912,7 +912,7 @@ function GymReminderCard({ prefs, onChange }: { prefs: GymPrefs; onChange: (next
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Gym reminders", "Gym reminders", "Gym reminders")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
               {t(
                 "Suggest a workout when you're at your gym or it's your usual training time.",
                 "Nudge you to lift when you're at the gym or it's your usual time.",
@@ -975,7 +975,7 @@ function GymReminderCard({ prefs, onChange }: { prefs: GymPrefs; onChange: (next
         )}
       </div>
 
-      <div style={{ fontSize: 11, color: status === "error" ? "var(--coral, #FF6B6B)" : "var(--muted)", marginTop: 8 }}>
+      <div style={{ fontSize: 12, color: status === "error" ? "var(--coral, #FF6B6B)" : "var(--muted)", marginTop: 8 }}>
         {status === "locating" && t("Getting your location…", "Getting your location…", "Getting your location…")}
         {status === "error"    && t("Couldn't read your location. Check browser permissions.", "Couldn't read your location. Check permissions.", "Couldn't read your location, bestie. Check permissions.")}
         {status !== "locating" && status !== "error" && hasLocation && (

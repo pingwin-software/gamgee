@@ -143,7 +143,7 @@ export default function CoachingTab({
               <div key={a.id} className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
                   <strong>{a.regime.name}</strong>
-                  <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>
                     from {a.trainer_name || a.trainer_username}
                   </span>
                 </div>
@@ -198,10 +198,10 @@ export default function CoachingTab({
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <strong>{t.name || t.username}</strong>
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>@{t.username} · {t.trainee_count} trainees</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>@{t.username} · {t.trainee_count} trainees</div>
                 </div>
                 {t.trainer_years_experience != null && (
-                  <span title="Years of experience" style={{ fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 2 }}>
+                  <span title="Years of experience" style={{ fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 2 }}>
                     <Award size={12} /> {t.trainer_years_experience}y
                   </span>
                 )}
@@ -214,7 +214,7 @@ export default function CoachingTab({
               {t.trainer_specialties && t.trainer_specialties.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                   {t.trainer_specialties.slice(0, 4).map(s => (
-                    <span key={s} style={{ padding: "2px 8px", border: "1px solid var(--ad)", borderRadius: 999, fontSize: 11 }}>
+                    <span key={s} style={{ padding: "2px 8px", border: "1px solid var(--ad)", borderRadius: 999, fontSize: 12 }}>
                       {s}
                     </span>
                   ))}

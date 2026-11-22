@@ -112,7 +112,7 @@ export default function HealthTab({ healthMetrics, fetchHealthMetrics, authFetch
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11, fill: "var(--muted)" }}
+                tick={{ fontSize: 12, fill: "var(--muted)" }}
                 tickLine={false}
                 axisLine={{ stroke: "var(--border)" }}
               />
@@ -121,7 +121,7 @@ export default function HealthTab({ healthMetrics, fetchHealthMetrics, authFetch
                   (min: number) => Math.floor(min * 0.95),
                   (max: number) => Math.ceil(max * 1.05),
                 ]}
-                tick={{ fontSize: 11, fill: "var(--muted)" }}
+                tick={{ fontSize: 12, fill: "var(--muted)" }}
                 tickLine={false}
                 axisLine={false}
                 width={38}
@@ -131,7 +131,7 @@ export default function HealthTab({ healthMetrics, fetchHealthMetrics, authFetch
                   y={baseline}
                   stroke="var(--border)"
                   strokeDasharray="4 4"
-                  label={{ value: "Start", fill: "var(--muted)", fontSize: 11, position: "insideTopLeft" }}
+                  label={{ value: "Start", fill: "var(--muted)", fontSize: 12, position: "insideTopLeft" }}
                 />
               )}
               <Tooltip

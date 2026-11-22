@@ -558,7 +558,7 @@ function FindBuddies({ authFetch, refresh, onToast, onOpenProfile }: {
           autoFocus
         />
       </div>
-      {loading && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>Searching…</div>}
+      {loading && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Searching…</div>}
       <div style={{ marginTop: 12 }}>
         {results.length === 0 && q.trim() && !loading && (
           <div style={{ fontSize: 12, color: "var(--muted)" }}>No users found</div>
@@ -673,7 +673,7 @@ function LiveView({
               </div>
             ))}
             {mine.participants.length === 0 && (
-              <div style={{ fontSize: 11, color: "var(--muted)", flex: 1, textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", flex: 1, textAlign: "center" }}>
                 Waiting for buddies to join…
               </div>
             )}
@@ -688,7 +688,7 @@ function LiveView({
       ) : (
         <div className="profile-card">
           <div className="profile-section" style={{ margin: "0 0 8px" }}>Start a live session</div>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>
             {workoutActive
               ? `Currently logging a ${workoutFocus ?? "workout"} — broadcast to your buddies.`
               : "Start a workout first (or right after), then click below to broadcast."}
@@ -715,7 +715,7 @@ function LiveView({
       )}
 
       {workoutActive && mine && mine.owner_sets_done !== workoutDoneSets && (
-        <div style={{ fontSize: 11, color: "var(--muted)", padding: "4px 12px" }}>
+        <div style={{ fontSize: 12, color: "var(--muted)", padding: "4px 12px" }}>
           (your live count auto-syncs with your active workout)
         </div>
       )}

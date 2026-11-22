@@ -143,7 +143,7 @@ export default function RegimesTab({ authFetch, weeklyPlan: _weeklyPlan, setWeek
                       borderRadius: 6,
                       background: active ? "var(--ad2)" : "transparent",
                       border: active ? "1px solid var(--accent)" : "1px solid var(--ad)",
-                      fontSize: 11,
+                      fontSize: 12,
                       minWidth: 0,
                     }}
                   >
@@ -151,7 +151,7 @@ export default function RegimesTab({ authFetch, weeklyPlan: _weeklyPlan, setWeek
                     <div
                       style={{
                         color: "var(--muted)",
-                        fontSize: 10,
+                        fontSize: 12,
                         textTransform: "uppercase",
                         overflow: "hidden",
                         textOverflow: "ellipsis",

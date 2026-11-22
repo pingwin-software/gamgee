@@ -122,7 +122,7 @@ export default function ProfileTab({ username, name, history, isAdmin }: Props) 
             );
           })}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9, color: "var(--muted)", fontFamily: "'Nunito',sans-serif" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)", fontFamily: "'Nunito',sans-serif" }}>
           <span>16 weeks ago</span><span>this week</span>
         </div>
       </div>

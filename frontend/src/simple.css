@@ -2,19 +2,19 @@
    controls, chips, disclosures, the bottom bar, section sub-tabs. */
 
 /* ── Stepper ──────────────────────────────────────────────────────────── */
-.stepper {
+.qstep {
   display: inline-flex; align-items: center; gap: 2px;
   background: var(--s2); border: 1px solid var(--border); border-radius: 10px;
 }
-.stepper-btn {
+.qstep-btn {
   width: 44px; height: 44px; display: grid; place-items: center;
   background: none; border: none; color: var(--text); cursor: pointer; border-radius: 9px;
   transition: background 0.12s;
 }
-.stepper-btn:hover:not(:disabled) { background: var(--ad); }
-.stepper-btn:active:not(:disabled) { background: var(--ad2); }
-.stepper-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.stepper-val {
+.qstep-btn:hover:not(:disabled) { background: var(--ad); }
+.qstep-btn:active:not(:disabled) { background: var(--ad2); }
+.qstep-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.qstep-val {
   min-width: 34px; text-align: center; font-size: 16px; font-weight: 700;
   font-variant-numeric: tabular-nums; color: var(--text);
 }
@@ -48,7 +48,7 @@
 .disclose:hover { color: var(--text); }
 .disclose svg { transition: transform 0.2s; }
 .disclose svg.flip { transform: rotate(180deg); }
-.seg-btn:focus-visible, .chip-btn:focus-visible, .stepper-btn:focus-visible,
+.seg-btn:focus-visible, .chip-btn:focus-visible, .qstep-btn:focus-visible,
 .disclose:focus-visible, .bottom-nav-btn:focus-visible, .subtab:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
@@ -282,3 +282,41 @@ button.focus-card { font: inherit; color: inherit; width: 100%; display: block; 
 }
 .verify-line-x:hover { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .set-group-body { animation: none; } .set-group-chev { transition: none; } }
+
+/* ── Phone pass ───────────────────────────────────────────────────────────
+   Fingers, not cursors: every control is at least 44 px tall, fields use
+   16 px type (smaller makes iOS zoom the page on focus), and nothing a
+   person reads is under 11 px. */
+.week-label, .start-card-kicker, .bottom-nav-label, .prog-sample-label { font-size: 11px; }
+.start-card-sub, .subtab, .prescribe-field-label { font-size: 12px; }
+@media (max-width: 480px), (pointer: coarse) {
+  button, [role="button"], select, a.logout-btn, a.mobile-nav-item,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.step-inp) {
+    min-height: 44px;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea { font-size: 16px; }
+  /* Controls that are icons or pills by design keep their shape, with the
+     44 px reach around them. */
+  .hdr-brand { min-width: 44px; justify-content: center; }
+  .switch-pill, .chip-btn, .notif-chip, .wm-template-new, .buddy-subnav-btn, .health-metric-btn, .verify-line-btn, .subtab {
+    min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .auth-toggle { display: inline-flex; align-items: center; }
+  .rm-set-btn { width: 36px; }
+  .set-col-hdr, .set-row { grid-template-columns: 18px 1.2fr 1fr 54px 36px; gap: 5px; }
+  .step-btn { flex-basis: 36px; min-width: 36px; }
+  .step-inp { font-size: 17px; }
+  .focus-card-del, .tab-badge, .bottom-nav-badge { min-height: 0; }
+  .effort-bar, .week-dot { min-height: 0; }
+}
+@media (max-width: 480px), (pointer: coarse) {
+  .btn-sec, .btn-pri, .seg-btn { min-height: 44px; }
+  .duck-btn { min-width: 44px; }
+}
+.score-self-tag, .body-lbl, .status-badge, .sugg-focus-badge { font-size: 10px; }
+/* The tag sat above the field, where the field's own clipping cut it in half.
+   It now sits inside, over the number. */
+.new-pr-tag {
+  top: 2px; left: 50%; right: auto; transform: translateX(-50%);
+  background: none; font-size: 9px; white-space: nowrap; animation: none;
+}

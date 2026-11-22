@@ -270,7 +270,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         </div>
 
         <div className="re-popover-section">
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>
             Your reference max for this lift — we'll prescribe each working set from it.
           </div>
           <div className="re-popover-grid">
@@ -315,9 +315,9 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
 
         {previewWeight != null && presc && (
           <div className="re-popover-section" style={{ background: "var(--ad2)", borderRadius: 6, padding: 8 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Preview</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>Preview</div>
             {presc.warmup.length > 0 && (
-              <div style={{ fontSize: 11 }}>
+              <div style={{ fontSize: 12 }}>
                 <strong>Warmup:</strong>{" "}
                 {presc.warmup.map((w, i) => (
                   <span key={i}>{w.weight}kg × {w.reps}{i < presc.warmup.length - 1 ? " · " : ""}</span>
@@ -330,7 +330,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
           </div>
         )}
         {previewWeight == null && (
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
             Add a max weight + reps to see the prescribed working weight.
           </div>
         )}
@@ -371,7 +371,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
 
       {/* Week tabs */}
       <div className="card" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
           Program weeks
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

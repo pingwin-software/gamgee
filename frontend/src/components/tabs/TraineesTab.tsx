@@ -264,7 +264,7 @@ export default function TraineesTab({
                       />
                       <div>
                         <strong>{r.name}</strong>
-                        <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                        <div style={{ fontSize: 12, color: "var(--muted)" }}>
                           {r.days_per_week} days/week · {r.goal || "general"}
                         </div>
                       </div>

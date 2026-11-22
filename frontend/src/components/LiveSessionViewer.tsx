@@ -99,7 +99,7 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
 
         {/* Current + last set */}
         <div className="card" style={{ padding: 12 }}>
-          <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>
             Working on
           </div>
           <div style={{ marginTop: 4, fontSize: 15 }}>
@@ -119,7 +119,7 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
         {/* Set-by-set timeline (trainer audience) */}
         {canTimeline && (
           <div className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>
               Set timeline (trainer view)
             </div>
             {events.length === 0 ? (
@@ -137,13 +137,13 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
                       border: "1px solid var(--ad)", fontSize: 13,
                     }}
                   >
-                    <span style={{ width: 60, color: "var(--muted)", fontSize: 11 }}>
+                    <span style={{ width: 60, color: "var(--muted)", fontSize: 12 }}>
                       {new Date(ev.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                     <strong style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {ev.exercise_name}
                     </strong>
-                    <span style={{ color: "var(--muted)", fontSize: 11 }}>set {ev.set_index + 1}</span>
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>set {ev.set_index + 1}</span>
                     {ev.weight != null && <span><strong>{ev.weight}kg</strong></span>}
                     {ev.reps != null && <span>× {ev.reps}</span>}
                   </div>
@@ -156,7 +156,7 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
         {/* Participants */}
         {session.participants.length > 0 && (
           <div className="card" style={{ padding: 12 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
               Joined buddies
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -180,7 +180,7 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
 function Stat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="card" style={{ padding: 10, textAlign: "center" }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
         {icon}{label}
       </div>
       <div style={{ fontSize: 16, fontWeight: 600, marginTop: 4 }}>{value}</div>

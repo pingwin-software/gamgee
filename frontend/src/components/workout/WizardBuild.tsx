@@ -370,7 +370,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
                 <>
                   <div className="section-title">
                     <Star size={14} /> {focusDef.name.toUpperCase()}
-                    <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "'Nunito',sans-serif", fontWeight: 400, letterSpacing: 0 }}>
+                    <span style={{ fontSize: 12, color: "var(--muted)", fontFamily: "'Nunito',sans-serif", fontWeight: 400, letterSpacing: 0 }}>
                       hover to preview
                     </span>
                   </div>

@@ -14,12 +14,12 @@ export default function Stepper({ value, min, max, onChange, label, format }: {
 }) {
   const set = (v: number) => onChange(Math.max(min, Math.min(max, v)));
   return (
-    <div className="stepper" role="group" aria-label={label}>
-      <button type="button" className="stepper-btn" onClick={() => set(value - 1)} disabled={value <= min} aria-label={`Less: ${label}`}>
+    <div className="qstep" role="group" aria-label={label}>
+      <button type="button" className="qstep-btn" onClick={() => set(value - 1)} disabled={value <= min} aria-label={`Less: ${label}`}>
         <Minus size={16} />
       </button>
-      <output className="stepper-val" aria-live="polite">{format ? format(value) : value}</output>
-      <button type="button" className="stepper-btn" onClick={() => set(value + 1)} disabled={value >= max} aria-label={`More: ${label}`}>
+      <output className="qstep-val" aria-live="polite">{format ? format(value) : value}</output>
+      <button type="button" className="qstep-btn" onClick={() => set(value + 1)} disabled={value >= max} aria-label={`More: ${label}`}>
         <Plus size={16} />
       </button>
     </div>

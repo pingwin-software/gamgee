@@ -203,7 +203,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: 12px;
   padding: 8px 12px;
   text-align: left;
   border-bottom: 1px solid #222;
@@ -221,8 +221,8 @@
 .adm-table tr:hover td { background: rgba(255,255,255,0.02); }
 
 .adm-muted   { color: #555 !important; }
-.adm-mono    { font-family: "Courier New", monospace; font-size: 11px; }
-.adm-small   { font-size: 11px; }
+.adm-mono    { font-family: "Courier New", monospace; font-size: 12px; }
+.adm-small   { font-size: 12px; }
 
 .adm-actions {
   display: flex;
@@ -343,7 +343,7 @@ select.adm-input { cursor: pointer; }
   border-radius: 5px;
   color: #888;
   font-family: "Nunito", sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
   cursor: pointer;
@@ -398,7 +398,7 @@ select.adm-input { cursor: pointer; }
 }
 
 .adm-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -474,7 +474,7 @@ select.adm-input { cursor: pointer; }
   border-radius: 6px;
   color: #888;
   font-family: "Nunito", sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -530,7 +530,7 @@ select.adm-input { cursor: pointer; }
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -544,7 +544,7 @@ select.adm-input { cursor: pointer; }
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -557,7 +557,7 @@ select.adm-input { cursor: pointer; }
 
 .adm-fb-meta {
   color: #c8c4bf;
-  font-size: 11px;
+  font-size: 12px;
   margin-left: auto;
   font-family: "Nunito", sans-serif;
 }
