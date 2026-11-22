@@ -3,6 +3,7 @@ import {
   Users, UserPlus, Search, Check, X as XIcon, Trash2, Send,
   Trophy, Flame, Zap, Play, LogOut, Crown, Medal, Eye, ChevronDown,
   Dumbbell, Radio, Clock,
+  MessageCircle,
 } from "lucide-react";
 import type {
   Buddy, UserSearchResult, ScoreboardRow, MotivatePreset, LiveSession,
@@ -28,6 +29,8 @@ interface Props {
   startLiveSession: (note: string) => Promise<void>;
   endLiveSession:   () => Promise<void>;
   joinLiveSession:  (id: string) => Promise<void>;
+  /** Open (or start) the chat with a buddy, by username. */
+  onOpenChat:       (username: string) => void;
 }
 
 /** Initials in a ring of the person's own colour. */
@@ -49,7 +52,7 @@ export default function BuddiesTab({
   authFetch, buddies, liveSessions, myLiveSession,
   workoutActive, workoutFocus, workoutDoneSets,
   refreshBuddies, refreshLive,
-  startLiveSession, endLiveSession, joinLiveSession,
+  startLiveSession, endLiveSession, joinLiveSession, onOpenChat,
 }: Props) {
   const t = useTxt();
   const [sub, setSub] = useState<Sub>("scoreboard");
@@ -130,6 +133,7 @@ export default function BuddiesTab({
           onToast={showToast}
           onLoading={setLoading}
           onOpenProfile={openProfile}
+          onOpenChat={onOpenChat}
           onFind={() => setSub("find")}
         />
       )}
@@ -369,7 +373,7 @@ function IncomingRequests({ incoming, authFetch, refresh, onToast }: {
 
 // ─── Buddies list ─────────────────────────────────────────────────────────
 
-function BuddiesList({ buddies, statsById, authFetch, refresh, onToast, onLoading, onOpenProfile, onFind }: {
+function BuddiesList({ buddies, statsById, authFetch, refresh, onToast, onLoading, onOpenProfile, onOpenChat, onFind }: {
   buddies: Buddy[];
   statsById: Map<number, ScoreboardRow>;
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -377,6 +381,7 @@ function BuddiesList({ buddies, statsById, authFetch, refresh, onToast, onLoadin
   onToast: (m: string) => void;
   onLoading: (l: boolean) => void;
   onOpenProfile: (userId: number) => void;
+  onOpenChat: (username: string) => void;
   onFind: () => void;
 }) {
   const t = useTxt();
@@ -442,6 +447,7 @@ function BuddiesList({ buddies, statsById, authFetch, refresh, onToast, onLoadin
           onLoading={onLoading}
           onMotivate={() => setMotivateBuddy(b)}
           onOpenProfile={() => onOpenProfile(b.user_id)}
+          onOpenChat={() => onOpenChat(b.username)}
         />
       ))}
 
@@ -457,7 +463,7 @@ function BuddiesList({ buddies, statsById, authFetch, refresh, onToast, onLoadin
   );
 }
 
-function BuddyCard({ buddy, stats, authFetch, refresh, onToast, onLoading, onMotivate, onOpenProfile }: {
+function BuddyCard({ buddy, stats, authFetch, refresh, onToast, onLoading, onMotivate, onOpenProfile, onOpenChat }: {
   buddy: Buddy;
   stats: ScoreboardRow | undefined;
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -466,6 +472,7 @@ function BuddyCard({ buddy, stats, authFetch, refresh, onToast, onLoading, onMot
   onLoading: (l: boolean) => void;
   onMotivate: () => void;
   onOpenProfile: () => void;
+  onOpenChat: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const name = buddy.name ?? buddy.username;
@@ -516,8 +523,11 @@ function BuddyCard({ buddy, stats, authFetch, refresh, onToast, onLoading, onMot
         <button type="button" className="so-act so-act-main" onClick={onMotivate}>
           <Send size={18} aria-hidden="true" /> Motivate
         </button>
-        <button type="button" className="so-act" onClick={onOpenProfile}>
-          <Eye size={18} aria-hidden="true" /> View
+        <button type="button" className="so-act" onClick={onOpenChat}>
+          <MessageCircle size={18} aria-hidden="true" /> Chat
+        </button>
+        <button type="button" className="so-act so-act-icon" onClick={onOpenProfile} aria-label={`View ${name}'s profile`} title="View profile">
+          <Eye size={18} aria-hidden="true" />
         </button>
       </div>
       <button type="button" className="disclose" aria-expanded={open} onClick={() => setOpen(o => !o)}>

@@ -1395,6 +1395,7 @@ export default function WorkoutTracker({
         {!completed && tab === "buddies" && (
           <BuddiesTab
             authFetch={authFetch}
+            onOpenChat={openChatWith}
             buddies={buddies}
             liveSessions={liveSessions}
             myLiveSession={myLiveSession}
