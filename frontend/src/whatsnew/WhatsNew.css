@@ -143,3 +143,20 @@
 @keyframes wn-qs-tap { 0%, 12% { transform: scale(1); } 18% { transform: scale(0.95); } 26%, 100% { transform: scale(1); } }
 @keyframes wn-qs-bar { 0%, 28% { opacity: 0.2; } 40%, 100% { opacity: 1; } }
 .wn-qs-bars span:nth-child(n+8) { animation-name: none; }
+
+/* ── Fresh pages ──────────────────────────────────────────────────────── */
+.wn-fp { display: flex; align-items: flex-end; gap: 22px; }
+.wn-fp-grid { display: grid; grid-template-columns: repeat(7, 14px); gap: 4px; }
+.wn-fp-grid span { width: 14px; height: 14px; border-radius: 4px; background: var(--s2); border: 1px solid var(--border); }
+.wn-fp-grid span.on {
+  background: var(--accent); border-color: var(--accent);
+  animation: wn-fp-fill 5s ease-in-out infinite; animation-delay: calc(var(--i) * 0.08s);
+}
+.wn-fp-podium { display: flex; align-items: flex-end; gap: 4px; height: 70px; }
+.wn-fp-podium span { width: 22px; border-radius: 5px 5px 0 0; background: var(--ad2); border: 1px solid var(--accent); transform-origin: bottom; animation: wn-fp-rise 5s ease-in-out infinite; }
+.wn-fp-podium span:nth-child(1) { height: 60%; animation-delay: 1.9s; }
+.wn-fp-podium span:nth-child(2) { height: 100%; background: var(--primary); animation-delay: 2.1s; }
+.wn-fp-podium span:nth-child(3) { height: 40%; animation-delay: 1.7s; }
+@keyframes wn-fp-fill { 0%, 6% { opacity: 0.15; transform: scale(0.6); } 16%, 100% { opacity: 1; transform: none; } }
+@keyframes wn-fp-rise { 0%, 4% { transform: scaleY(0.1); } 14%, 100% { transform: none; } }
+:root[data-reduced-motion="1"] .wn-art * { animation: none !important; }

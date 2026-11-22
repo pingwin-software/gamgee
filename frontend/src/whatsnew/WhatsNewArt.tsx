@@ -9,6 +9,7 @@ import type { WhatsNewId } from "./whatsNew";
 export default function WhatsNewArt({ demo }: { demo: WhatsNewId }) {
   return (
     <div className="wn-art" aria-hidden="true">
+      {demo === "freshPages" && <FreshPagesArt />}
       {demo === "progression" && <ProgressionArt />}
       {demo === "quickStart" && <QuickStartArt />}
       {demo === "passkeys" && <PasskeysArt />}
@@ -67,6 +68,21 @@ function QuickStartArt() {
       <div className="wn-qs-nav">
         <Zap size={14} className="on" /><TrendingUp size={14} /><Users size={14} /><Calendar size={14} /><User size={14} />
       </div>
+    </div>
+  );
+}
+
+/** A heat map filling in day by day, and a podium rising under it. */
+function FreshPagesArt() {
+  const filled = new Set([2, 5, 8, 9, 11, 13, 16, 18, 19, 20]);
+  return (
+    <div className="wn-fp">
+      <div className="wn-fp-grid">
+        {Array.from({ length: 21 }, (_, i) => (
+          <span key={i} className={filled.has(i) ? "on" : undefined} style={{ ["--i" as string]: i }} />
+        ))}
+      </div>
+      <div className="wn-fp-podium"><span /><span /><span /></div>
     </div>
   );
 }

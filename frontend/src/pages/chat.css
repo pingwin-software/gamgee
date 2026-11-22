@@ -1,0 +1,381 @@
+/* Chat (direct messages, coaching channels) and the custom exercises page.
+   Phone first; every class is prefixed ch-. Colours come from the theme's
+   variables only (a contact's own colour arrives as --c on the avatar). */
+
+.ch-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ── Layout: one screen on a phone, two panes on a wide one ───────────── */
+.ch-shell { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ch-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ch-blank { display: none; }
+
+.ch-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ch-title {
+  margin: 0; font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900;
+  letter-spacing: 0.5px; color: var(--text);
+}
+.ch-title-count {
+  display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px;
+  margin-left: 8px; border-radius: 999px; vertical-align: 3px;
+  background: var(--accent); color: #000; font-size: 12px; font-weight: 800;
+}
+
+.ch-new-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  background: var(--accent); border: 1px solid var(--accent); color: #000;
+  font: inherit; font-size: 14px; font-weight: 800;
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+}
+.ch-new-btn:active { transform: scale(0.96); }
+.ch-new-btn.on { background: var(--ad2); color: var(--accent); }
+
+/* ── Avatar: initials in a ring of the person's colour ────────────────── */
+.ch-av {
+  position: relative; flex-shrink: 0; display: grid; place-items: center;
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 2.5px solid var(--c, var(--accent));
+  background: color-mix(in srgb, var(--c, var(--accent)) 18%, var(--s2));
+  color: var(--text); font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+}
+.ch-av-sm { width: 40px; height: 40px; font-size: 13px; border-width: 2px; }
+.ch-av-lg { width: 56px; height: 56px; font-size: 18px; }
+.ch-av-badge {
+  position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #000; border: 2px solid var(--s1);
+}
+
+/* ── New chat picker ──────────────────────────────────────────────────── */
+.ch-picker {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px;
+  background: var(--s1); border: 1px solid var(--accent); border-radius: 16px;
+  animation: ch-rise 0.25s ease both;
+}
+.ch-picker-hint { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.ch-picker-row { display: flex; gap: 8px; }
+.ch-field {
+  flex: 1; min-width: 0; min-height: 48px; padding: 0 16px; border-radius: 999px;
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 16px; outline: none;
+  transition: border-color 0.15s;
+}
+.ch-field::placeholder { color: var(--muted); }
+.ch-field:focus { border-color: var(--accent); }
+.ch-open-btn {
+  flex-shrink: 0; min-height: 48px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  background: var(--s2); border: 1px solid var(--accent); color: var(--accent);
+  font: inherit; font-size: 14px; font-weight: 800;
+}
+.ch-open-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--border); color: var(--muted); }
+.ch-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.ch-person {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0;
+  min-height: 132px; padding: 14px 8px 10px; border-radius: 14px; cursor: pointer;
+  background: var(--s2); border: 1px solid var(--border); color: var(--text); font: inherit;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+}
+.ch-person:hover:not(:disabled) { border-color: var(--accent); background: var(--ad); }
+.ch-person:active:not(:disabled) { transform: scale(0.96); }
+.ch-person:disabled { opacity: 0.5; cursor: wait; }
+.ch-person-name {
+  max-width: 100%; font-size: 13px; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-person-kind {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; color: var(--muted);
+}
+.ch-person-kind.coach, .ch-person-kind.trainee { color: var(--accent); }
+.ch-note { font-size: 13px; color: var(--muted); line-height: 1.45; padding: 4px 2px; }
+.ch-err {
+  padding: 10px 12px; border-radius: 10px; font-size: 13px; color: var(--red);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+/* ── Conversation list ────────────────────────────────────────────────── */
+.ch-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ch-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0;
+  min-height: 72px; padding: 10px 14px; border-radius: 16px; cursor: pointer; text-align: left;
+  background: var(--s1); border: 1px solid var(--border); color: var(--text); font: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.ch-row:hover { border-color: var(--accent); }
+.ch-row:active { transform: scale(0.985); }
+.ch-row[aria-current="true"] { background: var(--ad); border-color: var(--accent); }
+.ch-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ch-row-name {
+  font-size: 16px; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-row-preview {
+  font-size: 13px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-row.unread .ch-row-name { font-weight: 900; }
+.ch-row.unread .ch-row-preview { color: var(--text); font-weight: 600; }
+.ch-row-meta { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ch-row-time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ch-row.unread .ch-row-time { color: var(--accent); font-weight: 700; }
+.ch-pill {
+  display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px;
+  border-radius: 999px; background: var(--accent); color: #000;
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+  animation: ch-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Empty states (chat and exercises) ────────────────────────────────── */
+.ch-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  padding: 36px 20px; border-radius: 18px;
+  background: var(--s1); border: 1px dashed var(--border);
+}
+.ch-empty-icon {
+  display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%;
+  background: var(--ad2); color: var(--accent);
+}
+.ch-empty-text { max-width: 30ch; font-size: 15px; line-height: 1.45; color: var(--text); }
+.ch-big-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 24px; border-radius: 999px; cursor: pointer;
+  background: var(--accent); border: 1px solid var(--accent); color: #000;
+  font: inherit; font-size: 15px; font-weight: 800;
+  transition: transform 0.15s;
+}
+.ch-big-btn:active { transform: scale(0.97); }
+
+/* ── Open conversation ────────────────────────────────────────────────── */
+.ch-thread {
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+  height: clamp(420px, calc(100dvh - 230px), 760px);
+  background: var(--s1); border: 1px solid var(--border); border-radius: 18px;
+}
+.ch-handle { display: none; }
+.ch-thread-head {
+  flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--s2); border-bottom: 1px solid var(--border);
+}
+.ch-back {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-width: 44px; min-height: 44px; padding: 0 12px 0 6px; border-radius: 999px; cursor: pointer;
+  background: none; border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px; font-weight: 700;
+}
+.ch-back:hover { border-color: var(--accent); color: var(--accent); }
+.ch-thread-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ch-thread-name {
+  font-size: 16px; font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-thread-sub {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.ch-log {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 3px; padding: 14px 12px;
+}
+.ch-hello {
+  margin: auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  text-align: center; color: var(--muted); font-size: 15px;
+}
+.ch-day {
+  align-self: center; margin: 12px 0 6px; padding: 4px 12px; border-radius: 999px;
+  background: var(--s2); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 700; color: var(--muted);
+}
+.ch-stamp { margin: 10px 6px 3px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ch-stamp.mine { align-self: flex-end; }
+.ch-stamp.theirs { align-self: flex-start; }
+.ch-msg { display: flex; }
+.ch-msg.mine { justify-content: flex-end; }
+.ch-msg.theirs { justify-content: flex-start; }
+.ch-msg:last-child { animation: ch-rise 0.22s ease both; }
+.ch-bubble {
+  max-width: min(82%, 520px); padding: 10px 14px; border-radius: 20px;
+  font-size: 16px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ch-msg.mine .ch-bubble { background: var(--accent); color: #000; border-bottom-right-radius: 6px; }
+.ch-msg.theirs .ch-bubble {
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  border-bottom-left-radius: 6px;
+}
+/* Inside a run from one sender only the last bubble keeps its tail corner. */
+.ch-msg.mine.mid .ch-bubble { border-bottom-right-radius: 20px; }
+.ch-msg.theirs.mid .ch-bubble { border-bottom-left-radius: 20px; }
+
+.ch-composer {
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: var(--s1); border-top: 1px solid var(--border);
+}
+.ch-send {
+  flex-shrink: 0; display: grid; place-items: center; width: 48px; height: 48px; padding: 0;
+  border-radius: 50%; cursor: pointer;
+  background: var(--accent); border: 1px solid var(--accent); color: #000;
+  transition: transform 0.15s, opacity 0.15s, background 0.15s;
+}
+.ch-send:active:not(:disabled) { transform: scale(0.9); }
+.ch-send:disabled {
+  background: var(--s2); border-color: var(--border); color: var(--muted); cursor: not-allowed;
+}
+
+/* ── Focus ────────────────────────────────────────────────────────────── */
+.ch-new-btn:focus-visible, .ch-open-btn:focus-visible, .ch-person:focus-visible,
+.ch-row:focus-visible, .ch-big-btn:focus-visible, .ch-back:focus-visible,
+.ch-send:focus-visible, .ch-field:focus-visible, .ch-ex-head:focus-visible,
+.ch-ex-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+/* ── Phone: the open conversation is its own screen, over the dock ────── */
+@media (max-width: 480px) {
+  .ch-shell.is-open .ch-side { visibility: hidden; }
+  .ch-shell.is-open:has(.ch-thread.is-dragging) .ch-side { visibility: visible; }
+  .ch-thread {
+    position: fixed; inset: 0; z-index: 200; height: auto;
+    border: none; border-radius: 0; background: var(--bg);
+    animation: ch-sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+    will-change: transform; touch-action: pan-y;
+  }
+  .ch-thread.is-dragging { animation: none; }
+  .ch-handle {
+    display: block; flex-shrink: 0; width: 38px; height: 4px; border-radius: 999px;
+    margin: max(6px, env(safe-area-inset-top)) auto 0; background: var(--muted); opacity: 0.55;
+  }
+  .ch-thread-head { background: var(--bg); padding-top: 8px; }
+  .ch-composer {
+    background: var(--bg);
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+  .ch-new-btn { padding: 0 16px; }
+}
+
+/* ── Tablet: still one pane, but in the page ──────────────────────────── */
+@media (min-width: 481px) and (max-width: 819px) {
+  .ch-shell.is-open .ch-side { display: none; }
+}
+
+/* ── Wide: list beside the conversation ───────────────────────────────── */
+@media (min-width: 820px) {
+  .ch-shell {
+    display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 16px; align-items: start;
+  }
+  .ch-side { max-height: clamp(420px, calc(100dvh - 230px), 760px); overflow-y: auto; padding: 2px; }
+  .ch-back { display: none; }
+  .ch-thread-head { padding-left: 16px; }
+  .ch-blank {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    height: clamp(420px, calc(100dvh - 230px), 760px); text-align: center;
+    border: 1px dashed var(--border); border-radius: 18px; color: var(--muted); font-size: 15px;
+  }
+  .ch-log { padding: 18px 20px; }
+}
+
+/* ── Custom exercises ─────────────────────────────────────────────────── */
+.ch-ex-page { display: flex; flex-direction: column; gap: 14px; }
+.ch-ex-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ch-ex-count { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.ch-ex-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.ch-ex-card {
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 18px;
+  animation: ch-rise 0.25s ease both;
+}
+.ch-ex-head {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 64px;
+  padding: 14px 14px 10px; cursor: pointer; text-align: left;
+  background: none; border: none; color: var(--text); font: inherit; border-radius: 18px 18px 0 0;
+}
+.ch-ex-head:hover { background: var(--ad); }
+.ch-ex-dot {
+  flex-shrink: 0; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: color-mix(in srgb, var(--k) 18%, transparent); color: var(--k);
+  border: 2px solid var(--k);
+}
+.ch-ex-card.strength { --k: var(--accent); }
+.ch-ex-card.timed { --k: var(--green); }
+.ch-ex-card.cardio { --k: var(--red); }
+.ch-ex-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ch-ex-name { font-size: 17px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+.ch-ex-meta { font-size: 13px; color: var(--muted); text-transform: capitalize; }
+.ch-ex-chev { flex-shrink: 0; margin-top: 12px; color: var(--muted); transition: transform 0.2s; }
+.ch-ex-chev.flip { transform: rotate(180deg); }
+.ch-ex-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; }
+.ch-ex-chip {
+  display: inline-flex; align-items: center; min-height: 28px; padding: 0 11px; border-radius: 999px;
+  background: var(--ad2); color: var(--accent); font-size: 12px; font-weight: 700;
+}
+.ch-ex-chip.second { background: var(--s2); color: var(--muted); border: 1px solid var(--border); }
+.ch-ex-detail {
+  margin: 0 14px 12px; padding: 12px; border-radius: 12px; background: var(--s2);
+  animation: ch-rise 0.2s ease both;
+}
+.ch-ex-detail-label {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+  font-size: 12px; font-weight: 800; color: var(--muted);
+}
+.ch-ex-detail-text { font-size: 14px; line-height: 1.5; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ch-ex-detail-none { font-size: 13px; line-height: 1.45; color: var(--muted); }
+.ch-ex-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding: 0 14px 14px;
+}
+.ch-ex-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 12px; border-radius: 14px; cursor: pointer;
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px; font-weight: 700;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.15s;
+}
+.ch-ex-btn:hover { border-color: var(--accent); }
+.ch-ex-btn:active { transform: scale(0.97); }
+.ch-ex-btn.del { color: var(--red); }
+.ch-ex-btn.del:hover { border-color: var(--red); }
+.ch-ex-btn.del.sure {
+  background: var(--red); border-color: var(--red); color: #000;
+  animation: ch-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@media (max-width: 480px) { .ch-ex-top .ch-big-btn { width: 100%; } }
+@media (min-width: 700px) { .ch-ex-grid { grid-template-columns: 1fr 1fr; align-items: stretch; } }
+
+/* ── Motion ───────────────────────────────────────────────────────────── */
+@keyframes ch-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ch-pop {
+  from { transform: scale(0.6); }
+  to   { transform: scale(1); }
+}
+@keyframes ch-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch-picker, .ch-pill, .ch-msg:last-child, .ch-thread, .ch-ex-card, .ch-ex-detail,
+  .ch-ex-btn.del.sure { animation: none !important; }
+  .ch-new-btn, .ch-person, .ch-row, .ch-big-btn, .ch-send, .ch-ex-btn, .ch-ex-chev,
+  .ch-field { transition: none !important; }
+}
+:root[data-reduced-motion="1"] .ch-picker,
+:root[data-reduced-motion="1"] .ch-pill,
+:root[data-reduced-motion="1"] .ch-msg:last-child,
+:root[data-reduced-motion="1"] .ch-thread,
+:root[data-reduced-motion="1"] .ch-ex-card,
+:root[data-reduced-motion="1"] .ch-ex-detail,
+:root[data-reduced-motion="1"] .ch-ex-btn.del.sure { animation: none !important; }
+:root[data-reduced-motion="1"] .ch-new-btn,
+:root[data-reduced-motion="1"] .ch-person,
+:root[data-reduced-motion="1"] .ch-row,
+:root[data-reduced-motion="1"] .ch-big-btn,
+:root[data-reduced-motion="1"] .ch-send,
+:root[data-reduced-motion="1"] .ch-ex-btn,
+:root[data-reduced-motion="1"] .ch-ex-chev,
+:root[data-reduced-motion="1"] .ch-field { transition: none !important; }

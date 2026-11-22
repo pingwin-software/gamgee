@@ -1,10 +1,17 @@
-import { useState } from "react";
-import { ClipboardList, Timer, Dumbbell, Layers, Activity, Trophy, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ClipboardList, Timer, Dumbbell, Layers, Weight, Trophy, ChevronDown, ChevronLeft, ChevronRight,
+  Pencil, Flame, CalendarCheck, Heart,
+} from "lucide-react";
 import type { WorkoutSession, PRDict } from "../../types";
 import { fmtDate, fmtDur } from "../../utils";
-import { ALL_EX } from "../../data/exercises";
+import { ALL_EX, EM } from "../../data/exercises";
+import { MI } from "../../data/muscles";
+import { getFocusDef } from "../../data/focuses";
 import EditWorkoutModal from "./EditWorkoutModal";
 import { useTxt } from "../../context/ToneContext";
+import "../../simple.css";
+import "../../pages/history.css";
 
 interface Props {
   history: WorkoutSession[];
@@ -14,7 +21,20 @@ interface Props {
   onUpdate: (session: WorkoutSession) => void;
 }
 
-const DAYS = ["S","M","T","W","T","F","S"];
+/** Monday first, as on the workout page's week strip. */
+const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const HEAT_WEEKS = 4;
+
+/** Local `YYYY-MM-DD` of a date (never toISOString: that shifts the day). */
+const dayOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const mondayOf = (d: Date) => {
+  const m = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
+  return m;
+};
+const longDay = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
 // Render a strength set's weight chip. Assisted exercises log an offset from
 // bodyweight; show the effective lifted weight when known, else just the offset.
@@ -27,6 +47,37 @@ function fmtAssistedSet(w: number, reps: string, bodyweight: number | null): str
   return `BW ${w < 0 ? "−" : "+"} ${Math.abs(w)}kg × ${reps}`;
 }
 
+const setCount = (w: WorkoutSession) => w.exercises.reduce((a, e) => a + e.sets.length, 0);
+
+/** Tonnage of a session. Assisted exercises log negative weight; skip them so
+ *  they don't subtract from the total. */
+const volumeOf = (w: WorkoutSession) =>
+  w.exercises.reduce((a, e) => e.type !== "strength" ? a :
+    a + e.sets.reduce((b, s) => {
+      const kg = parseFloat(s.weight) || 0;
+      if (kg <= 0) return b;
+      return b + kg * (parseInt(s.reps) || 0);
+    }, 0), 0);
+
+const fmtVolume = (kg: number) =>
+  kg >= 10000 ? `${(kg / 1000).toFixed(1)} t` : `${Math.round(kg).toLocaleString("en-US")} kg`;
+
+/** Where the session's sets went: muscle groups, biggest first, at most four
+ *  slices (the rest folded into "Other"). */
+function splitOf(w: WorkoutSession): { name: string; sets: number }[] {
+  const by: Record<string, number> = {};
+  w.exercises.forEach(ex => {
+    const first = EM[ex.id]?.p[0];
+    const group = ex.type === "cardio" ? "Cardio" : (first && MI[first]?.g) || "Other";
+    by[group] = (by[group] || 0) + ex.sets.length;
+  });
+  const sorted = Object.entries(by).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
+    .map(([name, sets]) => ({ name, sets }));
+  if (sorted.length <= 4) return sorted;
+  const rest = sorted.slice(3).reduce((a, s) => a + s.sets, 0);
+  return [...sorted.slice(0, 3), { name: "Other", sets: rest }];
+}
+
 export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdate }: Props) {
   const t = useTxt();
   const [view,           setView]           = useState<"list" | "calendar">("list");
@@ -34,22 +85,27 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
   const [calMonth,       setCalMonth]       = useState(() => new Date());
   const [selectedDay,    setSelectedDay]    = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
+  const [jump,           setJump]           = useState<{ id: string; n: number } | null>(null);
 
   const toggleExpand = (id: string) =>
     setExpanded(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
-  const workoutByDay: Record<string, WorkoutSession[]> = {};
-  history.forEach(w => {
-    const d = w.date.slice(0, 10);
-    (workoutByDay[d] = workoutByDay[d] || []).push(w);
-  });
+  const workoutByDay = useMemo(() => {
+    const map: Record<string, WorkoutSession[]> = {};
+    history.forEach(w => {
+      const d = dayOf(new Date(w.date));
+      (map[d] = map[d] || []).push(w);
+    });
+    return map;
+  }, [history]);
 
-  const today    = new Date().toISOString().slice(0, 10);
+  const now      = new Date();
+  const today    = dayOf(now);
   const year     = calMonth.getFullYear();
   const month    = calMonth.getMonth();
-  const firstDow = new Date(year, month, 1).getDay();
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMo = new Date(year, month + 1, 0).getDate();
-  const monthLabel = calMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
+  const monthLabel = calMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   const prevMonth = () => setCalMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
   const nextMonth = () => setCalMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
@@ -60,6 +116,56 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
   ];
 
   const selectedSessions = selectedDay ? (workoutByDay[selectedDay] ?? []) : [];
+
+  // The header's numbers: weeks in a row with a workout (this week may still be
+  // empty without breaking it), sessions this month, sessions in all.
+  const stats = useMemo(() => {
+    const weeks = new Set(history.map(w => dayOf(mondayOf(new Date(w.date)))));
+    const cursor = mondayOf(new Date());
+    if (!weeks.has(dayOf(cursor))) cursor.setDate(cursor.getDate() - 7);
+    let streak = 0;
+    while (weeks.has(dayOf(cursor))) { streak += 1; cursor.setDate(cursor.getDate() - 7); }
+    const ym = dayOf(new Date()).slice(0, 7);
+    const thisMonth = history.filter(w => dayOf(new Date(w.date)).slice(0, 7) === ym).length;
+    return { streak, thisMonth };
+  }, [history]);
+
+  // The last four weeks, Monday to Sunday, ending with this week.
+  const heatDays = useMemo(() => {
+    const start = mondayOf(new Date());
+    start.setDate(start.getDate() - 7 * (HEAT_WEEKS - 1));
+    return Array.from({ length: HEAT_WEEKS * 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return { iso: dayOf(d), num: d.getDate() };
+    });
+  }, [today]);
+
+  /** How full a day was, by sets: one of three shades. */
+  const levelOf = (iso: string) => {
+    const sets = (workoutByDay[iso] ?? []).reduce((a, w) => a + setCount(w), 0);
+    if (!workoutByDay[iso]) return 0;
+    return sets >= 20 ? 3 : sets >= 10 ? 2 : 1;
+  };
+
+  /** Open a day's sessions in the list and bring the first one into view. */
+  const jumpToDay = (iso: string) => {
+    const sessions = workoutByDay[iso];
+    if (!sessions?.length) return;
+    setExpanded(p => { const s = new Set(p); sessions.forEach(w => s.add(w.id)); return s; });
+    setJump(j => ({ id: sessions[0].id, n: (j?.n ?? 0) + 1 }));
+  };
+
+  useEffect(() => {
+    if (!jump) return;
+    const el = document.getElementById(`hx-s-${jump.id}`);
+    if (!el) return;
+    const still = document.documentElement.getAttribute("data-reduced-motion") === "1"
+      || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+    const timer = window.setTimeout(() => setJump(null), 1000);
+    return () => window.clearTimeout(timer);
+  }, [jump]);
 
   const handleSave = (updated: WorkoutSession) => {
     onUpdate(updated);
@@ -79,118 +185,211 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     );
   }
 
-  const renderSession = (w: WorkoutSession, expandable = true) => {
+  const renderSession = (w: WorkoutSession, inList = false) => {
     const isOpen = expanded.has(w.id);
-    const sets   = w.exercises.reduce((a, e) => a + e.sets.length, 0);
-    const vol    = w.exercises.reduce((a, e) => e.type !== "strength" ? a :
-      a + e.sets.reduce((b, s) => {
-        const w = parseFloat(s.weight) || 0;
-        // Assisted exercises log negative weight; skip them in tonnage so they
-        // don't subtract from total volume.
-        if (w <= 0) return b;
-        return b + w * (parseInt(s.reps) || 0);
-      }, 0), 0);
+    const sets   = setCount(w);
+    const vol    = volumeOf(w);
+    const focus  = w.focus ? getFocusDef(w.focus) : undefined;
+    const allCardio = w.exercises.length > 0 && w.exercises.every(e => e.type === "cardio");
+    const Icon   = focus?.icon ?? (allCardio ? Heart : Dumbbell);
+    const split  = splitOf(w);
+    const total  = split.reduce((a, s) => a + s.sets, 0);
+    const bodyId = `hx-b-${inList ? "l" : "c"}-${w.id}`;
     return (
-      <div key={w.id} className="hist-card">
-        <div className="hist-hdr" onClick={() => expandable && toggleExpand(w.id)}>
-          <div>
-            <div className="hist-date">{fmtDate(w.date)}</div>
-            <div className="hist-meta">
-              <span><Timer size={13} /> {fmtDur(w.duration)}</span>
-              <span><Dumbbell size={13} /> {w.exercises.length} ex</span>
-              <span><Layers size={13} /> {sets} sets</span>
-              {vol > 0 && <span><Activity size={13} /> {Math.round(vol)}kg</span>}
+      <div
+        key={w.id}
+        id={inList ? `hx-s-${w.id}` : undefined}
+        className={`hx-card${isOpen ? " open" : ""}${inList && jump?.id === w.id ? " flash" : ""}`}
+      >
+        <div className="hx-card-top">
+          <button
+            type="button" className="hx-card-toggle"
+            onClick={() => toggleExpand(w.id)}
+            aria-expanded={isOpen} aria-controls={bodyId}
+          >
+            <span className="hx-card-icon"><Icon size={22} /></span>
+            <span className="hx-card-text">
+              <span className="hx-card-title">
+                <span className="hx-card-date">{fmtDate(w.date)}</span>
+                {focus && <span className="hx-card-focus">{focus.name}</span>}
+              </span>
+              <span className="hx-facts">
+                <span className="hx-fact"><Timer size={14} /> <b>{fmtDur(w.duration)}</b></span>
+                <span className="hx-fact"><Dumbbell size={14} /> <b>{w.exercises.length}</b> {w.exercises.length === 1 ? "exercise" : "exercises"}</span>
+                <span className="hx-fact"><Layers size={14} /> <b>{sets}</b> {sets === 1 ? "set" : "sets"}</span>
+                {vol > 0 && <span className="hx-fact"><Weight size={14} /> <b>{fmtVolume(vol)}</b></span>}
+              </span>
+            </span>
+            <ChevronDown size={20} className={`hx-chev${isOpen ? " flip" : ""}`} />
+          </button>
+          <button
+            type="button" className="hx-card-edit"
+            onClick={() => setEditingSession(w)}
+            aria-label={`Edit session of ${fmtDate(w.date)}`} title="Edit session"
+          >
+            <Pencil size={18} />
+          </button>
+        </div>
+
+        {total > 0 && (
+          <div className="hx-split">
+            <div className="hx-bar" role="img" aria-label={`Sets by muscle group: ${split.map(s => `${s.name} ${s.sets}`).join(", ")}`}>
+              {split.map((s, i) => (
+                <span key={s.name} className={`hx-tone${i}`} style={{ flex: s.sets }} />
+              ))}
+            </div>
+            <div className="hx-legend" aria-hidden="true">
+              {split.map((s, i) => (
+                <span key={s.name} className="hx-legend-item">
+                  <span className={`hx-legend-dot hx-tone${i}`} />{s.name} {s.sets}
+                </span>
+              ))}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <button
-              className="hist-edit-btn"
-              onClick={e => { e.stopPropagation(); setEditingSession(w); }}
-              title="Edit session"
-            >
-              <Pencil size={15} />
-            </button>
-            <span style={{ color: "var(--muted)" }}>{isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</span>
-          </div>
-        </div>
+        )}
+
         {isOpen && (
-          <div className="hist-body">
+          <div className="hx-body" id={bodyId}>
             {w.exercises.map(ex => (
-              <div key={ex.uid} className="hist-ex">
-                <div className="hist-ex-name">{ex.name}</div>
-                <div className="hist-chips">
+              <div key={ex.uid} className="hx-ex">
+                <div className="hx-ex-name">{ex.name}</div>
+                <div className="hx-sets">
                   {ex.sets.map((s, i) => {
-                    const w = parseFloat(s.weight);
-                    const isPr = ex.type === "strength" && prs[ex.id] && prs[ex.id].weight === w;
+                    const kg = parseFloat(s.weight);
+                    const isPr = ex.type === "strength" && prs[ex.id] && prs[ex.id].weight === kg;
                     const isAssisted = !!ex.is_assisted || !!ALL_EX.find(e => e.id === ex.id)?.is_assisted;
                     const strengthLabel = isAssisted
-                      ? fmtAssistedSet(w, s.reps, bodyweight)
+                      ? fmtAssistedSet(kg, s.reps, bodyweight)
                       : `${s.weight}kg × ${s.reps}`;
                     return (
-                      <span key={i} className={`chip ${isPr ? "pr-chip" : ""}`}>
+                      <span key={i} className={`hx-set${isPr ? " pr" : ""}`}>
                         {ex.type === "cardio" ? `${s.weight}min${s.reps ? ` · ${s.reps}km` : ""}`
                           : ex.type === "timed" ? `${s.weight}s`
                           : strengthLabel}
-                        {isPr && <Trophy size={12} style={{ verticalAlign: "middle", marginLeft: 4 }} />}
+                        {isPr && <Trophy size={13} aria-label="Personal record" />}
                       </span>
                     );
                   })}
                 </div>
               </div>
             ))}
+            <button type="button" className="hx-body-edit" onClick={() => setEditingSession(w)}>
+              <Pencil size={15} /> Edit or delete
+            </button>
           </div>
         )}
       </div>
     );
   };
 
+  // The list, with a small heading where the month changes.
+  let lastMonth = "";
+  const listRows = history.map(w => {
+    const d = new Date(w.date);
+    const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const head = label !== lastMonth ? <h3 key={`m-${label}`} className="hx-month">{label}</h3> : null;
+    lastMonth = label;
+    return head ? [head, renderSession(w, true)] : [renderSession(w, true)];
+  });
+
   return (
-    <div className="tab-anim">
-      <div className="hist-view-toggle">
-        <button className={`hist-view-btn ${view === "list" ? "active" : ""}`} onClick={() => setView("list")}>LIST</button>
-        <button className={`hist-view-btn ${view === "calendar" ? "active" : ""}`} onClick={() => setView("calendar")}>CALENDAR</button>
+    <div className="tab-anim hx-page">
+      <div className="hx-stats">
+        <div className="hx-stat hx-stat-main">
+          <span className="hx-stat-icon"><Flame size={18} /></span>
+          <span className="hx-stat-num">{stats.streak}</span>
+          <span className="hx-stat-label">{stats.streak === 1 ? "week in a row" : "weeks in a row"}</span>
+        </div>
+        <div className="hx-stat">
+          <span className="hx-stat-icon"><CalendarCheck size={18} /></span>
+          <span className="hx-stat-num">{stats.thisMonth}</span>
+          <span className="hx-stat-label">this month</span>
+        </div>
+        <div className="hx-stat">
+          <span className="hx-stat-icon"><Trophy size={18} /></span>
+          <span className="hx-stat-num">{history.length}</span>
+          <span className="hx-stat-label">{history.length === 1 ? "session in all" : "sessions in all"}</span>
+        </div>
       </div>
 
-      {view === "list" && history.map(w => renderSession(w))}
+      <div className="seg" role="group" aria-label="How to show your sessions">
+        <button type="button" className={`seg-btn${view === "list" ? " on" : ""}`} aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
+        <button type="button" className={`seg-btn${view === "calendar" ? " on" : ""}`} aria-pressed={view === "calendar"} onClick={() => setView("calendar")}>Calendar</button>
+      </div>
+
+      {view === "list" && (
+        <>
+          <div className="hx-heat">
+            <div className="hx-heat-head">
+              <span className="hx-heat-title">Last {HEAT_WEEKS} weeks</span>
+              <span className="hx-heat-hint">Tap a filled day to jump to it</span>
+            </div>
+            <div className="hx-grid7" aria-hidden="true">
+              {DAYS.map((d, i) => <div key={i} className="hx-dow">{d}</div>)}
+            </div>
+            <div className="hx-grid7">
+              {heatDays.map(d => {
+                const n = workoutByDay[d.iso]?.length ?? 0;
+                const lvl = levelOf(d.iso);
+                const future = d.iso > today;
+                return (
+                  <button
+                    key={d.iso} type="button"
+                    className={`hx-day${lvl ? ` lvl${lvl}` : ""}${d.iso === today ? " today" : ""}${future ? " future" : ""}`}
+                    disabled={n === 0}
+                    onClick={() => jumpToDay(d.iso)}
+                    aria-label={`${longDay(d.iso)}: ${n === 0 ? "no workout" : n === 1 ? "1 workout" : `${n} workouts`}`}
+                  >
+                    {d.num}
+                    {n > 1 && <span className="hx-day-count">{n}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="hx-list">{listRows}</div>
+        </>
+      )}
 
       {view === "calendar" && (
-        <div className="cal-wrap">
-          <div className="cal-nav">
-            <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month"><ChevronLeft size={14} /><span className="cal-nav-text">PREV</span></button>
-            <span className="cal-month-label">{monthLabel}</span>
-            <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month"><span className="cal-nav-text">NEXT</span><ChevronRight size={14} /></button>
+        <div className="hx-cal">
+          <div className="hx-cal-nav">
+            <button type="button" className="hx-round" onClick={prevMonth} aria-label="Previous month"><ChevronLeft size={20} /></button>
+            <span className="hx-cal-month" aria-live="polite">{monthLabel}</span>
+            <button type="button" className="hx-round" onClick={nextMonth} aria-label="Next month"><ChevronRight size={20} /></button>
           </div>
-          <div className="cal-dow">
-            {DAYS.map((d, i) => <div key={i} className="cal-dow-lbl">{d}</div>)}
+          <div className="hx-grid7" aria-hidden="true">
+            {DAYS.map((d, i) => <div key={i} className="hx-dow">{d}</div>)}
           </div>
-          <div className="cal-grid">
+          <div className="hx-grid7">
             {calCells.map((day, i) => {
-              if (!day) return <div key={i} className="cal-cell empty" />;
+              if (!day) return <div key={i} className="hx-cal-pad" />;
               const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const hasW    = !!workoutByDay[iso];
-              const isToday = iso === today;
-              const isSel   = iso === selectedDay;
-              let cls = "cal-cell";
-              if (isSel)        cls += " selected";
-              else if (hasW)    cls += " has-workout";
-              else              cls += " no-workout";
-              if (isToday && !isSel) cls += " today";
+              const n     = workoutByDay[iso]?.length ?? 0;
+              const lvl   = levelOf(iso);
+              const isSel = iso === selectedDay;
               return (
-                <div
-                  key={i} className={cls}
-                  onClick={() => hasW && setSelectedDay(isSel ? null : iso)}
-                  title={hasW ? `${workoutByDay[iso].length} workout(s)` : ""}
+                <button
+                  key={i} type="button"
+                  className={`hx-day${lvl ? ` lvl${lvl}` : ""}${iso === today ? " today" : ""}${isSel ? " sel" : ""}${iso > today ? " future" : ""}`}
+                  disabled={n === 0}
+                  aria-pressed={n > 0 ? isSel : undefined}
+                  onClick={() => setSelectedDay(isSel ? null : iso)}
+                  aria-label={`${longDay(iso)}: ${n === 0 ? "no workout" : n === 1 ? "1 workout" : `${n} workouts`}`}
                 >
                   {day}
-                </div>
+                  {n > 1 && <span className="hx-day-count">{n}</span>}
+                </button>
               );
             })}
           </div>
 
-          {selectedSessions.length > 0 && (
-            <div className="cal-session">
+          {selectedSessions.length > 0 ? (
+            <div className="hx-cal-sessions">
               {selectedSessions.map(w => renderSession(w))}
             </div>
+          ) : (
+            <p className="hx-cal-note">Tap a filled day to see what you did.</p>
           )}
         </div>
       )}

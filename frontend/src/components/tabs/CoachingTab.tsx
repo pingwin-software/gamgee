@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import { Search, Check, X, MessageSquare, GraduationCap, Award, ClipboardList } from "lucide-react";
+import { Search, Check, MessageSquare, GraduationCap, Award, ClipboardList, CalendarCheck, Clock, Send, UserPlus, Users } from "lucide-react";
 import type { TrainerPublic, TrainerLink, RegimeAssignment } from "../../types";
+import { useTxt } from "../../context/ToneContext";
+import { ConfirmButton, PlanAvatar, WeekDots } from "./RegimesTab";
+import "../../simple.css";
+import "../../pages/plans.css";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -20,6 +24,15 @@ export default function CoachingTab({
   const [requesting, setRequesting] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [openTrainer, setOpenTrainer] = useState<TrainerPublic | null>(null);
+  const t = useTxt();
+
+  // Escape closes the request sheet.
+  useEffect(() => {
+    if (!openTrainer) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenTrainer(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openTrainer]);
 
   // Initial trainer list
   useEffect(() => {
@@ -78,196 +91,214 @@ export default function CoachingTab({
   // From the trainee's perspective, links where they are the trainee
   const myCoaches = trainerLinks.filter(l => l.role === "trainee");
 
-  return (
-    <div className="coaching-tab tab-anim" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <h2 style={{ margin: 0, fontSize: 16, letterSpacing: 1 }}>COACHING</h2>
+  const plans = assignments.filter(a => a.trainee_username && a.regime);
+  const showPlans = assignments.filter(a => a.trainer_id !== a.trainee_id).length > 0;
+  const openName = openTrainer ? (openTrainer.name || openTrainer.username) : "";
 
+  return (
+    <div className="coaching-tab tab-anim pl-page">
       {/* My coaches */}
-      <div className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          <GraduationCap size={16} /> My coaches
-        </h3>
+      <section className="pl-section">
+        <h2 className="pl-head">
+          <GraduationCap size={18} /> My coaches
+        </h2>
         {myCoaches.length === 0 && (
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>
-            You aren't connected to a trainer yet. Browse the directory below to find one.
+          <div className="pl-empty">
+            <span className="pl-empty-icon"><GraduationCap size={26} /></span>
+            <p>{t(
+              "You have no trainer yet. Pick one from the list below.",
+              "No coach in your corner yet. Pick one from the list below.",
+              "No coach yet, bestie. Pick one from the list below.",
+            )}</p>
           </div>
         )}
-        {myCoaches.map(l => (
-          <div key={l.id} className="card" style={{ padding: 10, display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: l.other_primary_color || "var(--accent)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#000", fontWeight: 700,
-              }}
-            >
-              {(l.other_name || l.other_username).slice(0, 1).toUpperCase()}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <strong>{l.other_name || l.other_username}</strong>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                {l.status === "accepted" && "Coaching active"}
-                {l.status === "pending_trainee" && "Awaiting trainer to accept your request"}
-                {l.status === "pending_trainer" && "Invitation received — accept to start coaching"}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {l.status === "accepted" && (
-                <button className="btn-sec" onClick={() => onOpenChat(l.other_username)} title="Message">
-                  <MessageSquare size={14} />
-                </button>
-              )}
-              {l.status === "pending_trainer" && (
-                <button className="btn-pri" onClick={() => acceptLink(l.id)}>
-                  <Check size={14} /> Accept
-                </button>
-              )}
-              <button className="btn-sec" onClick={() => removeLink(l.id)} title="Remove">
-                <X size={14} />
-              </button>
-            </div>
+        {myCoaches.length > 0 && (
+          <div className="pl-grid">
+            {myCoaches.map(l => {
+              const name = l.other_name || l.other_username;
+              const active = l.status === "accepted";
+              return (
+                <article key={l.id} className={`pl-card${active ? " is-on" : " is-wait"}`}>
+                  <div className="pl-card-top">
+                    <PlanAvatar name={name} color={l.other_primary_color} large />
+                    <div className="pl-card-id">
+                      <span className="pl-name">{name}</span>
+                      <span className="pl-sub">@{l.other_username}</span>
+                      <div className="pl-pills">
+                        {active && <span className="pl-tag pl-tag-on"><Check size={14} strokeWidth={3} /> Coaching active</span>}
+                        {l.status === "pending_trainee" && <span className="pl-tag"><Clock size={14} /> Waiting for their reply</span>}
+                        {l.status === "pending_trainer" && <span className="pl-tag pl-tag-ok"><UserPlus size={14} /> Invited you</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {l.status === "pending_trainer" && l.note && <p className="pl-quote">“{l.note}”</p>}
+                  <div className="pl-actions">
+                    {active && (
+                      <button type="button" className="pl-btn pl-btn-main" onClick={() => onOpenChat(l.other_username)}>
+                        <MessageSquare size={18} /> Chat
+                      </button>
+                    )}
+                    {l.status === "pending_trainer" && (
+                      <button type="button" className="pl-btn pl-btn-main" onClick={() => acceptLink(l.id)}>
+                        <Check size={18} strokeWidth={3} /> Accept
+                      </button>
+                    )}
+                    <ConfirmButton
+                      label={active ? "Stop coaching" : l.status === "pending_trainer" ? "Decline" : "Cancel request"}
+                      onConfirm={() => removeLink(l.id)}
+                    />
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        )}
+      </section>
 
       {/* Assigned regimes */}
-      {assignments.filter(a => a.trainer_id !== a.trainee_id).length > 0 && (
-        <div className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <ClipboardList size={16} /> Plans from your coach
-          </h3>
-          {assignments
-            .filter(a => a.trainee_username && a.regime)
-            .map(a => (
-              <div key={a.id} className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
-                  <strong>{a.regime.name}</strong>
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                    from {a.trainer_name || a.trainer_username}
-                  </span>
-                </div>
-                {a.regime.description && (
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{a.regime.description}</div>
-                )}
-                {a.note && (
-                  <div style={{ fontSize: 12, padding: 8, background: "var(--ad)", borderRadius: 6 }}>
-                    “{a.note}”
+      {showPlans && (
+        <section className="pl-section">
+          <h2 className="pl-head">
+            <ClipboardList size={18} /> Plans from your coach
+            {plans.length > 0 && <span className="pl-count">{plans.length}</span>}
+          </h2>
+          <div className="pl-grid">
+            {plans.map(a => {
+              const weeks = a.regime.weeks?.length ?? 1;
+              return (
+                <article key={a.id} className="pl-card">
+                  <div className="pl-card-top">
+                    <span className="pl-icon"><ClipboardList size={22} /></span>
+                    <div className="pl-card-id">
+                      <span className="pl-name">{a.regime.name}</span>
+                      <span className="pl-sub">
+                        From {a.trainer_name || a.trainer_username} · {a.regime.days_per_week} days a week
+                        {weeks > 1 ? ` · ${weeks} weeks` : ""}
+                      </span>
+                    </div>
                   </div>
-                )}
-                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                  <button className="btn-pri" onClick={() => onApplyRegime(a)}>
-                    Apply to my week
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
+                  {a.regime.description && <p className="pl-desc">{a.regime.description}</p>}
+                  {a.note && <p className="pl-quote">“{a.note}”</p>}
+                  <WeekDots days={a.regime.days} />
+                  <div className="pl-actions">
+                    <button type="button" className="pl-btn pl-btn-main" onClick={() => onApplyRegime(a)}>
+                      <CalendarCheck size={18} /> Apply to my week
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* Trainer directory */}
-      <div className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          <Search size={16} /> Find a trainer
-        </h3>
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="Search by name, username, or specialty"
-          style={{ width: "100%" }}
-        />
-        {loading && <div style={{ color: "var(--muted)" }}>Loading…</div>}
-        {results.length === 0 && !loading && (
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>
-            No trainers found. Be the first — sign up with a trainer account from the login screen.
+      <section className="pl-section">
+        <h2 className="pl-head">
+          <Search size={18} /> Find a trainer
+        </h2>
+        <div className="pl-search">
+          <Search size={18} />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Name, username or specialty"
+            aria-label="Search trainers by name, username or specialty"
+            type="search"
+            enterKeyHint="search"
+          />
+        </div>
+        {loading && results.length === 0 && (
+          <div className="pl-grid" aria-busy="true" aria-label="Loading trainers">
+            <div className="pl-skel" /><div className="pl-skel" />
           </div>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
-          {results.map(t => (
-            <div key={t.id} className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: t.primary_color || "var(--accent)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#000", fontWeight: 700,
-                  }}
-                >
-                  {(t.name || t.username).slice(0, 1).toUpperCase()}
+        {results.length === 0 && !loading && (
+          <p className="pl-muted">
+            No trainers found. Be the first: sign up with a trainer account from the login screen.
+          </p>
+        )}
+        <div className="pl-grid">
+          {results.map(tr => {
+            const name = tr.name || tr.username;
+            return (
+              <article key={tr.id} className={`pl-card${tr.link_status === "accepted" ? " is-on" : ""}`}>
+                <div className="pl-card-top">
+                  <PlanAvatar name={name} color={tr.primary_color} />
+                  <div className="pl-card-id">
+                    <span className="pl-name">{name}</span>
+                    <span className="pl-sub">@{tr.username}</span>
+                    <div className="pl-pills">
+                      {tr.trainer_years_experience != null && (
+                        <span className="pl-pill pl-pill-plain">
+                          <Award size={14} /> {tr.trainer_years_experience} {tr.trainer_years_experience === 1 ? "year" : "years"}
+                        </span>
+                      )}
+                      <span className="pl-pill pl-pill-plain">
+                        <Users size={14} /> {tr.trainee_count} {tr.trainee_count === 1 ? "trainee" : "trainees"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <strong>{t.name || t.username}</strong>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>@{t.username} · {t.trainee_count} trainees</div>
-                </div>
-                {t.trainer_years_experience != null && (
-                  <span title="Years of experience" style={{ fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 2 }}>
-                    <Award size={12} /> {t.trainer_years_experience}y
-                  </span>
+                {tr.trainer_bio && <p className="pl-desc">{tr.trainer_bio}</p>}
+                {tr.trainer_specialties && tr.trainer_specialties.length > 0 && (
+                  <div className="pl-pills">
+                    {tr.trainer_specialties.slice(0, 4).map(s => (
+                      <span key={s} className="pl-pill">{s}</span>
+                    ))}
+                  </div>
                 )}
-              </div>
-              {t.trainer_bio && (
-                <div style={{ fontSize: 12, color: "var(--muted)", maxHeight: 60, overflow: "hidden" }}>
-                  {t.trainer_bio}
+                <div className="pl-actions">
+                  {tr.link_status === "self" && <span className="pl-tag">This is you</span>}
+                  {tr.link_status === "accepted" && <span className="pl-tag pl-tag-on"><Check size={14} strokeWidth={3} /> Coaching active</span>}
+                  {tr.link_status === "pending_trainee" && <span className="pl-tag"><Clock size={14} /> Waiting for their reply</span>}
+                  {tr.link_status === "pending_trainer" && <span className="pl-tag pl-tag-ok"><UserPlus size={14} /> They invited you</span>}
+                  {tr.link_status === "none" && (
+                    <button type="button" className="pl-btn pl-btn-main" onClick={() => setOpenTrainer(tr)}>
+                      <UserPlus size={18} /> Ask to coach me
+                    </button>
+                  )}
                 </div>
-              )}
-              {t.trainer_specialties && t.trainer_specialties.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {t.trainer_specialties.slice(0, 4).map(s => (
-                    <span key={s} style={{ padding: "2px 8px", border: "1px solid var(--ad)", borderRadius: 999, fontSize: 12 }}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: "flex", gap: 6 }}>
-                {t.link_status === "self" && <span style={{ fontSize: 12, color: "var(--muted)" }}>This is you</span>}
-                {t.link_status === "accepted" && <span style={{ fontSize: 12, color: "var(--accent)" }}>Coaching active</span>}
-                {t.link_status === "pending_trainee" && <span style={{ fontSize: 12, color: "var(--muted)" }}>Awaiting reply</span>}
-                {t.link_status === "pending_trainer" && <span style={{ fontSize: 12, color: "var(--muted)" }}>Pending — they invited you</span>}
-                {t.link_status === "none" && (
-                  <button className="btn-pri" onClick={() => setOpenTrainer(t)}>
-                    Ask to coach me
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+              </article>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
       {openTrainer && (
-        <div
-          onClick={() => setOpenTrainer(null)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
-            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16,
-          }}
-        >
+        <div className="modal-backdrop" onClick={() => setOpenTrainer(null)}>
           <div
+            className="modal-card pl-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pl-ask-title"
             onClick={e => e.stopPropagation()}
-            className="card"
-            style={{ padding: 20, maxWidth: 420, width: "100%", display: "flex", flexDirection: "column", gap: 10 }}
           >
-            <h3 style={{ margin: 0 }}>Ask {openTrainer.name || openTrainer.username} to coach you</h3>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
-              Optional message — tell them what you're working on.
-            </p>
-            <textarea
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              rows={4}
-              placeholder="Hi, I want to focus on my deadlift over the next 3 months…"
-              style={{ width: "100%", resize: "vertical" }}
-            />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button className="btn-sec" onClick={() => setOpenTrainer(null)}>Cancel</button>
+            <div className="pl-card-top">
+              <PlanAvatar name={openName} color={openTrainer.primary_color} />
+              <div className="pl-card-id">
+                <h3 id="pl-ask-title" className="pl-sheet-title">Ask {openName} to coach you</h3>
+              </div>
+            </div>
+            <div className="pl-form">
+              <label className="pl-label" htmlFor="pl-ask-note">A message, if you like: what are you working on?</label>
+              <textarea
+                id="pl-ask-note"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                rows={4}
+                placeholder="Hi, I want to focus on my deadlift over the next 3 months…"
+              />
+            </div>
+            <div className="pl-actions">
+              <button type="button" className="pl-btn" onClick={() => setOpenTrainer(null)}>Cancel</button>
               <button
-                className="btn-pri"
+                type="button"
+                className="pl-btn pl-btn-main"
                 onClick={() => requestTrainer(openTrainer.username)}
                 disabled={requesting === openTrainer.username}
               >
-                Send request
+                <Send size={18} /> Send request
               </button>
             </div>
           </div>

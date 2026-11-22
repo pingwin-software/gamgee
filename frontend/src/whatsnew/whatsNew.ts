@@ -8,7 +8,7 @@
  * in this browser, dated after the day it joined: a newcomer is not handed
  * the history.
  */
-export type WhatsNewId = "progression" | "quickStart" | "passkeys";
+export type WhatsNewId = "freshPages" | "progression" | "quickStart" | "passkeys";
 
 export interface WhatsNewEntry {
   /** Stable: it is what "seen" remembers. */
@@ -18,6 +18,7 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  { id: "freshPages", date: "2026-11-22" },
   { id: "progression", date: "2026-11-22" },
   { id: "quickStart", date: "2026-11-22" },
   { id: "passkeys", date: "2026-11-22" },
@@ -25,6 +26,11 @@ export const WHATS_NEW: readonly WhatsNewEntry[] = [
 
 /** Title and a few lines per entry. `**words**` show in bold. */
 export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }> = {
+  freshPages: {
+    title: "Every page hit the gym",
+    body:
+      "The rest of the app got the same treatment. **History** opens with your streak and a four-week heat map you can tap. **PRs** is a trophy shelf with medals for your three strongest lifts. **Trends** draws each lift's line and shows the next target big. **Body** logs with plus and minus. **Buddies** has a podium, **Chat** has proper bubbles, and **Alerts** are grouped by day. Buttons are bigger everywhere, so your post-deadlift hands can hit them.",
+  },
   progression: {
     title: "Your gains, your rules",
     body:
