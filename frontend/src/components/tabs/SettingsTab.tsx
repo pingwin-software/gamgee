@@ -294,8 +294,10 @@ function ColorPicker({ color, onChange, token }: { color: string; onChange: (c: 
             key={c}
             onClick={() => save(c)}
             title={c}
+            aria-label={`Accent colour ${c}`}
+            aria-pressed={c.toLowerCase() === color.toLowerCase()}
             style={{
-              width: 30, height: 30, borderRadius: "50%", background: c, padding: 0,
+              width: 44, height: 44, borderRadius: "50%", background: c, padding: 0,
               border: "none", cursor: "pointer", flexShrink: 0,
               outline: c.toLowerCase() === color.toLowerCase() ? `3px solid ${c}` : "none",
               outlineOffset: 3,
@@ -307,7 +309,7 @@ function ColorPicker({ color, onChange, token }: { color: string; onChange: (c: 
         <label
           title="Custom color"
           style={{
-            width: 30, height: 30, borderRadius: "50%", border: "2px dashed var(--border)",
+            width: 44, height: 44, borderRadius: "50%", border: "2px dashed var(--border)",
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, overflow: "hidden",
             outline: !PALETTE.some(c => c.toLowerCase() === color.toLowerCase()) ? `3px solid ${color}` : "none",
@@ -318,9 +320,10 @@ function ColorPicker({ color, onChange, token }: { color: string; onChange: (c: 
             type="color"
             value={color}
             onChange={e => save(e.target.value)}
-            style={{ width: 40, height: 40, border: "none", padding: 0, cursor: "pointer", opacity: 0, position: "absolute" }}
+            aria-label="Custom accent colour"
+            style={{ width: 44, height: 44, border: "none", padding: 0, cursor: "pointer", opacity: 0, position: "absolute" }}
           />
-          <span style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1, pointerEvents: "none" }}>+</span>
+          <span style={{ fontSize: 18, color: "var(--muted)", lineHeight: 1, pointerEvents: "none" }}>+</span>
         </label>
       </div>
     </div>
