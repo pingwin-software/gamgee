@@ -9,6 +9,9 @@ import { ALL_EX } from "../../data/exercises";
 import { prescribeExercise, weightForRpe } from "../../analysis";
 import { orm1 } from "../../utils";
 import { UPPER_IDS } from "../../constants";
+import NumField from "../NumField";
+import Stepper from "../Stepper";
+import EffortPicker from "../EffortPicker";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -262,41 +265,35 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         <div className="re-popover-section">
           <div className="re-popover-row">
             <span style={{ fontSize: 12, color: "var(--muted)" }}>Effort (RPE)</span>
-            <strong style={{ fontSize: 16 }}>{rpe}</strong>
           </div>
-          <input
-            type="range" min={1} max={10} step={1} value={rpe}
-            onChange={e => setExerciseConfig(exId, { rpe: Number(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)" }}>
-            <span>1 easy</span><span>10 max</span>
-          </div>
+          <EffortPicker value={rpe} onChange={v => setExerciseConfig(exId, { rpe: v })} label="Effort (1 easy, 10 max)" />
         </div>
 
         <div className="re-popover-section">
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>
             Your reference max for this lift — we'll prescribe each working set from it.
           </div>
           <div className="re-popover-grid">
             <label>Max weight (kg)
-              <input
-                type="number" min={0} step={2.5} value={maxW}
+              <NumField
+                key={exId}
+                value={cfg.max_weight}
+                min={0}
+                max={1000}
+                step={2.5}
+                decimal
                 placeholder="e.g. 100"
-                onChange={e => {
-                  const v = e.target.value === "" ? undefined : Math.max(0, Number(e.target.value) || 0);
-                  setExerciseConfig(exId, { max_weight: v });
-                }}
+                onCommit={v => setExerciseConfig(exId, { max_weight: v })}
               />
             </label>
             <label>Max reps @ that
-              <input
-                type="number" min={1} max={20} value={maxR}
+              <NumField
+                key={exId}
+                value={cfg.max_reps}
+                min={1}
+                max={30}
                 placeholder="e.g. 5"
-                onChange={e => {
-                  const v = e.target.value === "" ? undefined : Math.max(1, Number(e.target.value) || 1);
-                  setExerciseConfig(exId, { max_reps: v });
-                }}
+                onCommit={v => setExerciseConfig(exId, { max_reps: v })}
               />
             </label>
           </div>
@@ -305,31 +302,22 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         <div className="re-popover-section">
           <div className="re-popover-grid">
             <label>Warmup sets
-              <input
-                type="number" min={0} max={6} value={warmupSets}
-                onChange={e => setExerciseConfig(exId, { warmup_sets: Math.max(0, Math.min(6, Number(e.target.value) || 0)) })}
-              />
+              <Stepper value={warmupSets} min={0} max={6} label="Warmup sets" onChange={v => setExerciseConfig(exId, { warmup_sets: v })} />
             </label>
             <label>Working sets
-              <input
-                type="number" min={1} max={10} value={workingSets}
-                onChange={e => setExerciseConfig(exId, { working_sets: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
-              />
+              <Stepper value={workingSets} min={1} max={10} label="Working sets" onChange={v => setExerciseConfig(exId, { working_sets: v })} />
             </label>
             <label>Reps / set
-              <input
-                type="number" min={1} max={30} value={workingReps}
-                onChange={e => setExerciseConfig(exId, { working_reps: Math.max(1, Math.min(30, Number(e.target.value) || 1)) })}
-              />
+              <Stepper value={workingReps} min={1} max={30} label="Reps per set" onChange={v => setExerciseConfig(exId, { working_reps: v })} />
             </label>
           </div>
         </div>
 
         {previewWeight != null && presc && (
           <div className="re-popover-section" style={{ background: "var(--ad2)", borderRadius: 6, padding: 8 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Preview</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>Preview</div>
             {presc.warmup.length > 0 && (
-              <div style={{ fontSize: 11 }}>
+              <div style={{ fontSize: 12 }}>
                 <strong>Warmup:</strong>{" "}
                 {presc.warmup.map((w, i) => (
                   <span key={i}>{w.weight}kg × {w.reps}{i < presc.warmup.length - 1 ? " · " : ""}</span>
@@ -342,7 +330,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
           </div>
         )}
         {previewWeight == null && (
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
             Add a max weight + reps to see the prescribed working weight.
           </div>
         )}
@@ -383,7 +371,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
 
       {/* Week tabs */}
       <div className="card" style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
           Program weeks
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

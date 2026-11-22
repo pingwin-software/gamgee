@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import "./WorkoutTracker.css";
+import "./simple.css";
+import { X } from "lucide-react";
 import type {
   CardioPlan, DayPlan, ExerciseDef, WorkoutExercise, WorkoutSession,
   PersonalRecordAPI, PRDict, WorkoutSet, BodyMetric, WeeklyPlan,
@@ -33,6 +35,12 @@ import RegimesTab from "./components/tabs/RegimesTab";
 import LiveSessionViewer from "./components/LiveSessionViewer";
 import NotificationBell from "./components/NotificationBell";
 import FeedbackModal from "./components/FeedbackModal";
+import WhatsNewModal from "./whatsnew/WhatsNewModal";
+import {
+  loadProgressionPrefs, normalizeProgressionPrefs, saveProgressionPrefs, setProgressionPrefs,
+  type ProgressionPrefs,
+} from "./progressionPrefs";
+import { WHATS_NEW, loadSeen, markSeen, unseen, type WhatsNewEntry } from "./whatsnew/whatsNew";
 import OnboardingWelcome from "./components/Onboarding";
 import { ALL_EX, subscribeCustomExercises } from "./data/exercises";
 import { analyzeEx, prescribeExercise, rampedSetsFromHistory } from "./analysis";
@@ -103,17 +111,27 @@ export default function WorkoutTracker({
   const restored = restoredRef.current;
 
   // UI
-  const [tab,       setTab]       = useState<string>(() => {
+  const [tab,       setTabRaw]    = useState<string>(() => {
     const valid  = ["workout", "history", "prs", "buddies", "health", "coach", "exercises", "notifications", "profile", "settings", "chat", "coaching", "trainees", "regimes"];
     // A ?tab= query param takes precedence — push-notification clicks route
     // through the service worker to /?tab=notifications.
     const params = new URLSearchParams(window.location.search);
     const urlTab = params.get("tab");
-    if (urlTab && valid.includes(urlTab)) return urlTab;
+    // Settings lives on the Me page now; old links and stored tabs land there.
+    const page = (k: string) => (k === "settings" ? "profile" : k);
+    if (urlTab && valid.includes(urlTab)) return page(urlTab);
     const stored = sessionStorage.getItem("gamgee_active_tab");
-    return stored && valid.includes(stored) ? stored : "workout";
+    return stored && valid.includes(stored) ? page(stored) : "workout";
   });
-  const [wStep,     setWStep]     = useState(() => typeof restored.wStep === "number" ? restored.wStep : 0);
+  /** Go to a page. "settings" is the lower half of the Me page: go there and
+   * bring it into view. */
+  const setTab = useCallback((key: string) => {
+    if (key !== "settings") { setTabRaw(key); return; }
+    setTabRaw("profile");
+    window.setTimeout(() => document.getElementById("me-settings")?.scrollIntoView({ block: "start" }), 60);
+  }, []);
+  // Step 3 was the cardio screen, now part of the build screen (4).
+  const [wStep,     setWStep]     = useState(() => typeof restored.wStep === "number" ? (restored.wStep === 3 ? 4 : restored.wStep) : 0);
   const [focus,     setFocus]     = useState<string | null>(() => restored.focus ?? null);
   // `timing: null` means the user hasn't picked yet — the wizard screen lands
   // with nothing pre-selected so they make a deliberate choice.
@@ -261,6 +279,17 @@ export default function WorkoutTracker({
   // wizards and tabs that read ALL_EX/EM to re-render against the mutated catalog.
   const [, setCustomExBump] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // How suggested progression behaves (Settings, Workout). The analyzer reads
+  // it from its module, set here during render so every suggestion drawn in
+  // this pass already follows it.
+  const [progressionPrefs, setProgressionPrefsState] = useState<ProgressionPrefs>(loadProgressionPrefs);
+  setProgressionPrefs(progressionPrefs);
+  // The "verify your email" line can be put away for this visit.
+  const [verifyHidden, setVerifyHidden] = useState(() => sessionStorage.getItem("gamgee_verify_hidden") === "1");
+  // What's new: the entries on show (null = closed). Opens by itself once
+  // per account and browser for entries newer than the account; the menu
+  // item shows them all.
+  const [whatsNew, setWhatsNew] = useState<readonly WhatsNewEntry[] | null>(null);
 
   useEffect(() => subscribeCustomExercises(() => setCustomExBump(v => v + 1)), []);
 
@@ -288,7 +317,11 @@ export default function WorkoutTracker({
   }, []);
 
   const tokenRef = useRef(token);
-  useEffect(() => { tokenRef.current = token; }, [token]);
+  // Kept current during render, not in an effect: a child's mount effect runs
+  // before this component's effects, so right after sign-in a child calling
+  // authFetch would send the old (empty) token, get a 401 and sign the user
+  // straight back out.
+  tokenRef.current = token;
 
   const authFetch = useCallback((url: string, opts: RequestInit = {}) =>
     fetch(url, {
@@ -298,6 +331,40 @@ export default function WorkoutTracker({
       if (res.status === 401) { localStorage.removeItem("iron_log_token"); setToken(null); }
       return res;
     }), []);
+
+  /** Change the progression rules: at once on screen, kept in this browser,
+   * and saved to the account so other devices follow. */
+  const updateProgressionPrefs = useCallback((next: ProgressionPrefs) => {
+    setProgressionPrefsState(next);
+    saveProgressionPrefs(next);
+    authFetch("/api/auth/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ progression_prefs: next }),
+    }).catch(() => { /* offline: the local copy still applies */ });
+  }, [authFetch]);
+
+  // A session in use slides: once a day the token is swapped for a fresh one,
+  // so someone who opens the app every week never meets the sign-in screen.
+  useEffect(() => {
+    if (!token) return;
+    const DAY = 24 * 60 * 60 * 1000;
+    const last = Number(localStorage.getItem("gamgee_token_refreshed_at") ?? 0);
+    if (Date.now() - last < DAY) return;
+    let cancelled = false;
+    authFetch("/api/auth/refresh", { method: "POST" })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { access_token?: string } | null) => {
+        if (cancelled || !d?.access_token) return;
+        localStorage.setItem("gamgee_token_refreshed_at", String(Date.now()));
+        localStorage.setItem("iron_log_token", d.access_token);
+        setToken(d.access_token);
+      })
+      .catch(() => { /* offline: try again next start */ });
+    return () => { cancelled = true; };
+    // Only when a session starts, not each time the token is swapped.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!token, authFetch]);
 
   const refreshTemplates = useCallback(async () => {
     try { setTemplates(await listTemplates(authFetch)); } catch { /* ignore */ }
@@ -489,7 +556,7 @@ export default function WorkoutTracker({
         setPrs(dict);
       }).catch(() => {});
     authFetch("/api/auth/me")
-      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean }) => {
+      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean; created_at?: string | null; progression_prefs?: unknown }) => {
         setUsername(d.username);
         setName(d.name ?? null);
         setEmail(d.email ?? null);
@@ -500,7 +567,16 @@ export default function WorkoutTracker({
         setIsVerified(d.is_verified ?? true);
         setIsTrainer(d.is_trainer ?? false);
         setCurrentUserId(d.id ?? null);
+        if (d.id != null) {
+          const fresh = unseen(WHATS_NEW, loadSeen(d.id), d.created_at);
+          if (fresh.length) setWhatsNew(fresh);
+        }
         if (d.primary_color) setPrimaryColor(d.primary_color);
+        if (d.progression_prefs) {
+          const serverPrefs = normalizeProgressionPrefs(d.progression_prefs);
+          setProgressionPrefsState(serverPrefs);
+          saveProgressionPrefs(serverPrefs);
+        }
         const clamp = (n: number | null | undefined, fallback: number) =>
           n != null && Number.isFinite(n) && n >= 5 && n <= 3600 ? Math.round(n) : fallback;
         if (d.rest_short_seconds != null || d.rest_medium_seconds != null || d.rest_long_seconds != null) {
@@ -822,6 +898,9 @@ export default function WorkoutTracker({
      * path where we have the freshly-tuned configs in hand and don't want to
      * race React's state commit. */
     configsOverride?: Record<string, import("./types").ExerciseConfig>,
+    /** Exercises to start with instead of the builder's list: the one-tap
+     * starts on the landing screen never go through the builder. */
+    plannedOverride?: ExerciseDef[],
   ) => {
     setWStep(0); setActive(true); setStartTs(Date.now()); setElapsed(0);
 
@@ -837,7 +916,7 @@ export default function WorkoutTracker({
     };
 
     const configs = configsOverride ?? plannedConfigs;
-    const mainExercises: WorkoutExercise[] = planned.map(ex => {
+    const mainExercises: WorkoutExercise[] = (plannedOverride ?? planned).map(ex => {
       let initSets: WorkoutSet[] = [{ weight: "", reps: "", done: false }];
       // Regime-driven prescription takes precedence — if the day plan has a
       // config for this exercise (with a max or working weight), lay out
@@ -890,6 +969,14 @@ export default function WorkoutTracker({
     setPlannedConfigs(configs);
     setSavedPrescribeConfigs(mergePrescribeConfigs(configs));
     startFromWizard(false, configs);
+  };
+
+  /** One tap from the landing screen: today's plan or a repeat of the last
+   * workout, straight into logging with weights filled from history (or the
+   * plan's own prescription). Exercises can still be added and removed there. */
+  const quickStart = (exs: ExerciseDef[], f: string | null, plan?: DayPlan) => {
+    if (f) setFocus(f);
+    startFromWizard(true, plan?.exerciseConfig ?? {}, exs);
   };
 
   const addExercise = (ex: ExerciseDef) =>
@@ -1233,6 +1320,7 @@ export default function WorkoutTracker({
         tab={tab} setTab={setTab} onLogout={logout} isAdmin={isAdmin}
         onLogoClick={() => { setTab("workout"); setWStep(0); }}
         onOpenFeedback={() => setFeedbackOpen(true)}
+        onOpenWhatsNew={() => setWhatsNew(WHATS_NEW)}
         notifBell={
           <NotificationBell
             notifications={notifications}
@@ -1248,16 +1336,19 @@ export default function WorkoutTracker({
         }
       />
       {active && <StatsBar exercises={exercises} doneSets={doneSets} />}
-      {!isVerified && (
-        <div className={`verify-banner ${verifyMsgKind === "warn" ? "verify-banner-warn" : ""}`} role="status">
-          <span>
-            Your email isn't verified yet.
-            {email ? <> We sent a confirmation link to <strong>{email}</strong>.</> : null}
+      {!isVerified && !verifyHidden && !(tab === "workout" && (active || wStep > 0)) && (
+        <div className={`verify-line ${verifyMsgKind === "warn" ? "verify-line-warn" : ""}`} role="status">
+          <span className="verify-line-text">
+            {verifyMsg ?? <>Confirm your email{email ? <> (<strong>{email}</strong>)</> : null}</>}
           </span>
-          <button className="verify-banner-btn" onClick={resendVerification}>
-            Resend verification email
+          <button className="verify-line-btn" onClick={resendVerification}>Resend link</button>
+          <button
+            className="verify-line-x"
+            aria-label="Hide for now"
+            onClick={() => { sessionStorage.setItem("gamgee_verify_hidden", "1"); setVerifyHidden(true); }}
+          >
+            <X size={16} />
           </button>
-          {verifyMsg && <small className={`verify-banner-msg ${verifyMsgKind === "ok" ? "ok" : "warn"}`}>{verifyMsg}</small>}
         </div>
       )}
       <div className={`content${
@@ -1278,7 +1369,7 @@ export default function WorkoutTracker({
             planned={planned} setPlanned={setPlanned}
             exercises={exercises} prs={prs} history={history}
             doneSets={doneSets}
-            weeklyPlan={weeklyPlan} setWeeklyPlan={setWeeklyPlan} onLoadToday={loadTodayPlan}
+            weeklyPlan={weeklyPlan} setWeeklyPlan={setWeeklyPlan} onLoadToday={loadTodayPlan} onQuickStart={quickStart}
             templates={templates} onSaveTemplate={saveTemplate} onLoadTemplate={loadTemplate}
             onUpdateTemplate={editTemplate} onDeleteTemplate={removeTemplate}
             progressionOverrides={progressionOverrides}
@@ -1304,6 +1395,7 @@ export default function WorkoutTracker({
         {!completed && tab === "buddies" && (
           <BuddiesTab
             authFetch={authFetch}
+            onOpenChat={openChatWith}
             buddies={buddies}
             liveSessions={liveSessions}
             myLiveSession={myLiveSession}
@@ -1375,10 +1467,22 @@ export default function WorkoutTracker({
         {!completed && tab === "health"  && <HealthTab healthMetrics={healthMetrics} fetchHealthMetrics={fetchHealthMetrics} authFetch={authFetch} />}
         {!completed && tab === "coach"     && <CoachTab history={history} overrides={progressionOverrides} onSetOverride={setProgressionOverride} onUpdateSession={updateWorkout} />}
         {!completed && tab === "exercises" && <ExercisesTab />}
-        {!completed && tab === "profile"   && <ProfileTab username={username} name={name} history={history} isAdmin={isAdmin} onOpenSettings={() => setTab("settings")} />}
-        {!completed && tab === "settings"  && <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} />}
+        {!completed && tab === "profile" && (
+          <>
+            <ProfileTab username={username} name={name} history={history} isAdmin={isAdmin} />
+            <div id="me-settings" className="me-settings">
+              <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} progressionPrefs={progressionPrefs} onProgressionPrefsChange={updateProgressionPrefs} />
+            </div>
+          </>
+        )}
       </div>
       {feedbackOpen && <FeedbackModal authFetch={authFetch} onClose={() => setFeedbackOpen(false)} />}
+      {whatsNew && !active && (
+        <WhatsNewModal
+          entries={whatsNew}
+          onClose={() => { if (currentUserId != null) markSeen(currentUserId, whatsNew); setWhatsNew(null); }}
+        />
+      )}
       {viewedLiveSession && (
         <LiveSessionViewer
           session={viewedLiveSession}

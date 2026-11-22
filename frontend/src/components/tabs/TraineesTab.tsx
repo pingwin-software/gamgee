@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, Send, UserPlus, MessageSquare, Activity, X, Check } from "lucide-react";
+import { GraduationCap, Send, UserPlus, MessageSquare, Activity, Check, Clock, ClipboardList, Bell, ChevronUp, Dumbbell } from "lucide-react";
 import type { TrainerLink, Regime, RegimeAssignment, LiveSession } from "../../types";
+import { useTxt } from "../../context/ToneContext";
+import { ConfirmButton, PlanAvatar, WeekDots } from "./RegimesTab";
+import "../../simple.css";
+import "../../pages/plans.css";
+
+const shortDate = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -23,6 +29,15 @@ export default function TraineesTab({
   const [assigningTo, setAssigningTo] = useState<{ traineeId: number; username: string } | null>(null);
   const [assignNote, setAssignNote] = useState("");
   const [selectedRegime, setSelectedRegime] = useState<number | null>(null);
+  const t = useTxt();
+
+  // Escape closes the assign sheet.
+  useEffect(() => {
+    if (!assigningTo) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setAssigningTo(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [assigningTo]);
 
   const refresh = async () => {
     const [reg, asn] = await Promise.all([
@@ -97,192 +112,270 @@ export default function TraineesTab({
     } catch { /* ignore */ }
   };
 
-  return (
-    <div className="trainees-tab tab-anim" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 16, letterSpacing: 1, display: "flex", alignItems: "center", gap: 8 }}>
-          <GraduationCap size={16} /> MY TRAINEES
-        </h2>
-        <button className="btn-pri" onClick={() => setInviteOpen(true)}>
-          <UserPlus size={14} /> Invite trainee
-        </button>
-      </div>
+  // People who asked for you come first; the rest are yours or invited.
+  const incoming = myTrainees.filter(l => l.status === "pending_trainee");
+  const roster = myTrainees.filter(l => l.status !== "pending_trainee");
+  const sent = assignments.filter(a => myTrainees.some(tr => tr.other_user_id === a.trainee_id));
+  const lastPlanFor = (userId: number) =>
+    sent.filter(a => a.trainee_id === userId && a.status !== "revoked").sort((a, b) => b.created_at - a.created_at)[0];
 
-      {inviteOpen && (
-        <div className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-          <strong>Invite a user to be your trainee</strong>
-          <input
-            value={inviteUsername}
-            onChange={e => setInviteUsername(e.target.value)}
-            placeholder="username"
-          />
-          <textarea
-            value={inviteNote}
-            onChange={e => setInviteNote(e.target.value)}
-            placeholder="Optional message"
-            rows={3}
-          />
-          {inviteErr && <div style={{ color: "var(--red)", fontSize: 12 }}>{inviteErr}</div>}
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-            <button className="btn-sec" onClick={() => { setInviteOpen(false); setInviteErr(null); }}>Cancel</button>
-            <button className="btn-pri" onClick={inviteTrainee} disabled={!inviteUsername.trim()}>Send invite</button>
+  return (
+    <div className="trainees-tab tab-anim pl-page">
+      {incoming.length > 0 && (
+        <section className="pl-section">
+          <h2 className="pl-head">
+            <Bell size={18} /> Requests <span className="pl-count">{incoming.length}</span>
+          </h2>
+          <div className="pl-grid">
+            {incoming.map(l => {
+              const name = l.other_name || l.other_username;
+              return (
+                <article key={l.id} className="pl-card is-on">
+                  <div className="pl-card-top">
+                    <PlanAvatar name={name} color={l.other_primary_color} />
+                    <div className="pl-card-id">
+                      <span className="pl-name">{name}</span>
+                      <span className="pl-sub">@{l.other_username} · asked {shortDate(l.created_at)}</span>
+                      <div className="pl-pills">
+                        <span className="pl-tag pl-tag-ok"><UserPlus size={14} /> Wants you as coach</span>
+                      </div>
+                    </div>
+                  </div>
+                  {l.note && <p className="pl-quote">“{l.note}”</p>}
+                  <div className="pl-actions">
+                    <button type="button" className="pl-btn pl-btn-main" onClick={() => acceptLink(l.id)}>
+                      <Check size={18} strokeWidth={3} /> Accept
+                    </button>
+                    <ConfirmButton label="Decline" onConfirm={() => removeLink(l.id)} />
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
 
-      {myTrainees.length === 0 ? (
-        <div className="card" style={{ padding: 16, color: "var(--muted)" }}>
-          No trainees yet. Invite a user above, or wait for someone to find your public profile.
+      <section className="pl-section">
+        <h2 className="pl-head">
+          <GraduationCap size={18} /> {t("My trainees", "My crew", "My crew")}
+          {roster.length > 0 && <span className="pl-count">{roster.length}</span>}
+        </h2>
+
+        <div className="pl-starts">
+          <button
+            type="button"
+            className={`start-card${inviteOpen || myTrainees.length > 0 ? "" : " start-card-main"}`}
+            onClick={() => { setInviteOpen(o => !o); setInviteErr(null); }}
+            aria-expanded={inviteOpen}
+          >
+            <span className="start-card-icon">{inviteOpen ? <ChevronUp size={22} /> : <UserPlus size={22} />}</span>
+            <span className="start-card-text">
+              <span className="start-card-kicker">{inviteOpen ? "Invite open" : "New trainee"}</span>
+              <span className="start-card-title">{inviteOpen ? "Close the invite" : "Invite a trainee"}</span>
+              <span className="start-card-sub">They get a request and choose whether to accept.</span>
+            </span>
+          </button>
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {myTrainees.map(l => {
-            const live = traineeLiveByOwner[l.other_user_id];
-            return (
-              <div key={l.id} className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div
-                    style={{
-                      width: 40, height: 40, borderRadius: "50%",
-                      background: l.other_primary_color || "var(--accent)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#000", fontWeight: 700,
-                    }}
-                  >
-                    {(l.other_name || l.other_username).slice(0, 1).toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <strong>{l.other_name || l.other_username}</strong>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      @{l.other_username}
-                      {l.status === "pending_trainer" && " · awaiting their reply"}
-                      {l.status === "pending_trainee" && " · they requested you — accept below"}
+
+        {inviteOpen && (
+          <div className="pl-card pl-solo">
+            <div className="pl-form">
+              <label className="pl-label" htmlFor="pl-invite-user">Their username</label>
+              <input
+                id="pl-invite-user"
+                value={inviteUsername}
+                onChange={e => setInviteUsername(e.target.value)}
+                placeholder="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <label className="pl-label" htmlFor="pl-invite-note">A message, if you like</label>
+              <textarea
+                id="pl-invite-note"
+                value={inviteNote}
+                onChange={e => setInviteNote(e.target.value)}
+                placeholder="Optional message"
+                rows={3}
+              />
+              {inviteErr && <p className="pl-error" role="alert">{inviteErr}</p>}
+            </div>
+            <div className="pl-actions">
+              <button type="button" className="pl-btn" onClick={() => { setInviteOpen(false); setInviteErr(null); }}>Cancel</button>
+              <button type="button" className="pl-btn pl-btn-main" onClick={inviteTrainee} disabled={!inviteUsername.trim()}>
+                <Send size={18} /> Send invite
+              </button>
+            </div>
+          </div>
+        )}
+
+        {myTrainees.length === 0 ? (
+          <div className="pl-empty">
+            <span className="pl-empty-icon"><GraduationCap size={26} /></span>
+            <p>No trainees yet. Invite someone, or wait for a request from your public profile.</p>
+            {!inviteOpen && (
+              <button type="button" className="pl-btn pl-btn-main" onClick={() => setInviteOpen(true)}>
+                <UserPlus size={18} /> Invite a trainee
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="pl-grid">
+            {roster.map(l => {
+              const live = traineeLiveByOwner[l.other_user_id];
+              const name = l.other_name || l.other_username;
+              const accepted = l.status === "accepted";
+              const plan = lastPlanFor(l.other_user_id);
+              return (
+                <article key={l.id} className={`pl-card${live ? " is-live" : accepted ? "" : " is-wait"}`}>
+                  <div className="pl-card-top">
+                    <PlanAvatar name={name} color={l.other_primary_color} live={!!live} />
+                    <div className="pl-card-id">
+                      <span className="pl-name">{name}</span>
+                      <span className="pl-sub">
+                        @{l.other_username}
+                        {accepted ? ` · since ${shortDate(l.created_at)}` : ` · invited ${shortDate(l.created_at)}`}
+                      </span>
+                      <div className="pl-pills">
+                        {live && <span className="pl-tag pl-tag-live"><span className="pl-live-dot" /> Training now</span>}
+                        {!accepted && <span className="pl-tag"><Clock size={14} /> Waiting for their reply</span>}
+                        {accepted && plan && (
+                          <span className="pl-pill pl-pill-plain"><ClipboardList size={14} /> {plan.regime.name}</span>
+                        )}
+                        {accepted && !plan && !live && <span className="pl-tag">No plan yet</span>}
+                      </div>
                     </div>
                   </div>
                   {live && (
-                    <button
-                      className="btn-pri"
-                      onClick={() => onOpenLive(live)}
-                      style={{ background: "var(--accent)" }}
-                    >
-                      <Activity size={14} /> Watch live
-                    </button>
+                    <p className="pl-quote">
+                      <Dumbbell size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />
+                      {live.current_exercise_name || "Warming up"} · {live.owner_sets_done} {live.owner_sets_done === 1 ? "set" : "sets"} done
+                    </p>
                   )}
-                </div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {l.status === "pending_trainee" && (
-                    <button className="btn-pri" onClick={() => acceptLink(l.id)}>
-                      <Check size={14} /> Accept
-                    </button>
-                  )}
-                  {l.status === "accepted" && (
-                    <>
-                      <button className="btn-sec" onClick={() => onOpenChat(l.other_username)}>
-                        <MessageSquare size={14} /> Message
+                  <div className="pl-actions">
+                    {live && (
+                      <button type="button" className="pl-btn pl-btn-live pl-btn-wide" onClick={() => onOpenLive(live)}>
+                        <Activity size={18} /> Watch live
                       </button>
-                      <button
-                        className="btn-pri"
-                        onClick={() => setAssigningTo({ traineeId: l.other_user_id, username: l.other_username })}
-                      >
-                        <Send size={14} /> Assign plan
-                      </button>
-                    </>
-                  )}
-                  <button className="btn-sec" onClick={() => removeLink(l.id)}>
-                    <X size={14} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                    )}
+                    {accepted && (
+                      <>
+                        <button
+                          type="button"
+                          className="pl-btn pl-btn-main"
+                          onClick={() => setAssigningTo({ traineeId: l.other_user_id, username: l.other_username })}
+                        >
+                          <Send size={18} /> Assign plan
+                        </button>
+                        <button type="button" className="pl-btn" onClick={() => onOpenChat(l.other_username)}>
+                          <MessageSquare size={18} /> Chat
+                        </button>
+                      </>
+                    )}
+                    <ConfirmButton
+                      label={accepted ? "Remove" : "Cancel invite"}
+                      onConfirm={() => removeLink(l.id)}
+                      className={accepted ? "pl-btn-wide" : ""}
+                    />
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* Assignments I have sent */}
-      {assignments.length > 0 && (
-        <div className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          <h3 style={{ margin: 0 }}>Plans I've assigned</h3>
-          {assignments
-            .filter(a => myTrainees.some(t => t.other_user_id === a.trainee_id))
-            .map(a => (
-              <div key={a.id} className="card" style={{ padding: 10, display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <div style={{ minWidth: 0 }}>
-                  <strong>{a.regime.name}</strong>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    → {a.trainee_name || a.trainee_username}
+      {sent.length > 0 && (
+        <section className="pl-section">
+          <h2 className="pl-head">
+            <ClipboardList size={18} /> Plans I've assigned
+            {sent.length > 0 && <span className="pl-count">{sent.length}</span>}
+          </h2>
+          <div className="pl-grid">
+            {sent.map(a => {
+              const who = a.trainee_name || a.trainee_username;
+              return (
+                <article key={a.id} className="pl-card">
+                  <div className="pl-card-top">
+                    <PlanAvatar name={who} />
+                    <div className="pl-card-id">
+                      <span className="pl-name">{a.regime.name}</span>
+                      <span className="pl-sub">For {who} · sent {shortDate(a.created_at)}</span>
+                    </div>
+                    {a.status === "accepted" && <span className="pl-tag pl-tag-ok"><Check size={14} strokeWidth={3} /> Accepted</span>}
                   </div>
-                </div>
-                <button
-                  className="btn-sec"
-                  onClick={async () => {
-                    await authFetch(`/api/assignments/${a.id}`, { method: "DELETE" });
-                    refresh();
-                  }}
-                >
-                  <X size={14} /> Revoke
-                </button>
-              </div>
-            ))}
-        </div>
+                  <WeekDots days={a.regime.days} small />
+                  <div className="pl-actions">
+                    <ConfirmButton
+                      label="Revoke"
+                      onConfirm={async () => {
+                        await authFetch(`/api/assignments/${a.id}`, { method: "DELETE" });
+                        refresh();
+                      }}
+                    />
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {assigningTo && (
-        <div
-          onClick={() => setAssigningTo(null)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
-            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16,
-          }}
-        >
+        <div className="modal-backdrop" onClick={() => setAssigningTo(null)}>
           <div
+            className="modal-card pl-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pl-assign-title"
             onClick={e => e.stopPropagation()}
-            className="card"
-            style={{ padding: 20, maxWidth: 460, width: "100%", display: "flex", flexDirection: "column", gap: 12 }}
           >
-            <h3 style={{ margin: 0 }}>Assign a plan to {assigningTo.username}</h3>
+            <h3 id="pl-assign-title" className="pl-sheet-title">Assign a plan to {assigningTo.username}</h3>
             {regimes.length === 0 ? (
-              <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                You haven't built any regimes yet. Open the Regimes tab to generate one.
-              </div>
+              <p className="pl-muted">You have no regimes yet. Build one on the Regimes page first.</p>
             ) : (
               <>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
-                  {regimes.map(r => (
-                    <label
-                      key={r.id}
-                      className="card"
-                      style={{
-                        padding: 10, display: "flex", alignItems: "center", gap: 8,
-                        border: selectedRegime === r.id ? "1px solid var(--accent)" : "1px solid var(--ad)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        checked={selectedRegime === r.id}
-                        onChange={() => setSelectedRegime(r.id)}
-                      />
-                      <div>
-                        <strong>{r.name}</strong>
-                        <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                          {r.days_per_week} days/week · {r.goal || "general"}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
+                <div className="pl-picks" role="radiogroup" aria-label="Pick a regime">
+                  {regimes.map(r => {
+                    const on = selectedRegime === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        className={`pl-pick${on ? " on" : ""}`}
+                        onClick={() => setSelectedRegime(r.id)}
+                      >
+                        <span className="pl-pick-top">
+                          <span className="pl-pick-check"><Check size={15} strokeWidth={3} /></span>
+                          <span className="pl-card-id">
+                            <span className="pl-name">{r.name}</span>
+                            <span className="pl-sub">{r.days_per_week} days a week · {(r.goal || "general").replace("_", " ")}</span>
+                          </span>
+                        </span>
+                        <WeekDots days={r.days} small />
+                      </button>
+                    );
+                  })}
                 </div>
-                <textarea
-                  rows={2}
-                  value={assignNote}
-                  onChange={e => setAssignNote(e.target.value)}
-                  placeholder="Optional note for your trainee"
-                />
+                <div className="pl-form">
+                  <label className="pl-label" htmlFor="pl-assign-note">A note for your trainee, if you like</label>
+                  <textarea
+                    id="pl-assign-note"
+                    rows={2}
+                    value={assignNote}
+                    onChange={e => setAssignNote(e.target.value)}
+                    placeholder="Optional note for your trainee"
+                  />
+                </div>
               </>
             )}
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button className="btn-sec" onClick={() => setAssigningTo(null)}>Cancel</button>
-              <button className="btn-pri" onClick={assignRegime} disabled={!selectedRegime}>
-                Send plan
+            <div className="pl-actions">
+              <button type="button" className="pl-btn" onClick={() => setAssigningTo(null)}>Cancel</button>
+              <button type="button" className="pl-btn pl-btn-main" onClick={assignRegime} disabled={!selectedRegime}>
+                <Send size={18} /> Send plan
               </button>
             </div>
           </div>

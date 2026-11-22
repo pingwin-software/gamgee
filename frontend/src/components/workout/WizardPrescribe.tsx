@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronRight, Gauge, Target, AlertCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronDown, Gauge, AlertCircle, RotateCcw } from "lucide-react";
 import type { ExerciseDef, ExerciseConfig, PRDict, WorkoutSession } from "../../types";
 import { prescribeExercise } from "../../analysis";
 import { MI } from "../../data/muscles";
 import { EM } from "../../data/exercises";
 import { useTxt } from "../../context/ToneContext";
+import NumField from "../NumField";
+import Stepper from "../Stepper";
+import EffortPicker from "../EffortPicker";
 
 interface Props {
   planned: ExerciseDef[];
@@ -45,30 +48,6 @@ function refFromHistory(exId: string, history: WorkoutSession[]): { weight: numb
   return null;
 }
 
-/** Short label for a given RPE level — mirrors WorkoutComplete's vocabulary
- * so the post- and pre-session prompts feel like one consistent scale. */
-function rpeLabel(level: number): string {
-  if (level <= 2) return "Way too easy";
-  if (level <= 4) return "Easy day";
-  if (level <= 6) return "On point";
-  if (level <= 7) return "Solid grind";
-  if (level <= 8) return "Hard";
-  if (level <= 9) return "Brutal";
-  return "Max effort";
-}
-
-function clampInt(v: string, min: number, max: number): number | null {
-  const n = parseInt(v, 10);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(min, Math.min(max, n));
-}
-
-function clampFloat(v: string, min: number, max: number): number | null {
-  const n = parseFloat(v);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(min, Math.min(max, n));
-}
-
 export default function WizardPrescribe({ planned, prs, history, initialConfigs, onBack, onStart }: Props) {
   const t = useTxt();
 
@@ -98,6 +77,11 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
   }, [planned, prs, history, initialConfigs]);
 
   const [configs, setConfigs] = useState<Record<string, ExerciseConfig>>(initial);
+  // Which cards show their detail (reference max, sets, reps, own effort).
+  // A lift with no reference opens by itself: that is the one thing we must ask.
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set());
+  const toggleOpen = (id: string) =>
+    setOpenIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   const strengthExs = planned.filter(ex => ex.type === "strength");
   const missingRef = strengthExs.filter(ex => {
@@ -108,6 +92,18 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
 
   const setCfg = (exId: string, patch: Partial<ExerciseConfig>) =>
     setConfigs(prev => ({ ...prev, [exId]: { ...(prev[exId] ?? {}), ...patch } }));
+
+  // One effort for the whole session: the common case. It is "mixed" once a
+  // lift has been given its own under Adjust.
+  const efforts = strengthExs.map(ex => configs[ex.id]?.rpe ?? DEFAULT_RPE);
+  const sessionRpe = efforts.length ? Math.round(efforts.reduce((a, b) => a + b, 0) / efforts.length) : DEFAULT_RPE;
+  const mixed = new Set(efforts).size > 1;
+  const setSessionRpe = (rpe: number) =>
+    setConfigs(prev => {
+      const next = { ...prev };
+      for (const ex of strengthExs) next[ex.id] = { ...(next[ex.id] ?? {}), rpe };
+      return next;
+    });
 
   const resetCfg = (exId: string) => {
     const ex = planned.find(e => e.id === exId);
@@ -141,19 +137,15 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
         </button>
       </div>
 
-      <div className="prescribe-intro">
-        <Target size={14} />
-        <div>
-          <div className="prescribe-intro-title">
-            {t("Effort-based prescription", "Pick your effort", "Set the vibe")}
-          </div>
-          <div className="prescribe-intro-sub">
-            {t(
-              "Tell us how hard you want to push each lift (1 easy, 10 max). We'll generate the warmup ramp and working sets for you.",
-              "Set how hard you want to go on each lift. We'll do the math for sets and weight.",
-              "Pick the effort, bestie. We'll handle the sets and weight from there."
-            )}
-          </div>
+      <div className="prescribe-session">
+        <div className="prescribe-session-title">
+          {t("How hard today?", "How hard are we going?", "What's the effort, bestie?")}
+        </div>
+        <EffortPicker value={sessionRpe} onChange={setSessionRpe} label="Effort for the whole session (1 easy, 10 max)" />
+        <div className="prescribe-session-sub">
+          {mixed
+            ? "Some lifts have their own effort. Tap a bar to set them all again."
+            : t("We work out sets, reps and weight from this.", "We do the math from here.", "We'll do the math from here.")}
         </div>
       </div>
 
@@ -162,9 +154,9 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
           <AlertCircle size={13} />
           <span>
             {t(
-              `Add a reference max (the heaviest weight × reps you can clean) for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} below before starting.`,
-              `Drop a reference max for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} so we know where to load you up.`,
-              `Plug in a reference max for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} so we can do the math, bestie.`
+              `Add your best set (weight × reps) for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} below.`,
+              `Drop a best set for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} so we know where to load you up.`,
+              `Plug in a best set for ${missingRef.length} lift${missingRef.length === 1 ? "" : "s"} so we can do the math, bestie.`
             )}
           </span>
         </div>
@@ -182,123 +174,92 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
               : null;
           const presc = hasRef ? prescribeExercise(ex.id, cfg) : null;
           const muscleNames = (EM[ex.id]?.p ?? []).map(mid => MI[mid]?.n).filter(Boolean).join(" · ");
+          const open = !hasRef || openIds.has(ex.id);
+          const working = cfg.working_sets ?? DEFAULT_WORKING_SETS;
+          const reps = cfg.working_reps ?? DEFAULT_WORKING_REPS;
+          const warmups = cfg.warmup_sets ?? DEFAULT_WARMUP_SETS;
 
           return (
             <div key={ex.id} className={`prescribe-card${hasRef ? "" : " prescribe-card-needs-ref"}`}>
-              <div className="prescribe-card-head">
+              <button
+                type="button"
+                className="prescribe-card-head prescribe-card-toggle"
+                onClick={() => toggleOpen(ex.id)}
+                aria-expanded={open}
+                disabled={!hasRef}
+              >
                 <div className="prescribe-card-title">
                   <div className="prescribe-ex-name">{ex.name}</div>
-                  {muscleNames && <div className="prescribe-ex-muscles">{muscleNames}</div>}
+                  <div className="prescribe-ex-muscles">
+                    {presc && presc.working.weight > 0
+                      ? <span className="prescribe-plan">{presc.working.count} × {presc.working.reps} @ <b>{presc.working.weight} kg</b>{mixed ? ` · effort ${rpe}` : ""}</span>
+                      : muscleNames}
+                  </div>
                 </div>
-                <button
-                  className="prescribe-reset"
-                  onClick={() => resetCfg(ex.id)}
-                  title="Reset to defaults"
-                  aria-label="Reset to defaults"
-                >
-                  <RotateCcw size={11} />
-                </button>
-              </div>
+                {hasRef && <span className="prescribe-adjust">Adjust <ChevronDown size={14} className={open ? "flip" : ""} /></span>}
+              </button>
 
-              <div className="prescribe-rpe-row">
-                <span className="prescribe-rpe-label">
-                  <Gauge size={11} /> RPE
-                  <strong className="prescribe-rpe-val">{rpe}</strong>
-                  <span className="prescribe-rpe-text">{rpeLabel(rpe)}</span>
-                </span>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={rpe}
-                  onChange={e => setCfg(ex.id, { rpe: Number(e.target.value) })}
-                  aria-label={`RPE for ${ex.name} (1 easy, 10 max)`}
-                  className="prescribe-rpe-slider"
-                />
-              </div>
+              {open && (
+                <div className="prescribe-detail">
+                  <div className="prescribe-row">
+                    <label className="prescribe-field">
+                      <span className="prescribe-field-label">Best set: weight (kg)</span>
+                      <NumField
+                        value={cfg.max_weight}
+                        min={0}
+                        max={1000}
+                        step={0.5}
+                        decimal
+                        placeholder="—"
+                        onCommit={v => setCfg(ex.id, { max_weight: v })}
+                      />
+                    </label>
+                    <label className="prescribe-field">
+                      <span className="prescribe-field-label">× reps</span>
+                      <NumField
+                        value={cfg.max_reps}
+                        min={1}
+                        max={30}
+                        placeholder="—"
+                        onCommit={v => setCfg(ex.id, { max_reps: v })}
+                      />
+                    </label>
+                    {refSource && hasRef && (
+                      <span className="prescribe-ref-source">{refSource}</span>
+                    )}
+                  </div>
 
-              <div className="prescribe-row">
-                <label className="prescribe-field">
-                  <span className="prescribe-field-label">Max weight (kg)</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step={0.5}
-                    value={cfg.max_weight ?? ""}
-                    onChange={e => setCfg(ex.id, { max_weight: clampFloat(e.target.value, 0, 1000) ?? undefined })}
-                    placeholder="—"
-                  />
-                </label>
-                <label className="prescribe-field">
-                  <span className="prescribe-field-label">× reps</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={30}
-                    step={1}
-                    value={cfg.max_reps ?? ""}
-                    onChange={e => setCfg(ex.id, { max_reps: clampInt(e.target.value, 1, 30) ?? undefined })}
-                    placeholder="—"
-                  />
-                </label>
-                {refSource && hasRef && (
-                  <span className="prescribe-ref-source">{refSource}</span>
-                )}
-              </div>
+                  <div className="prescribe-steppers">
+                    <div className="prescribe-stepper">
+                      <span className="prescribe-field-label">Warmup sets</span>
+                      <Stepper value={warmups} min={0} max={6} label={`Warmup sets for ${ex.name}`} onChange={v => setCfg(ex.id, { warmup_sets: v })} />
+                    </div>
+                    <div className="prescribe-stepper">
+                      <span className="prescribe-field-label">Working sets</span>
+                      <Stepper value={working} min={1} max={10} label={`Working sets for ${ex.name}`} onChange={v => setCfg(ex.id, { working_sets: v })} />
+                    </div>
+                    <div className="prescribe-stepper">
+                      <span className="prescribe-field-label">Target reps</span>
+                      <Stepper value={reps} min={1} max={30} label={`Target reps for ${ex.name}`} onChange={v => setCfg(ex.id, { working_reps: v })} />
+                    </div>
+                  </div>
 
-              <div className="prescribe-row">
-                <label className="prescribe-field">
-                  <span className="prescribe-field-label">Warmup sets</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={6}
-                    step={1}
-                    value={cfg.warmup_sets ?? DEFAULT_WARMUP_SETS}
-                    onChange={e => setCfg(ex.id, { warmup_sets: clampInt(e.target.value, 0, 6) ?? 0 })}
-                  />
-                </label>
-                <label className="prescribe-field">
-                  <span className="prescribe-field-label">Working sets</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={10}
-                    step={1}
-                    value={cfg.working_sets ?? DEFAULT_WORKING_SETS}
-                    onChange={e => setCfg(ex.id, { working_sets: clampInt(e.target.value, 1, 10) ?? DEFAULT_WORKING_SETS })}
-                  />
-                </label>
-                <label className="prescribe-field">
-                  <span className="prescribe-field-label">Target reps</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={30}
-                    step={1}
-                    value={cfg.working_reps ?? DEFAULT_WORKING_REPS}
-                    onChange={e => setCfg(ex.id, { working_reps: clampInt(e.target.value, 1, 30) ?? DEFAULT_WORKING_REPS })}
-                  />
-                </label>
-              </div>
+                  <div className="prescribe-own-effort">
+                    <span className="prescribe-field-label"><Gauge size={11} /> Effort for this lift</span>
+                    <EffortPicker compact value={rpe} onChange={v => setCfg(ex.id, { rpe: v })} label={`Effort for ${ex.name} (1 easy, 10 max)`} />
+                  </div>
 
-              {presc && presc.working.weight > 0 && (
-                <div className="prescribe-preview">
-                  <span className="prescribe-preview-label">PRESCRIPTION</span>
-                  {presc.warmup.length > 0 && (
-                    <span className="prescribe-preview-warmup">
-                      Warmup: {presc.warmup.map(w => `${w.weight}×${w.reps}`).join(" → ")}
-                    </span>
+                  {presc && presc.warmup.length > 0 && (
+                    <div className="prescribe-preview">
+                      <span className="prescribe-preview-warmup">
+                        Warmup: {presc.warmup.map(w => `${w.weight}×${w.reps}`).join(" → ")}
+                      </span>
+                    </div>
                   )}
-                  <span className="prescribe-preview-working">
-                    Working: {presc.working.count} × {presc.working.weight}kg × {presc.working.reps}
-                  </span>
+
+                  <button type="button" className="auth-toggle prescribe-reset-link" onClick={() => resetCfg(ex.id)}>
+                    <RotateCcw size={11} /> Reset this lift
+                  </button>
                 </div>
               )}
             </div>

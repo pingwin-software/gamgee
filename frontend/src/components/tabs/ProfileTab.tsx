@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { User, Settings } from "lucide-react";
+import { User } from "lucide-react";
 import type { WorkoutSession } from "../../types";
 import { fmtDate, fmtDur } from "../../utils";
 import { MI } from "../../data/muscles";
@@ -11,23 +11,10 @@ interface Props {
   name:         string | null;
   history:      WorkoutSession[];
   isAdmin?:     boolean;
-  onOpenSettings: () => void;
 }
 
-export default function ProfileTab({ username, name, history, isAdmin, onOpenSettings }: Props) {
+export default function ProfileTab({ username, name, history, isAdmin }: Props) {
   const t = useTxt();
-
-  const settingsButton = (
-    <button
-      type="button"
-      className="auth-toggle"
-      onClick={onOpenSettings}
-      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-    >
-      <Settings size={14} />
-      <span>{t("Open Settings", "Open Settings", "Open Settings")}</span>
-    </button>
-  );
 
   if (history.length === 0) {
     return (
@@ -42,7 +29,6 @@ export default function ProfileTab({ username, name, history, isAdmin, onOpenSet
             )}
           </div>
         </div>
-        <div className="profile-card">{settingsButton}</div>
         <Duck isAdmin={isAdmin} />
       </div>
     );
@@ -136,7 +122,7 @@ export default function ProfileTab({ username, name, history, isAdmin, onOpenSet
             );
           })}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9, color: "var(--muted)", fontFamily: "'Nunito',sans-serif" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)", fontFamily: "'Nunito',sans-serif" }}>
           <span>16 weeks ago</span><span>this week</span>
         </div>
       </div>
@@ -171,9 +157,6 @@ export default function ProfileTab({ username, name, history, isAdmin, onOpenSet
           </div>
         </>
       )}
-
-      <div className="profile-section">{t("Settings", "Settings", "Settings")}</div>
-      <div className="profile-card">{settingsButton}</div>
 
       <Duck isAdmin={isAdmin} />
     </div>

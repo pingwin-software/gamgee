@@ -1,5 +1,7 @@
-from sqlalchemy import Column, DateTime, Integer, String, Text, Float, Boolean, ForeignKey, UniqueConstraint, BigInteger, Index
+from sqlalchemy import Column, DateTime, LargeBinary, Integer, String, Text, Float, Boolean, ForeignKey, UniqueConstraint, BigInteger, Index
 from sqlalchemy.dialects.postgresql import JSONB
+from datetime import datetime, timezone
+
 from .database import Base
 
 
@@ -46,6 +48,10 @@ class User(Base):
     # rpe_multipliers_by_exercise, keyed by Exercise.id (same keys per ex).
     rpe_multipliers = Column(JSONB, nullable=True)
     rpe_multipliers_by_exercise = Column(JSONB, nullable=True)
+    # How the suggested progression behaves (rep range before weight, weight
+    # jumps, skip-ahead, what to do when slipping). Shape is the client's
+    # ProgressionPrefs; null = the client's defaults.
+    progression_prefs = Column(JSONB, nullable=True)
     # Gym location + training-reminder preferences. When a home gym is saved
     # (lat/lng), the client can detect when the user is physically there and
     # surface a "start your usual training" prompt. `gym_radius_m` is the
@@ -57,6 +63,9 @@ class User(Base):
     gym_longitude = Column(Float, nullable=True)
     gym_radius_m = Column(Integer, nullable=True)
     training_reminders_enabled = Column(Boolean, nullable=False, default=True)
+    # When the account was made. Null for accounts older than the column;
+    # the client's "What's new" treats those as long-standing.
+    created_at = Column(DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc))
 
 
 class PasswordResetToken(Base):
@@ -67,6 +76,35 @@ class PasswordResetToken(Base):
     token_hash = Column(String(64), nullable=False, unique=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     used_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class Passkey(Base):
+    """A passkey a user signs in with. The public key only: the private one
+    never leaves their device."""
+
+    __tablename__ = "passkeys"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    # base64url, as browsers send it.
+    credential_id = Column(String(1400), unique=True, nullable=False)
+    public_key = Column(LargeBinary, nullable=False)
+    sign_count = Column(Integer, nullable=False, default=0)
+    name = Column(String(40), nullable=False, default="")
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PasskeyChallenge(Base):
+    """A passkey ceremony under way (5 minutes): adding one (`user_id` set) or
+    signing in (null). The browser holds the token; only its hash is stored."""
+
+    __tablename__ = "passkey_challenges"
+
+    token_hash = Column(String(64), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    challenge = Column(String(128), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
 
 
 class EmailVerificationToken(Base):

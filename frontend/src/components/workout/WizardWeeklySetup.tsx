@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Moon, Wrench, Sparkles, Search, X, Heart, Eye, Plus, Copy, Trash2, Gauge, Bookmark } from "lucide-react";
+import EffortPicker from "../EffortPicker";
 import type { WeekPlanDay, WeeklyPlan, DayPlan, WeekPlan, Regime, ExerciseDef, ExerciseConfig, WorkoutTemplate } from "../../types";
 import { WEEK_DAYS } from "../../data/weeklyPlan";
 import { FOCUS, getFocusDef } from "../../data/focuses";
@@ -252,19 +253,9 @@ export default function WizardWeeklySetup({ initial, onPersist, onDone, template
       >
         <span className="ww-rpe-label">
           <Gauge size={11} /> RPE
-          <strong className="ww-rpe-val">{value}</strong>
           {!isSet && <span className="ww-rpe-hint">default</span>}
         </span>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          step={1}
-          value={value}
-          onChange={e => setExerciseRpe(exId, Number(e.target.value))}
-          aria-label={`RPE for this exercise (1 easy, 10 max)`}
-          className="ww-rpe-slider"
-        />
+        <EffortPicker compact value={value} onChange={v => setExerciseRpe(exId, v)} label="Effort for this exercise (1 easy, 10 max)" />
       </div>
     );
   };

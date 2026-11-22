@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Timer, MapPin } from "lucide-react";
+import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info } from "lucide-react";
 import { useTxt, type ToneMode } from "../../context/ToneContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import {
@@ -9,6 +9,10 @@ import {
 import type { RestPrefs, WizardTransitionStyle, ThemeMode, GymPrefs } from "../../types";
 import { DEFAULT_REST_PREFS, DEFAULT_GYM_RADIUS_M } from "../../types";
 import { APP_VERSION } from "../../version";
+import PasskeysCard from "../PasskeysCard";
+import ProgressionCard from "../ProgressionCard";
+import type { ProgressionPrefs } from "../../progressionPrefs";
+import "../../simple.css";
 
 type Gender = "female" | "male" | "non_binary" | "other" | "prefer_not_to_say";
 
@@ -43,6 +47,26 @@ interface Props {
   theme:                    ThemeMode;
   onThemeChange:            (next: ThemeMode) => void;
   authFetch:       (url: string, opts?: RequestInit) => Promise<Response>;
+  progressionPrefs:         ProgressionPrefs;
+  onProgressionPrefsChange: (next: ProgressionPrefs) => void;
+}
+
+/** One group of settings: a row that opens. Closed, the page is a short list
+ * of seven rows; which ones are open is remembered for the visit. */
+function Group({ id, title, Icon, children }: { id: string; title: string; Icon: typeof Bell; children: React.ReactNode }) {
+  const key = `gamgee_settings_open_${id}`;
+  const [open, setOpen] = useState(() => sessionStorage.getItem(key) === "1");
+  const toggle = () => setOpen(o => { sessionStorage.setItem(key, o ? "0" : "1"); return !o; });
+  return (
+    <section className={`set-group${open ? " open" : ""}`}>
+      <button type="button" className="set-group-head" aria-expanded={open} onClick={toggle}>
+        <span className="set-group-icon"><Icon size={17} /></span>
+        <span className="set-group-title">{title}</span>
+        <ChevronDown size={17} className={`set-group-chev${open ? " flip" : ""}`} />
+      </button>
+      {open && <div className="set-group-body">{children}</div>}
+    </section>
+  );
 }
 
 const PALETTE = [
@@ -67,7 +91,7 @@ function ToneToggle({ toneMode, onToneChange }: { toneMode: ToneMode; onToneChan
   ];
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         App Tone
       </div>
       <div style={{ display: "flex", gap: 8 }}>
@@ -78,7 +102,7 @@ function ToneToggle({ toneMode, onToneChange }: { toneMode: ToneMode; onToneChan
               key={id}
               onClick={() => onToneChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "#000" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -116,7 +140,7 @@ function WizardTransitionCard({
   };
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         Wizard transition
       </div>
       <div style={{ display: "flex", gap: 8 }}>
@@ -127,7 +151,7 @@ function WizardTransitionCard({
               key={id}
               onClick={() => onChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "#000" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -139,7 +163,7 @@ function WizardTransitionCard({
           );
         })}
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
         {descriptions[value]}
       </div>
     </div>
@@ -172,7 +196,7 @@ function ThemeCard({
   };
   return (
     <div className="profile-card" style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {t("Theme", "Theme", "Theme")}
       </div>
       <div style={{ display: "flex", gap: 8 }} role="group" aria-label="Theme">
@@ -185,7 +209,7 @@ function ThemeCard({
               aria-pressed={active}
               onClick={() => onChange(id)}
               style={{
-                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
                 background: active ? "var(--primary)" : "transparent",
                 color: active ? "var(--on-accent, #000)" : "var(--muted)",
                 border: active ? "none" : "1px solid var(--border)",
@@ -197,7 +221,7 @@ function ThemeCard({
           );
         })}
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 10, lineHeight: 1.4 }}>
         {descriptions[value]}
       </div>
     </div>
@@ -219,7 +243,7 @@ function ReducedMotionCard({
           <div style={{ fontSize: 13, fontWeight: 600 }}>
             {t("Reduce motion", "Reduce motion", "Reduce motion")}
           </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
             {t(
               "Disable wizard transitions, back-gesture sweeps, and other decorative animations.",
               "Kill the shake, sweep, and other decorative animations.",
@@ -261,7 +285,7 @@ function ColorPicker({ color, onChange, token }: { color: string; onChange: (c: 
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {saving ? "Saving…" : t("Accent color", "Your vibe", "Your aura")}
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -587,7 +611,7 @@ function PushToggleCard({ authFetch }: { authFetch: Props["authFetch"] }) {
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Push notifications", "Push notifications", "Push notifications")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {pushSupported()
                 ? "Not enabled on this server"
                 : "Your browser doesn't support push"}
@@ -607,7 +631,7 @@ function PushToggleCard({ authFetch }: { authFetch: Props["authFetch"] }) {
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Push notifications", "Push notifications", "Push notifications")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {enabled
                 ? t("On for this device", "Lit on this device", "Live on this device")
                 : t("Get pinged when buddies lift, motivate, or set PRs",
@@ -687,7 +711,7 @@ function NotificationTypesCard({ authFetch }: { authFetch: Props["authFetch"] })
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         What to notify me about
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }} role="group" aria-label="Notification types">
@@ -786,11 +810,11 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
     <div className="profile-card">
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Timer size={14} style={{ color: "var(--primary)" }} />
-        <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
           {t("Rest timer presets", "Rest timer presets", "Rest timer presets")}
         </div>
       </div>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12, lineHeight: 1.45 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, lineHeight: 1.45 }}>
         {t(
           "Set how long each preset waits before the bar fills. Custom rest is always available on the timer itself.",
           "Pick your default rest windows. You can still punch in a custom rest mid-workout.",
@@ -805,7 +829,7 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
       {err && <p className="auth-err" style={{ marginTop: 8, marginBottom: 0 }}>{err}</p>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
         <button type="button" className="auth-toggle" onClick={resetDefaults}>Reset to defaults</button>
-        {saved && <span style={{ color: "var(--green)", fontSize: 11 }}>Saved.</span>}
+        {saved && <span style={{ color: "var(--green)", fontSize: 12 }}>Saved.</span>}
       </div>
     </div>
   );
@@ -824,7 +848,7 @@ function OnboardingCard() {
 
   return (
     <div className="profile-card">
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {t("Tour & hints", "Tour & hints", "Tour & hints")}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -888,7 +912,7 @@ function GymReminderCard({ prefs, onChange }: { prefs: GymPrefs; onChange: (next
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {t("Gym reminders", "Gym reminders", "Gym reminders")}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
               {t(
                 "Suggest a workout when you're at your gym or it's your usual training time.",
                 "Nudge you to lift when you're at the gym or it's your usual time.",
@@ -951,7 +975,7 @@ function GymReminderCard({ prefs, onChange }: { prefs: GymPrefs; onChange: (next
         )}
       </div>
 
-      <div style={{ fontSize: 11, color: status === "error" ? "var(--coral, #FF6B6B)" : "var(--muted)", marginTop: 8 }}>
+      <div style={{ fontSize: 12, color: status === "error" ? "var(--coral, #FF6B6B)" : "var(--muted)", marginTop: 8 }}>
         {status === "locating" && t("Getting your location…", "Getting your location…", "Getting your location…")}
         {status === "error"    && t("Couldn't read your location. Check browser permissions.", "Couldn't read your location. Check permissions.", "Couldn't read your location, bestie. Check permissions.")}
         {status !== "locating" && status !== "error" && hasLocation && (
@@ -972,51 +996,62 @@ export default function SettingsTab({
   wizardTransition, onWizardTransitionChange,
   reducedMotion, onReducedMotionChange,
   theme, onThemeChange,
-  authFetch,
+  authFetch, progressionPrefs, onProgressionPrefsChange,
 }: Props) {
   const t = useTxt();
 
   return (
-    <div className="tab-anim">
-      <div className="profile-section">{t("Profile", "Profile")}</div>
-      <EditProfileCard
-        name={name}
-        email={email}
-        gender={gender}
-        bodyweightKg={bodyweightKg}
-        heightCm={heightCm}
-        token={token}
-        onSave={onProfileUpdate}
-      />
+    <div className="tab-anim set-groups">
+      <div className="profile-section">{t("Settings", "Settings", "Settings")}</div>
 
-      <div className="profile-section">{t("Appearance", "Appearance")}</div>
-      <ThemeCard value={theme} onChange={onThemeChange} />
-      <ToneToggle toneMode={toneMode} onToneChange={onToneChange} />
-      <ColorPicker color={primaryColor} onChange={onColorChange} token={token} />
-      <WizardTransitionCard value={wizardTransition} onChange={onWizardTransitionChange} />
-      <ReducedMotionCard value={reducedMotion} onChange={onReducedMotionChange} />
+      <Group id="profile" title={t("Profile", "Profile")} Icon={UserRound}>
+        <EditProfileCard
+          name={name}
+          email={email}
+          gender={gender}
+          bodyweightKg={bodyweightKg}
+          heightCm={heightCm}
+          token={token}
+          onSave={onProfileUpdate}
+        />
+      </Group>
 
-      <div className="profile-section">{t("Workout", "Workout")}</div>
-      <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
-      <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />
+      <Group id="workout" title={t("Workout", "Workout")} Icon={Dumbbell}>
+        <ProgressionCard prefs={progressionPrefs} onChange={onProgressionPrefsChange} />
+        <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
+        <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />
+      </Group>
 
-      <div className="profile-section">{t("Notifications", "Notifications")}</div>
-      <PushToggleCard authFetch={authFetch} />
-      <NotificationTypesCard authFetch={authFetch} />
+      <Group id="appearance" title={t("Appearance", "Appearance")} Icon={Palette}>
+        <ThemeCard value={theme} onChange={onThemeChange} />
+        <ColorPicker color={primaryColor} onChange={onColorChange} token={token} />
+        <ToneToggle toneMode={toneMode} onToneChange={onToneChange} />
+        <WizardTransitionCard value={wizardTransition} onChange={onWizardTransitionChange} />
+        <ReducedMotionCard value={reducedMotion} onChange={onReducedMotionChange} />
+      </Group>
 
-      <div className="profile-section">{t("Guidance", "Guidance", "Guidance")}</div>
-      <OnboardingCard />
+      <Group id="notifications" title={t("Notifications", "Notifications")} Icon={BellRing}>
+        <PushToggleCard authFetch={authFetch} />
+        <NotificationTypesCard authFetch={authFetch} />
+      </Group>
 
-      <div className="profile-section">{t("Account", "Account")}</div>
-      <ChangePasswordCard token={token} />
+      <Group id="account" title={t("Account", "Account")} Icon={ShieldCheck}>
+        <ChangePasswordCard token={token} />
+        <PasskeysCard authFetch={authFetch} />
+      </Group>
 
-      <AboutCard authFetch={authFetch} />
+      <Group id="guidance" title={t("Guidance", "Guidance", "Guidance")} Icon={Compass}>
+        <OnboardingCard />
+      </Group>
+
+      <Group id="about" title={t("About", "About", "About")} Icon={Info}>
+        <AboutCard authFetch={authFetch} />
+      </Group>
     </div>
   );
 }
 
 function AboutCard({ authFetch }: { authFetch: (url: string, opts?: RequestInit) => Promise<Response> }) {
-  const t = useTxt();
   const [apiVersion, setApiVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1030,7 +1065,6 @@ function AboutCard({ authFetch }: { authFetch: (url: string, opts?: RequestInit)
 
   return (
     <>
-      <div className="profile-section">{t("About", "About", "About")}</div>
       <div className="profile-card">
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)" }}>
           <span>App version</span>

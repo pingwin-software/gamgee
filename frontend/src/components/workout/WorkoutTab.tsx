@@ -5,7 +5,6 @@ import WizardStart from "./WizardStart";
 import TrainingSuggestionBanner from "./TrainingSuggestionBanner";
 import WizardMode from "./WizardMode";
 import WizardFocus from "./WizardFocus";
-import WizardCardio from "./WizardCardio";
 import WizardBuild from "./WizardBuild";
 import WizardPrescribe from "./WizardPrescribe";
 import WizardWeeklySetup from "./WizardWeeklySetup";
@@ -40,6 +39,8 @@ interface Props {
   authFetch:       (url: string, opts?: RequestInit) => Promise<Response>;
   onLoadToday:     (plan: DayPlan) => void;
   startFromWizard: (autoFill: boolean) => void;
+  /** One tap from the landing screen: start logging these exercises now. */
+  onQuickStart:    (exercises: ExerciseDef[], focus: string | null, plan?: DayPlan) => void;
   /** Location/time based recommendation shown on the landing screen (or null). */
   suggestion:          TrainingSuggestion | null;
   onStartSuggestion:   (s: TrainingSuggestion) => void;
@@ -67,7 +68,7 @@ export default function WorkoutTab({
   active, wStep, setWStep, focus, setFocus, cardio, setCardio,
   planned, setPlanned, exercises, prs, history, doneSets,
   weeklyPlan, setWeeklyPlan, templates, onSaveTemplate, onUpdateTemplate, onDeleteTemplate, onLoadTemplate, progressionOverrides, restPrefs, bodyweight, wizardTransition, authFetch, onLoadToday,
-  startFromWizard, suggestion, onStartSuggestion, onDismissSuggestion, prescribeInitialConfigs, startFromPrescribe, addExercise, removeExercise,
+  startFromWizard, onQuickStart, suggestion, onStartSuggestion, onDismissSuggestion, prescribeInitialConfigs, startFromPrescribe, addExercise, removeExercise,
   updateSet, setSetRpe, toggleSet, addSet, removeSet, toggleExerciseLock, isNewPr, finishWorkout, cancelWorkout, applyProgressionAll,
 }: Props) {
   const prevStepRef = useRef(wStep);
@@ -146,7 +147,13 @@ export default function WorkoutTab({
               onDismiss={onDismissSuggestion}
             />
           )}
-          <WizardStart lastSession={history[0] ?? null} onStart={() => setWStepQuake(1)} />
+          <WizardStart
+            history={history}
+            weeklyPlan={weeklyPlan}
+            onStart={() => setWStepQuake(1)}
+            onQuickStart={(exs, f, plan) => { triggerQuake(); onQuickStart(exs, f, plan); }}
+            onLoadToday={onLoadTodayQuake}
+          />
         </div>
       )}
 
@@ -175,18 +182,6 @@ export default function WorkoutTab({
             focus={focus}
             setFocus={setFocus}
             onBack={() => setWStepQuake(1)}
-            onNext={() => setWStepQuake(3)}
-          />
-        </div>
-      )}
-
-      {/* Step 3 — cardio */}
-      {!active && wStep === 3 && (
-        <div key="wstep-3" className={stepAnim}>
-          <WizardCardio
-            plan={cardio}
-            setPlan={setCardio}
-            onBack={() => setWStepQuake(2)}
             onNext={() => setWStepQuake(4)}
           />
         </div>
@@ -199,8 +194,10 @@ export default function WorkoutTab({
             focus={focus}
             planned={planned}
             setPlanned={setPlanned}
-            onBack={() => setWStepQuake(3)}
+            onBack={() => setWStepQuake(2)}
             onStart={startFromWizardQuake}
+            cardio={cardio}
+            setCardio={setCardio}
             onConfigureRpe={() => setWStepQuake(5)}
             onSaveTemplate={onSaveTemplate}
             history={history}

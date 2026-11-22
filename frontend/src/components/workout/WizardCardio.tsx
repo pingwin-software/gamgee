@@ -3,6 +3,7 @@ import type { CardioPlan, CardioSlot, CardioTiming } from "../../types";
 import { EX } from "../../data/exercises";
 import { useTxt } from "../../context/ToneContext";
 import OnboardingHint from "../OnboardingHint";
+import "../../simple.css";
 
 interface Props {
   plan:    CardioPlan;
@@ -151,5 +152,41 @@ export default function WizardCardio({ plan, setPlan, onBack, onNext }: Props) {
         />
       )}
     </>
+  );
+}
+
+
+/** Cardio as part of the build screen: closed it is one line saying what is
+ * planned; open it is four chips and the type and minutes for each slot. Not
+ * picking anything means no cardio. */
+export function CardioInline({ plan, setPlan }: { plan: CardioPlan; setPlan: (p: CardioPlan) => void }) {
+  const timing = plan.timing ?? "none";
+  const setTiming = (next: Exclude<CardioTiming, null>) => {
+    const wantsBefore = next === "before" || next === "both";
+    const wantsAfter  = next === "after"  || next === "both";
+    setPlan({
+      timing: next,
+      before: wantsBefore ? (plan.before ?? defaultSlot()) : null,
+      after:  wantsAfter  ? (plan.after  ?? defaultSlot()) : null,
+    });
+  };
+  return (
+    <div className="cardio-inline">
+      <div className="cardio-inline-head"><Heart size={13} /> CARDIO</div>
+      <div className="chips" role="radiogroup" aria-label="Cardio">
+        {TIMING_OPTIONS.map(opt => (
+          <button
+            key={opt.id} type="button" role="radio" aria-checked={timing === opt.id}
+            className={`chip-btn${timing === opt.id ? " on" : ""}`}
+            onClick={() => setTiming(opt.id)}
+          >
+            <opt.Icon size={13} style={{ verticalAlign: -2, marginRight: 5 }} />
+            {opt.id === "none" ? "None" : opt.label}
+          </button>
+        ))}
+      </div>
+      {plan.before && <SlotEditor label="WARM-UP CARDIO" slot={plan.before} onChange={s => setPlan({ ...plan, before: s })} />}
+      {plan.after && <SlotEditor label="COOL-DOWN CARDIO" slot={plan.after} onChange={s => setPlan({ ...plan, after: s })} />}
+    </div>
   );
 }

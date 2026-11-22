@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { Send, MessageSquarePlus, GraduationCap, Users, ArrowLeft } from "lucide-react";
+import {
+  Send, MessageSquarePlus, GraduationCap, Users, ChevronLeft, MessagesSquare, Hand, X,
+} from "lucide-react";
 import type { ChatMessage, Conversation, Buddy, TrainerLink } from "../../types";
 import { fmtDate } from "../../utils";
+import { useTxt } from "../../context/ToneContext";
+import "../../pages/chat.css";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -25,12 +29,63 @@ interface Contact {
   kind: ContactKind;
 }
 
+/** Up to two initials: "Ana Marić" is AM, "sam" is S. */
+function initials(label: string | null | undefined): string {
+  const words = (label || "?").trim().split(/[\s._-]+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 1).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+
+const DAY_MS = 86_400_000;
+const startOfDay = (ms: number) => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const clock = (ms: number) =>
+  new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+/** Whole days between a moment and today (0 = today, 1 = yesterday). */
+function daysAgo(ms: number): number {
+  return Math.round((startOfDay(Date.now()) - startOfDay(ms)) / DAY_MS);
+}
+
+/** Short time for the list: now, 5 min, 14:20, Yesterday, Mon, then the date. */
+function listTime(ms: number): string {
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return "now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min`;
+  const days = daysAgo(ms);
+  if (days <= 0) return clock(ms);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return new Date(ms).toLocaleDateString([], { weekday: "short" });
+  return fmtDate(new Date(ms).toISOString());
+}
+
+/** Label of a day divider inside a conversation. */
+function dayLabel(ms: number): string {
+  const days = daysAgo(ms);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return new Date(ms).toLocaleDateString([], { weekday: "long" });
+  return new Date(ms).toLocaleDateString([], { day: "numeric", month: "long", year: "numeric" });
+}
+
+/** Messages from one sender within this gap read as one group. */
+const GROUP_GAP_MS = 5 * 60_000;
+
+const reducedMotion = () =>
+  typeof window !== "undefined" && (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    document.documentElement.getAttribute("data-reduced-motion") === "1"
+  );
+
 export default function ChatTab({
   authFetch, conversations, refreshConversations,
   activeConvId, setActiveConvId, currentUserId,
   buddies, trainerLinks, messageSubscribersRef,
 }: Props) {
+  const t = useTxt();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // What a screen reader hears when someone else's message lands in the open thread.
+  const [heard, setHeard] = useState("");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
@@ -49,7 +104,7 @@ export default function ChatTab({
 
   const closeThread = () => {
     const el = threadRef.current;
-    if (!el || !isFullscreenMobile()) {
+    if (!el || !isFullscreenMobile() || reducedMotion()) {
       setActiveConvId(null);
       return;
     }
@@ -62,8 +117,8 @@ export default function ChatTab({
     if (!isFullscreenMobile()) return;
     const target = e.target as HTMLElement;
     // Only engage drag from the top of the sheet — never from scrollable body or composer.
-    if (target.closest(".chat-thread-body")) return;
-    if (target.closest(".chat-composer")) return;
+    if (target.closest(".ch-log")) return;
+    if (target.closest(".ch-composer")) return;
     dragStartY.current = e.touches[0].clientY;
     dragOffset.current = 0;
     dragActive.current = false;
@@ -169,6 +224,7 @@ export default function ChatTab({
 
   // Load thread when activeConv changes
   useEffect(() => {
+    setHeard("");
     if (!activeConvId) { setMessages([]); return; }
     let cancelled = false;
     (async () => {
@@ -201,6 +257,7 @@ export default function ChatTab({
         return [...prev, m];
       });
       if (m.sender_id !== currentUserId) {
+        setHeard(`${m.sender_name || m.sender_username}: ${m.body}`);
         authFetch(`/api/chat/conversations/${activeConvId}/read`, { method: "POST" })
           .catch(() => {});
       }
@@ -264,202 +321,278 @@ export default function ChatTab({
     }
   };
 
-  const showList = activeConvId == null;
+  const open = activeConvId != null;
   const kindLabel: Record<ContactKind, string> = {
     buddy: "Buddy",
     coach: "Coach",
     trainee: "Trainee",
   };
+  const totalUnread = conversations.reduce((n, c) => n + (c.unread_count > 0 ? c.unread_count : 0), 0);
+  const activeName = activeConv?.other_name || activeConv?.other_username || "";
+
+  // Each message with what goes above it: a day divider, a group's time.
+  const rows = useMemo(() => messages.map((m, i) => {
+    const prev = messages[i - 1];
+    const next = messages[i + 1];
+    const newDay = !prev || startOfDay(prev.created_at) !== startOfDay(m.created_at);
+    const head = newDay || prev.sender_id !== m.sender_id
+      || m.created_at - prev.created_at > GROUP_GAP_MS;
+    const last = !next || next.sender_id !== m.sender_id
+      || startOfDay(next.created_at) !== startOfDay(m.created_at)
+      || next.created_at - m.created_at > GROUP_GAP_MS;
+    return { m, newDay, head, last };
+  }), [messages]);
 
   return (
-    <div className="chat-tab tab-anim">
-      <div className="chat-header">
-        <h2 className="chat-title">CHAT</h2>
-        <button className="btn-sec" onClick={() => setNewConvOpen(v => !v)}>
-          <MessageSquarePlus size={14} /> New chat
-        </button>
-      </div>
+    <div className={`ch-shell${open ? " is-open" : ""}`}>
+      <div className="ch-sr" aria-live="polite" role="status">{heard}</div>
 
-      {newConvOpen && (
-        <div className="card chat-newconv">
-          <div className="chat-newconv-hint">
-            Pick a buddy or coach below, or type any username.
-          </div>
-          <div className="chat-newconv-input-row">
-            <input
-              autoFocus
-              value={newConvQuery}
-              onChange={e => setNewConvQuery(e.target.value)}
-              placeholder="Search by name or username…"
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  // If exactly one filtered result, open them. Else use raw text.
-                  if (filteredContacts.length === 1) openConversationWith(filteredContacts[0].username);
-                  else openConversationWith(newConvQuery);
-                }
-                if (e.key === "Escape") setNewConvOpen(false);
-              }}
-            />
-            <button
-              className="btn-pri"
-              onClick={() => openConversationWith(newConvQuery)}
-              disabled={!newConvQuery.trim() || opening}
-            >
-              Open
-            </button>
-          </div>
-          <div className="chat-suggestions">
-            {filteredContacts.length === 0 && (
-              <div className="chat-suggestions-empty">
-                {contacts.length === 0
-                  ? "No buddies or coaches yet. Add buddies from the Buddies tab, or type a username above."
-                  : "No matches. Press Enter to open by username anyway."}
-              </div>
+      <section className="ch-side tab-anim" aria-label="Conversations">
+        <div className="ch-head">
+          <h2 className="ch-title">
+            Chat
+            {totalUnread > 0 && (
+              <span className="ch-title-count" aria-label={`${totalUnread} unread`}>{totalUnread}</span>
             )}
-            {filteredContacts.map(c => (
-              <button
-                key={c.username}
-                className="chat-suggestion"
-                onClick={() => openConversationWith(c.username)}
-                disabled={opening}
-              >
-                <span
-                  className="chat-avatar chat-avatar-sm"
-                  style={{ background: c.primary_color || "var(--accent)" }}
-                >
-                  {(c.name || c.username).slice(0, 1).toUpperCase()}
-                </span>
-                <span className="chat-suggestion-main">
-                  <span className="chat-suggestion-name">{c.name || c.username}</span>
-                  <span className="chat-suggestion-meta">@{c.username}</span>
-                </span>
-                <span className={`chat-kind-tag chat-kind-${c.kind}`}>
-                  {c.kind === "coach" || c.kind === "trainee"
-                    ? <GraduationCap size={11} />
-                    : <Users size={11} />}
-                  {kindLabel[c.kind]}
-                </span>
-              </button>
-            ))}
-          </div>
-          {newConvErr && <div className="chat-err">{newConvErr}</div>}
-        </div>
-      )}
-
-      <div className={`chat-shell ${showList ? "chat-shell-list" : "chat-shell-thread"}`}>
-        {showList ? (
-          <div className="card chat-list">
-            {conversations.length === 0 && (
-              <div className="chat-list-empty">
-                No chats yet. Tap “New chat” to message a buddy or your coach.
-              </div>
-            )}
-            {conversations.map(c => (
-              <button
-                key={c.id}
-                className="chat-row"
-                onClick={() => setActiveConvId(c.id)}
-              >
-                <span
-                  className="chat-avatar"
-                  style={{ background: c.other_primary_color || "var(--accent)" }}
-                >
-                  {(c.other_name || c.other_username || "?").slice(0, 1).toUpperCase()}
-                </span>
-                <span className="chat-row-main">
-                  <span className="chat-row-name">
-                    <strong>{c.other_name || c.other_username}</strong>
-                    {c.kind === "coach" && (
-                      <span className="chat-row-icon" title="Coaching channel">
-                        <GraduationCap size={12} />
-                      </span>
-                    )}
-                    {c.kind === "dm" && (
-                      <span className="chat-row-icon chat-row-icon-muted" title="Peer DM">
-                        <Users size={12} />
-                      </span>
-                    )}
-                  </span>
-                  <span className="chat-row-preview">
-                    {c.last_message_preview || <em>No messages yet</em>}
-                  </span>
-                </span>
-                <span className="chat-row-meta">
-                  {c.last_message_at > 0 && (
-                    <small className="chat-row-time">
-                      {fmtDate(new Date(c.last_message_at).toISOString())}
-                    </small>
-                  )}
-                  {c.unread_count > 0 && (
-                    <span className="chat-row-unread">{c.unread_count}</span>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div
-            ref={threadRef}
-            className="card chat-thread chat-thread-fullscreen"
-            onTouchStart={onThreadTouchStart}
-            onTouchMove={onThreadTouchMove}
-            onTouchEnd={onThreadTouchEnd}
-            onTouchCancel={onThreadTouchEnd}
+          </h2>
+          <button
+            type="button"
+            className={`ch-new-btn${newConvOpen ? " on" : ""}`}
+            onClick={() => setNewConvOpen(v => !v)}
+            aria-expanded={newConvOpen}
           >
-            <div className="chat-thread-handle" aria-hidden="true" />
-            <div className="chat-thread-header">
-              <button className="chat-back-btn" onClick={closeThread} aria-label="Back">
-                <ArrowLeft size={16} />
-              </button>
-              <span
-                className="chat-avatar chat-avatar-sm"
-                style={{ background: activeConv?.other_primary_color || "var(--accent)" }}
-              >
-                {(activeConv?.other_name || activeConv?.other_username || "?").slice(0, 1).toUpperCase()}
-              </span>
-              <strong className="chat-thread-name">{activeConv?.other_name || activeConv?.other_username}</strong>
-              {activeConv?.kind === "coach" && (
-                <span className="chat-row-icon" title="Coaching channel">
-                  <GraduationCap size={14} />
-                </span>
+            {newConvOpen ? <X size={18} /> : <MessageSquarePlus size={18} />}
+            {newConvOpen ? "Close" : "New chat"}
+          </button>
+        </div>
+
+        {newConvOpen && (
+          <div className="ch-picker">
+            <div className="ch-picker-hint">
+              {t(
+                "Pick a buddy or coach, or type any username.",
+                "Pick a buddy or coach, or type any username.",
+                "Pick a bestie or coach, or type any username."
               )}
             </div>
-            <div ref={scrollerRef} className="chat-thread-body">
-              {messages.length === 0 && (
-                <div className="chat-thread-empty">Say hi.</div>
-              )}
-              {messages.map(m => {
-                const mine = currentUserId != null && m.sender_id === currentUserId;
-                return (
-                  <div key={m.id} className={`chat-msg-row ${mine ? "mine" : "theirs"}`}>
-                    <div className={`chat-bubble ${mine ? "mine" : "theirs"}`}>
-                      <div className="chat-bubble-body">{m.body}</div>
-                      <div className="chat-bubble-time">
-                        {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <form
-              onSubmit={e => { e.preventDefault(); sendMessage(); }}
-              className="chat-composer"
-            >
+            <div className="ch-picker-row">
               <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder="Type a message…"
-                disabled={sending}
-                className="chat-composer-input"
+                autoFocus
+                className="ch-field"
+                value={newConvQuery}
+                onChange={e => setNewConvQuery(e.target.value)}
+                placeholder="Name or username"
+                aria-label="Search by name or username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    // If exactly one filtered result, open them. Else use raw text.
+                    if (filteredContacts.length === 1) openConversationWith(filteredContacts[0].username);
+                    else openConversationWith(newConvQuery);
+                  }
+                  if (e.key === "Escape") setNewConvOpen(false);
+                }}
               />
-              <button className="btn-pri chat-send-btn" type="submit" disabled={sending || !input.trim()}>
-                <Send size={14} />
+              <button
+                type="button"
+                className="ch-open-btn"
+                onClick={() => openConversationWith(newConvQuery)}
+                disabled={!newConvQuery.trim() || opening}
+              >
+                Open
               </button>
-            </form>
+            </div>
+            {filteredContacts.length === 0 ? (
+              <div className="ch-note">
+                {contacts.length === 0
+                  ? "No buddies or coaches yet. Add buddies on the Buddies page, or type a username above."
+                  : "No matches. Press Open to try that username anyway."}
+              </div>
+            ) : (
+              <div className="ch-people">
+                {filteredContacts.map(c => (
+                  <button
+                    type="button"
+                    key={c.username}
+                    className="ch-person"
+                    onClick={() => openConversationWith(c.username)}
+                    disabled={opening}
+                    title={`@${c.username}`}
+                  >
+                    <span
+                      className="ch-av ch-av-lg"
+                      style={{ "--c": c.primary_color || "var(--accent)" } as React.CSSProperties}
+                      aria-hidden="true"
+                    >
+                      {initials(c.name || c.username)}
+                    </span>
+                    <span className="ch-person-name">{c.name || c.username}</span>
+                    <span className={`ch-person-kind ${c.kind}`}>
+                      {c.kind === "coach" || c.kind === "trainee"
+                        ? <GraduationCap size={13} />
+                        : <Users size={13} />}
+                      {kindLabel[c.kind]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {newConvErr && <div className="ch-err" role="alert">{newConvErr}</div>}
           </div>
         )}
-      </div>
+
+        {conversations.length === 0 ? (
+          !newConvOpen && (
+            <div className="ch-empty">
+              <span className="ch-empty-icon"><MessagesSquare size={34} /></span>
+              <div className="ch-empty-text">
+                {t(
+                  "No chats yet. Message a buddy or your coach.",
+                  "Quiet in here, bro. Hit up a buddy or your coach.",
+                  "So quiet, bestie. Message a buddy or your coach."
+                )}
+              </div>
+              <button type="button" className="ch-big-btn" onClick={() => setNewConvOpen(true)}>
+                <MessageSquarePlus size={18} /> New chat
+              </button>
+            </div>
+          )
+        ) : (
+          <div className="ch-list">
+            {conversations.map(c => {
+              const label = c.other_name || c.other_username;
+              const unread = c.unread_count > 0;
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  className={`ch-row${unread ? " unread" : ""}`}
+                  onClick={() => setActiveConvId(c.id)}
+                  aria-current={c.id === activeConvId ? "true" : undefined}
+                >
+                  <span
+                    className="ch-av"
+                    style={{ "--c": c.other_primary_color || "var(--accent)" } as React.CSSProperties}
+                    aria-hidden="true"
+                  >
+                    {initials(label)}
+                    {c.kind === "coach" && (
+                      <span className="ch-av-badge"><GraduationCap size={12} /></span>
+                    )}
+                  </span>
+                  <span className="ch-row-main">
+                    <span className="ch-row-name">
+                      {label}
+                      {c.kind === "coach" && <span className="ch-sr">, coaching channel</span>}
+                    </span>
+                    <span className="ch-row-preview">
+                      {c.last_message_preview || "No messages yet"}
+                    </span>
+                  </span>
+                  <span className="ch-row-meta">
+                    {c.last_message_at > 0 && (
+                      <span className="ch-row-time">{listTime(c.last_message_at)}</span>
+                    )}
+                    {unread && (
+                      <span className="ch-pill">
+                        {c.unread_count}<span className="ch-sr"> unread</span>
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {open ? (
+        <section
+          ref={threadRef}
+          className="ch-thread"
+          aria-label={activeName ? `Conversation with ${activeName}` : "Conversation"}
+          onTouchStart={onThreadTouchStart}
+          onTouchMove={onThreadTouchMove}
+          onTouchEnd={onThreadTouchEnd}
+          onTouchCancel={onThreadTouchEnd}
+        >
+          <div className="ch-handle" aria-hidden="true" />
+          <div className="ch-thread-head">
+            <button type="button" className="ch-back" onClick={closeThread} aria-label="Back to chats">
+              <ChevronLeft size={20} /> Back
+            </button>
+            <span
+              className="ch-av ch-av-sm"
+              style={{ "--c": activeConv?.other_primary_color || "var(--accent)" } as React.CSSProperties}
+              aria-hidden="true"
+            >
+              {initials(activeName)}
+            </span>
+            <span className="ch-thread-who">
+              <strong className="ch-thread-name">{activeName}</strong>
+              {activeConv && (
+                <span className="ch-thread-sub">
+                  {activeConv.kind === "coach"
+                    ? <><GraduationCap size={13} /> Coaching channel</>
+                    : <>@{activeConv.other_username}</>}
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div ref={scrollerRef} className="ch-log">
+            {messages.length === 0 && (
+              <div className="ch-hello">
+                <Hand size={34} />
+                <span>{t("Say hello.", "Say hi, bro.", "Say hi, bestie.")}</span>
+              </div>
+            )}
+            {rows.map(({ m, newDay, head, last }) => {
+              const mine = currentUserId != null && m.sender_id === currentUserId;
+              const side = mine ? "mine" : "theirs";
+              return [
+                newDay && <div key={`d${m.id}`} className="ch-day">{dayLabel(m.created_at)}</div>,
+                head && <div key={`t${m.id}`} className={`ch-stamp ${side}`}>{clock(m.created_at)}</div>,
+                <div key={m.id} className={`ch-msg ${side}${last ? "" : " mid"}`}>
+                  <div className="ch-bubble">
+                    <span className="ch-sr">{mine ? "You: " : `${m.sender_name || m.sender_username}: `}</span>
+                    {m.body}
+                  </div>
+                </div>,
+              ];
+            })}
+          </div>
+
+          <form
+            onSubmit={e => { e.preventDefault(); sendMessage(); }}
+            className="ch-composer"
+          >
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Message"
+              aria-label={activeName ? `Message ${activeName}` : "Message"}
+              className="ch-field"
+              enterKeyHint="send"
+              autoComplete="off"
+            />
+            <button
+              className="ch-send"
+              type="submit"
+              disabled={sending || !input.trim()}
+              aria-label="Send message"
+            >
+              <Send size={20} />
+            </button>
+          </form>
+        </section>
+      ) : (
+        <div className="ch-blank">
+          <span className="ch-empty-icon"><MessagesSquare size={34} /></span>
+          <span>Pick a chat to start talking.</span>
+        </div>
+      )}
     </div>
   );
 }

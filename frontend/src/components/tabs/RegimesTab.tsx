@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
-import { Plus, Calendar, Trash2, Wand2, Pencil, Bookmark } from "lucide-react";
-import type { Regime, WeeklyPlan, WeekPlanDay, WeekPlan, WorkoutTemplate } from "../../types";
+import { useEffect, useRef, useState } from "react";
+import {
+  Bookmark, Calendar, CalendarCheck, Check, ChevronUp, Dumbbell, Pencil, Trash2, Wand2, X,
+} from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import type { DayPlan, Regime, WeeklyPlan, WeekPlanDay, WeekPlan, WorkoutTemplate } from "../../types";
 import { weeklyPlanFromWeeks } from "../../data/weeklyPlan";
 import { getFocusDef } from "../../data/focuses";
+import { useTxt } from "../../context/ToneContext";
 import RegimeQuestionnairePanel from "../regime/RegimeQuestionnaire";
 import RegimeEditor from "../regime/RegimeEditor";
+import "../../simple.css";
+import "../../pages/plans.css";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -14,12 +20,97 @@ interface Props {
   onDeleteTemplate: (id: number) => Promise<boolean>;
 }
 
-const WEEK_LABELS: Record<string, string> = {
+const WEEK_KEYS: WeekPlanDay[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const WEEK_LABELS: Record<WeekPlanDay, string> = {
   mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
 };
+const DAY_NAMES: Record<WeekPlanDay, string> = {
+  mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday",
+};
 
-export default function RegimesTab({ authFetch, weeklyPlan: _weeklyPlan, setWeeklyPlan, templates, onDeleteTemplate }: Props) {
-  void _weeklyPlan;
+type DayMap = Partial<Record<string, DayPlan>> | null | undefined;
+
+/* ── Pieces shared by the Plans pages (regimes, coaching, trainees) ─────── */
+
+/** A week at a glance: one dot a day, the focus icon on training days. */
+export function WeekDots({ days, small }: { days: DayMap; small?: boolean }) {
+  const summary = WEEK_KEYS
+    .map(k => {
+      const d = days?.[k];
+      return `${DAY_NAMES[k]}: ${d?.enabled ? (getFocusDef(d.focus)?.name ?? d.focus ?? "training") : "rest"}`;
+    })
+    .join(", ");
+  return (
+    <span className={`pl-week${small ? " pl-week-sm" : ""}`} role="img" aria-label={summary}>
+      {WEEK_KEYS.map(k => {
+        const d = days?.[k];
+        const on = !!d?.enabled;
+        const Icon = on ? (getFocusDef(d!.focus)?.icon ?? Dumbbell) : null;
+        return (
+          <span key={k} className={`pl-day${on ? " on" : ""}`} title={on ? (getFocusDef(d!.focus)?.name ?? d!.focus) : "Rest"}>
+            <span className="pl-dot">{Icon && <Icon size={small ? 13 : 16} />}</span>
+            <span className="pl-day-label">{small ? WEEK_LABELS[k][0] : WEEK_LABELS[k]}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/** Initials in a ring of the person's own colour. */
+export function PlanAvatar({ name, color, large, live }: { name: string; color?: string | null; large?: boolean; live?: boolean }) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : name.trim().slice(0, 2)).toUpperCase();
+  const style = color && !live ? ({ "--pl-c": color } as CSSProperties) : undefined;
+  return (
+    <span className={`pl-avatar${large ? " pl-avatar-lg" : ""}${live ? " live" : ""}`} style={style} aria-hidden="true">
+      {initials}
+    </span>
+  );
+}
+
+/** A destructive button that asks once more before it acts: the first tap
+ *  arms it for a few seconds, the second one goes through. */
+export function ConfirmButton({
+  label, armedLabel = "Tap again", icon, onConfirm, className = "",
+}: { label: string; armedLabel?: string; icon?: ReactNode; onConfirm: () => void; className?: string }) {
+  const [armed, setArmed] = useState(false);
+  const timer = useRef<number | null>(null);
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current); }, []);
+  return (
+    <button
+      type="button"
+      className={`pl-btn pl-btn-danger${armed ? " armed" : ""} ${className}`}
+      onClick={() => {
+        if (timer.current) window.clearTimeout(timer.current);
+        if (armed) { setArmed(false); onConfirm(); return; }
+        setArmed(true);
+        timer.current = window.setTimeout(() => setArmed(false), 4000);
+      }}
+    >
+      {icon ?? <X size={18} />}
+      <span aria-live="polite">{armed ? armedLabel : label}</span>
+    </button>
+  );
+}
+
+/* ── Regimes ───────────────────────────────────────────────────────────── */
+
+const firstWeek = (r: Regime): DayMap => (r.weeks && r.weeks.length > 0 ? r.weeks[0].days : r.days);
+
+/** The shape of a week, to tell whether the plan in use came from a regime. */
+function weekSig(days: DayMap): string {
+  return WEEK_KEYS
+    .map(k => {
+      const d = days?.[k];
+      return d?.enabled ? `${d.focus}:${(d.exerciseIds ?? []).join(",")}` : "-";
+    })
+    .join("|");
+}
+const REST_WEEK = WEEK_KEYS.map(() => "-").join("|");
+
+export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templates, onDeleteTemplate }: Props) {
+  const t = useTxt();
   const [regimes, setRegimes] = useState<Regime[]>([]);
   const [building, setBuilding] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -71,133 +162,155 @@ export default function RegimesTab({ authFetch, weeklyPlan: _weeklyPlan, setWeek
     );
   }
 
+  // The regime whose week is the one in use right now (the first that matches).
+  const planWeeks = weeklyPlan?.weeks && weeklyPlan.weeks.length > 0 ? weeklyPlan.weeks : null;
+  const planSig = weeklyPlan ? weekSig(planWeeks ? planWeeks[0].days : weeklyPlan) : REST_WEEK;
+  const planLen = planWeeks ? planWeeks.length : 1;
+  const matches = planSig === REST_WEEK
+    ? []
+    : regimes.filter(r => weekSig(firstWeek(r)) === planSig && Math.max(1, r.weeks?.length ?? 1) === planLen);
+  const activeId = (matches.find(r => r.id === appliedId) ?? matches[0])?.id ?? null;
+
   return (
-    <div className="regimes-tab tab-anim" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 16, letterSpacing: 1, display: "flex", alignItems: "center", gap: 8 }}>
-          <Calendar size={16} /> MY REGIMES
+    <div className="regimes-tab tab-anim pl-page">
+      <section className="pl-section">
+        <h2 className="pl-head">
+          <Calendar size={18} /> {t("My regimes", "My programs", "My eras")}
+          {regimes.length > 0 && <span className="pl-count">{regimes.length}</span>}
         </h2>
-        <button className="btn-pri" onClick={() => setBuilding(b => !b)}>
-          {building ? <>Close builder</> : <><Plus size={14} /> New regime</>}
-        </button>
-      </div>
 
-      {building && (
-        <RegimeQuestionnairePanel
-          authFetch={authFetch}
-          onSaved={r => { refresh(); applyToWeek(r); }}
-        />
-      )}
-
-      {loading && <div style={{ color: "var(--muted)" }}>Loading…</div>}
-
-      {!loading && regimes.length === 0 && !building && (
-        <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-start" }}>
-          <div>
-            No regimes yet. Run the questionnaire to generate a personalised weekly plan
-            based on your goals, focus areas, and the muscle groups you'd rather skip.
-          </div>
-          <button className="btn-pri" onClick={() => setBuilding(true)}>
-            <Wand2 size={14} /> Run the questionnaire
+        <div className="pl-starts">
+          <button
+            type="button"
+            className={`start-card${building ? "" : " start-card-main"}`}
+            onClick={() => setBuilding(b => !b)}
+            aria-expanded={building}
+          >
+            <span className="start-card-icon">{building ? <ChevronUp size={22} /> : <Wand2 size={22} />}</span>
+            <span className="start-card-text">
+              <span className="start-card-kicker">{building ? "Builder open" : t("New regime", "New program", "New era")}</span>
+              <span className="start-card-title">{building ? "Close the builder" : "Run the questionnaire"}</span>
+              <span className="start-card-sub">
+                {building ? "Your answers are not saved until you finish." : "A few taps about your goal and your week, and the plan builds itself."}
+              </span>
+            </span>
           </button>
         </div>
-      )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {regimes.map(r => (
-          <div key={r.id} className="card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <div style={{ flex: "1 1 160px", minWidth: 0 }}>
-                <strong>{r.name}</strong>
-                <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                  {r.days_per_week} days/week · {r.goal || "general"} · {r.experience || "any"}
-                  {r.weeks && r.weeks.length > 1 && (
-                    <> · <strong>{r.weeks.length}-week program</strong></>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <button className="btn-pri" onClick={() => applyToWeek(r)}>
-                  {appliedId === r.id ? "Applied!" : "Apply to my week"}
-                </button>
-                <button className="btn-sec" onClick={() => setEditing(r)} aria-label="Edit regime">
-                  <Pencil size={14} />
-                </button>
-                <button className="btn-sec" onClick={() => deleteRegime(r.id)} aria-label="Delete regime">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-            {r.description && <div style={{ fontSize: 12, color: "var(--muted)" }}>{r.description}</div>}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 4 }}>
-              {(["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as WeekPlanDay[]).map(k => {
-                const d = r.days?.[k];
-                const active = d?.enabled;
-                return (
-                  <div
-                    key={k}
-                    title={d?.focus}
-                    style={{
-                      padding: "6px 2px",
-                      textAlign: "center",
-                      borderRadius: 6,
-                      background: active ? "var(--ad2)" : "transparent",
-                      border: active ? "1px solid var(--accent)" : "1px solid var(--ad)",
-                      fontSize: 11,
-                      minWidth: 0,
-                    }}
-                  >
-                    <div>{WEEK_LABELS[k]}</div>
-                    <div
-                      style={{
-                        color: "var(--muted)",
-                        fontSize: 10,
-                        textTransform: "uppercase",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {active ? (d?.focus || "—") : "rest"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {building && (
+          <RegimeQuestionnairePanel
+            authFetch={authFetch}
+            onSaved={r => { refresh(); applyToWeek(r); }}
+          />
+        )}
+
+        {loading && regimes.length === 0 && (
+          <div className="pl-grid" aria-busy="true" aria-label="Loading your regimes">
+            <div className="pl-skel" /><div className="pl-skel" />
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Saved templates — single-session blueprints. Loaded into a workout
+        {!loading && regimes.length === 0 && !building && (
+          <div className="pl-empty">
+            <span className="pl-empty-icon"><Calendar size={26} /></span>
+            <p>{t(
+              "No regimes yet. Answer a few questions and get a week built around your goals.",
+              "No programs yet. Answer a few questions and get a week built for your gains.",
+              "No eras yet. Answer a few questions and get a week built just for you.",
+            )}</p>
+            <button type="button" className="pl-btn pl-btn-main" onClick={() => setBuilding(true)}>
+              <Wand2 size={18} /> Run the questionnaire
+            </button>
+          </div>
+        )}
+
+        {regimes.length > 0 && (
+          <div className="pl-grid">
+            {regimes.map(r => {
+              const isActive = r.id === activeId;
+              const justApplied = appliedId === r.id;
+              const weeks = r.weeks?.length ?? 1;
+              return (
+                <article key={r.id} className={`pl-card${isActive ? " is-on" : ""}`}>
+                  <div className="pl-card-top">
+                    <div className="pl-card-id">
+                      <span className="pl-name">{r.name}</span>
+                      <div className="pl-pills">
+                        <span className="pl-pill pl-pill-plain">{r.days_per_week} days a week</span>
+                        <span className="pl-pill pl-pill-plain">{weeks > 1 ? `${weeks} weeks` : "1 week"}</span>
+                        <span className="pl-pill">{(r.goal || "general").replace("_", " ")}</span>
+                        <span className="pl-pill">{r.experience || "any level"}</span>
+                      </div>
+                    </div>
+                    {isActive && <span className="pl-tag pl-tag-on"><Check size={14} strokeWidth={3} /> Active</span>}
+                  </div>
+                  {r.description && <p className="pl-desc">{r.description}</p>}
+                  <WeekDots days={r.days} />
+                  <div className="pl-actions">
+                    <button
+                      type="button"
+                      className={`pl-btn pl-btn-main${justApplied ? " done" : ""}`}
+                      onClick={() => applyToWeek(r)}
+                    >
+                      {justApplied ? <Check size={18} strokeWidth={3} /> : <CalendarCheck size={18} />}
+                      {justApplied ? "Applied!" : isActive ? "Apply again" : "Apply to my week"}
+                    </button>
+                    <button type="button" className="pl-btn" onClick={() => setEditing(r)}>
+                      <Pencil size={18} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="pl-btn pl-btn-icon pl-btn-danger"
+                      onClick={() => deleteRegime(r.id)}
+                      aria-label={`Delete regime ${r.name}`}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Saved templates: single-session blueprints. Loaded into a workout
           from the Workout tab, or dropped onto a weekday in the plan editor or
           a regime's day; here the user can just review and prune them. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <h2 style={{ margin: "4px 0 0", fontSize: 16, letterSpacing: 1, display: "flex", alignItems: "center", gap: 8 }}>
-          <Bookmark size={16} /> MY TEMPLATES
+      <section className="pl-section">
+        <h2 className="pl-head">
+          <Bookmark size={18} /> My templates
+          {templates.length > 0 && <span className="pl-count">{templates.length}</span>}
         </h2>
         {templates.length === 0 ? (
-          <div style={{ fontSize: 12, color: "var(--muted)" }}>
-            No templates yet. Build a workout and tap “Save as template” to reuse it any time.
-          </div>
+          <p className="pl-muted">No templates yet. Build a workout and tap “Save as template” to reuse it any time.</p>
         ) : (
-          templates.map(tpl => {
-            const fd = tpl.focus ? getFocusDef(tpl.focus) : null;
-            return (
-              <div key={tpl.id} className="card" style={{ padding: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ minWidth: 0 }}>
-                  <strong>{tpl.name}</strong>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    {fd ? `${fd.name} · ` : ""}{tpl.exercise_ids.length} exercise{tpl.exercise_ids.length !== 1 ? "s" : ""}
+          <div className="pl-grid pl-grid-tight">
+            {templates.map(tpl => {
+              const fd = tpl.focus ? getFocusDef(tpl.focus) : null;
+              const Icon = fd?.icon ?? Dumbbell;
+              const n = tpl.exercise_ids.length;
+              return (
+                <div key={tpl.id} className="pl-row">
+                  <span className="pl-icon"><Icon size={22} /></span>
+                  <div className="pl-card-id">
+                    <span className="pl-name">{tpl.name}</span>
+                    <span className="pl-sub">{fd ? `${fd.name} · ` : ""}{n} exercise{n !== 1 ? "s" : ""}</span>
                   </div>
+                  <button
+                    type="button"
+                    className="pl-btn pl-btn-icon pl-btn-danger"
+                    onClick={() => onDeleteTemplate(tpl.id)}
+                    aria-label={`Delete template ${tpl.name}`}
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <button className="btn-sec" onClick={() => onDeleteTemplate(tpl.id)} aria-label="Delete template">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -185,7 +185,7 @@ function MemoryCard({ memory: m }: { memory: PublicProfileMemory }) {
       <div className="memory-footer">
         <div
           className="score-avatar small"
-          style={{ background: accent, width: 22, height: 22, fontSize: 9 }}
+          style={{ background: accent, width: 22, height: 22, fontSize: 11 }}
         >
           {initials}
         </div>

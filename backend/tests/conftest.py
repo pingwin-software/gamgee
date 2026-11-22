@@ -72,6 +72,16 @@ def client(db_engine) -> Iterator[TestClient]:
     app.dependency_overrides.clear()
 
 
+@pytest.fixture(autouse=True)
+def _fresh_throttles():
+    """The rate limiters are process-wide; no test inherits another's counts."""
+    from app import ratelimit
+
+    for limiter in (ratelimit.login_failures, ratelimit.passkey_failures, ratelimit.password_checks):
+        limiter.reset()
+    yield
+
+
 def _register_and_login(client: TestClient, username: str, password: str = "Str0ng-Test-Pass!") -> str:
     client.post(
         "/api/auth/register",

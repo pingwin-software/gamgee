@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Check, ArrowRight, Heart, X, Clock, Flame } from "lucide-react";
+import EffortPicker from "../EffortPicker";
 import type { WorkoutSession } from "../../types";
 import { EM } from "../../data/exercises";
 import { MI } from "../../data/muscles";
@@ -12,26 +13,6 @@ interface Props {
   /** Persist the RPE chosen on the post-session prompt. Called once when the
    * user picks a 1..10 level (or skips, with null). */
   onSetRpe?: (rpe: number | null) => void;
-}
-
-/** Short label for a given RPE level — drives the post-session prompt copy. */
-function rpeLabel(level: number): string {
-  if (level <= 2) return "Way too easy";
-  if (level <= 4) return "Easy day";
-  if (level <= 6) return "On point";
-  if (level <= 7) return "Solid grind";
-  if (level <= 8) return "Hard";
-  if (level <= 9) return "Brutal";
-  return "Max effort";
-}
-
-/** Color the RPE in the same green→red ramp as the slider track. */
-function rpeColor(level: number): string {
-  if (level <= 2) return "#6FCF97";
-  if (level <= 4) return "#82D27E";
-  if (level <= 6) return "#E8C547";
-  if (level <= 8) return "#FF9F43";
-  return "#FF6B6B";
 }
 
 // Collect every muscle group hit during the session (primary + secondary).
@@ -63,8 +44,6 @@ export default function WorkoutComplete({ session, onDone, onSetRpe }: Props) {
   };
 
   if (stage === "rpe") {
-    const color = rpeColor(rpeValue);
-    const pct = ((rpeValue - 1) / 9) * 100;
     return (
       <div className="complete-screen tab-anim">
         <div className="complete-icon"><Flame size={48} /></div>
@@ -78,24 +57,7 @@ export default function WorkoutComplete({ session, onDone, onSetRpe }: Props) {
         </p>
 
         <div className="rpe-slider-wrap">
-          <div className="rpe-value" style={{ color }}>{rpeValue}</div>
-          <div className="rpe-value-label">{rpeLabel(rpeValue)}</div>
-          <input
-            type="range"
-            min={1}
-            max={10}
-            step={1}
-            value={rpeValue}
-            onChange={(e) => setRpeValue(Number(e.target.value))}
-            className="rpe-slider"
-            aria-label="Session RPE"
-            style={{ ["--rpe-thumb-color" as string]: color, ["--rpe-pct" as string]: `${pct}%` }}
-          />
-          <div className="rpe-slider-ticks" aria-hidden="true">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-              <span key={n} className={`rpe-tick${n === rpeValue ? " rpe-tick-active" : ""}`}>{n}</span>
-            ))}
-          </div>
+          <EffortPicker value={rpeValue} onChange={setRpeValue} label="How hard the session was" />
         </div>
 
         <div className="complete-actions">
