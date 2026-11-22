@@ -120,6 +120,14 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return {"access_token": token, "token_type": "bearer"}
 
 
+@router.post("/refresh", response_model=schemas.Token)
+def refresh(current_user: models.User = Depends(get_current_user)):
+    """A fresh token for a session in use, so someone who opens the app every
+    week is never sent back to the sign-in screen. The client asks once a day;
+    a browser left alone for the token's whole life still has to sign in."""
+    return {"access_token": create_access_token({"sub": current_user.username}), "token_type": "bearer"}
+
+
 @router.get("/me", response_model=schemas.UserOut)
 def me(current_user: models.User = Depends(get_current_user)):
     return current_user
@@ -157,6 +165,8 @@ def update_preferences(
     # client defaults; populated dict → store the new table.
     if "rpe_multipliers" in body.model_dump(exclude_unset=True):
         current_user.rpe_multipliers = body.rpe_multipliers or None
+    if "progression_prefs" in body.model_dump(exclude_unset=True):
+        current_user.progression_prefs = body.progression_prefs or None
     db.commit()
     db.refresh(current_user)
     return current_user

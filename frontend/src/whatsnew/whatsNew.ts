@@ -8,7 +8,7 @@
  * in this browser, dated after the day it joined: a newcomer is not handed
  * the history.
  */
-export type WhatsNewId = "passkeys";
+export type WhatsNewId = "progression" | "quickStart" | "passkeys";
 
 export interface WhatsNewEntry {
   /** Stable: it is what "seen" remembers. */
@@ -18,15 +18,27 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  { id: "progression", date: "2026-11-22" },
+  { id: "quickStart", date: "2026-11-22" },
   { id: "passkeys", date: "2026-11-22" },
 ];
 
 /** Title and a few lines per entry. `**words**` show in bold. */
 export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }> = {
+  progression: {
+    title: "Your gains, your rules",
+    body:
+      "You can now tell Gamgee how to push you. Under **Me, Settings, Workout** pick **Steady**, **Standard** or **Fast**, or open **Customise**: how many reps to add before the weight goes up, how big each jump is for upper and lower body, whether an easy set lets you skip ahead, and what happens when a lift is slipping. The example updates as you tap, so you can see what you are signing up for. The plates still will not lift themselves.",
+  },
+  quickStart: {
+    title: "Less tapping, more lifting",
+    body:
+      "The home screen now shows **your week** and starts **today's plan** or **repeats your last workout** in one tap. Cardio moved onto the build screen, effort is picked by **tapping a bar** (the face says how it feels), and sets and reps have **plus and minus buttons**. Everything lives in five places along the bottom: **Train, Progress, Social, Plans, Me**. Settings moved in with your profile under **Me**.",
+  },
   passkeys: {
     title: "Skip password day",
     body:
-      "Your thumbs lift enough already. Add a **passkey** under **Settings, Account, Passkeys** and next time tap **Use a passkey**: your fingerprint, face or screen lock does the rest, no typing. Your password still works, and too many wrong guesses at it now earn a 15 minute rest period.",
+      "Your thumbs lift enough already. Add a **passkey** under **Me, Settings, Account** and next time tap **Use a passkey**: your fingerprint, face or screen lock does the rest, no typing. Your password still works, and too many wrong guesses at it now earn a 15 minute rest period.",
   },
 };
 

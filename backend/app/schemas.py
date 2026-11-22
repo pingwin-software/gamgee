@@ -108,6 +108,7 @@ class UserOut(BaseModel):
     gym_longitude: float | None = None
     gym_radius_m: int | None = None
     training_reminders_enabled: bool = True
+    progression_prefs: dict[str, Any] | None = None
     created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
@@ -203,6 +204,38 @@ class UserPreferences(BaseModel):
     rest_short_seconds: int | None = Field(default=None, ge=5, le=3600)
     rest_medium_seconds: int | None = Field(default=None, ge=5, le=3600)
     rest_long_seconds: int | None = Field(default=None, ge=5, le=3600)
+    # How the suggested progression behaves. Omit to leave alone; null clears
+    # back to the client's defaults.
+    progression_prefs: dict[str, Any] | None = None
+
+    @field_validator("progression_prefs")
+    @classmethod
+    def _progression_prefs(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        ranges = {
+            "repsBeforeWeight": (0, 10, True),
+            "stepUpperKg": (0.25, 20, False),
+            "stepLowerKg": (0.25, 20, False),
+            "easyRir": (1, 6, True),
+        }
+        out: dict[str, Any] = {}
+        for key, (low, high, nullable) in ranges.items():
+            if key not in value:
+                continue
+            item = value[key]
+            if item is None and nullable:
+                out[key] = None
+                continue
+            if isinstance(item, bool) or not isinstance(item, (int, float)) or not low <= item <= high:
+                raise ValueError(f"{key} must be between {low} and {high}")
+            out[key] = item
+        if "onSlip" in value:
+            if value["onSlip"] not in ("step", "percent", "hold"):
+                raise ValueError("onSlip must be step, percent or hold")
+            out["onSlip"] = value["onSlip"]
+        return out
+
     # RPE→step multiplier overrides. Use {} to clear back to the client default
     # table; omit to leave the existing value untouched.
     rpe_multipliers: dict[str, float] | None = None

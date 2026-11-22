@@ -11,19 +11,29 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(".tabs")).toBeVisible();
 });
 
-test("can switch between top-level tabs", async ({ page }) => {
+test("the five sections and their pages", async ({ page }) => {
   const tabs = page.locator(".tabs .tab");
-  // workout, history, prs, buddies, chat, regimes, profile = 7 for a non-trainer
-  await expect(tabs).toHaveCount(7);
+  await expect(tabs).toHaveCount(5);
 
-  await tabs.filter({ hasText: "HISTORY" }).first().click();
-  await expect(tabs.filter({ hasText: "HISTORY" }).first()).toHaveClass(/active/);
+  await tabs.filter({ hasText: "PROGRESS" }).click();
+  await expect(tabs.filter({ hasText: "PROGRESS" })).toHaveClass(/active/);
+  const pages = page.locator(".subtabs .subtab");
+  await expect(pages.filter({ hasText: "HISTORY" })).toHaveClass(/active/);
 
-  await tabs.filter({ hasText: "PRs" }).first().click();
-  await expect(tabs.filter({ hasText: "PRs" }).first()).toHaveClass(/active/);
+  await pages.filter({ hasText: "PRs" }).click();
+  await expect(pages.filter({ hasText: "PRs" })).toHaveClass(/active/);
 
-  await tabs.filter({ hasText: "PROFILE" }).first().click();
-  await expect(tabs.filter({ hasText: "PROFILE" }).first()).toHaveClass(/active/);
+  // A section reopens on the page it was left on.
+  await tabs.filter({ hasText: "SOCIAL" }).click();
+  await tabs.filter({ hasText: "PROGRESS" }).click();
+  await expect(page.locator(".subtabs .subtab").filter({ hasText: "PRs" })).toHaveClass(/active/);
+
+  // Me is profile and settings on one page.
+  await tabs.filter({ hasText: "ME" }).click();
+  await page.getByRole("button", { name: "Workout", exact: true }).click();
+  await expect(page.getByText("Suggested progression")).toBeVisible();
+  await page.getByRole("radio", { name: "Fast" }).click();
+  await expect(page.getByText(/next 60 kg × 10|next 62.5 kg × 8/)).toBeVisible();
 });
 
 test("clicking logout returns to the auth screen", async ({ page }) => {

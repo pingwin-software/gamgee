@@ -48,6 +48,10 @@ class User(Base):
     # rpe_multipliers_by_exercise, keyed by Exercise.id (same keys per ex).
     rpe_multipliers = Column(JSONB, nullable=True)
     rpe_multipliers_by_exercise = Column(JSONB, nullable=True)
+    # How the suggested progression behaves (rep range before weight, weight
+    # jumps, skip-ahead, what to do when slipping). Shape is the client's
+    # ProgressionPrefs; null = the client's defaults.
+    progression_prefs = Column(JSONB, nullable=True)
     # Gym location + training-reminder preferences. When a home gym is saved
     # (lat/lng), the client can detect when the user is physically there and
     # surface a "start your usual training" prompt. `gym_radius_m` is the

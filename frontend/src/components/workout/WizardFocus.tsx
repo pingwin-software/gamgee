@@ -58,7 +58,7 @@ export default function WizardFocus({ focus, setFocus, onBack, onNext }: Props) 
       <div className="wz-hdr">
         <button className="wz-back" onClick={onBack}><X size={12} /> Cancel</button>
         <span className="wz-focus-label">STEP 1: FOCUS</span>
-        <button className="wz-next" onClick={onNext} disabled={!focus}>CARDIO <ChevronRight size={13} /></button>
+        <button className="wz-next" onClick={onNext} disabled={!focus}>BUILD <ChevronRight size={13} /></button>
       </div>
       <div className="wizard-title">{t("What are we training?", "What are we DESTROYING today?", "What are we SERVING today?")}</div>
       <div className="wizard-sub">{t("Pick a focus to get smart exercise suggestions", "Pick your battleground and we'll arm you with the right exercises", "Pick your vibe and we'll line up the right moves")}</div>
@@ -73,18 +73,26 @@ export default function WizardFocus({ focus, setFocus, onBack, onNext }: Props) 
 
       <div className="focus-grid">
         {Object.entries(FOCUS).map(([k, f]) => (
-          <div key={k} className={`focus-card${focus === k ? " selected" : ""}`} onClick={() => selectAndAdvance(k)}>
+          <button type="button" key={k} className={`focus-card${focus === k ? " selected" : ""}`} aria-pressed={focus === k} onClick={() => selectAndAdvance(k)}>
             <div className="focus-icon"><f.icon size={24} /></div>
             <div className="focus-name">{f.name}</div>
             <div className="focus-desc">{f.desc}</div>
-          </div>
+          </button>
         ))}
 
         {customs.map(cf => {
           const IconComp = (ICON_OPTIONS.find(o => o.name === cf.iconName) ?? ICON_OPTIONS[0]).icon;
           return (
-            <div key={cf.id} className={`focus-card focus-card-custom${focus === cf.id ? " selected" : ""}`} onClick={() => selectAndAdvance(cf.id)}>
-              <button className="focus-card-del" onClick={(e) => handleDelete(cf.id, e)} title="Delete"><Trash2 size={11} /></button>
+            <div
+              key={cf.id}
+              role="button"
+              tabIndex={0}
+              aria-pressed={focus === cf.id}
+              className={`focus-card focus-card-custom${focus === cf.id ? " selected" : ""}`}
+              onClick={() => selectAndAdvance(cf.id)}
+              onKeyDown={e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selectAndAdvance(cf.id); } }}
+            >
+              <button className="focus-card-del" onClick={(e) => handleDelete(cf.id, e)} title="Delete" aria-label={`Delete ${cf.name}`}><Trash2 size={11} /></button>
               <div className="focus-icon"><IconComp size={24} /></div>
               <div className="focus-name">{cf.name}</div>
               <div className="focus-desc">{cf.desc}</div>
@@ -92,11 +100,11 @@ export default function WizardFocus({ focus, setFocus, onBack, onNext }: Props) 
           );
         })}
 
-        <div className="focus-card focus-card-create" onClick={() => setCreating(true)}>
+        <button type="button" className="focus-card focus-card-create" onClick={() => setCreating(true)}>
           <div className="focus-icon" style={{ color: "var(--muted)" }}><Plus size={24} /></div>
           <div className="focus-name" style={{ color: "var(--muted)" }}>Custom</div>
           <div className="focus-desc">{t("Create your own type", "Make it yours")}</div>
-        </div>
+        </button>
       </div>
 
       {creating && (

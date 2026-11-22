@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
-import { Zap, ClipboardList, Trophy, Heart, Brain, User, LogOut, Menu, X, Shield, Wrench, Users, Bell, MessageSquare, ChevronDown, HelpCircle, GraduationCap, MessagesSquare, Calendar, Settings, Sparkles } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Zap, ClipboardList, Trophy, Heart, Brain, User, LogOut, Menu, X, Shield, Wrench, Users, Bell, MessageSquare, ChevronDown, HelpCircle, GraduationCap, MessagesSquare, Calendar, Settings, Sparkles, TrendingUp } from "lucide-react";
+import "../simple.css";
 import { fmtClock } from "../utils";
 import { useTxt } from "../context/ToneContext";
 import { useOnboarding } from "../context/OnboardingContext";
@@ -30,6 +31,7 @@ interface Props {
 export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback, onOpenWhatsNew }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [lastPage, setLastPage] = useState<Record<string, string>>({});
   const t = useTxt();
   const { openWelcome } = useOnboarding();
   const workoutLabel = active ? "ACTIVE" : wStep > 0 ? "BUILD" : "WORKOUT";
@@ -42,48 +44,53 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
     openWelcome();
   };
 
-  // `inMenuOnly` tabs don't render in the desktop .tabs row — only in the
-  // hamburger drawer. Keeps the top row from getting overcrowded.
+  // Every page, by key. Pages are grouped into five sections (below); the
+  // sections are the top-level navigation, the pages the strip under it.
   const tabs = [
-    { key: "workout",       Icon: Zap,           label: workoutLabel,  badge: null,                    inMenuOnly: false },
-    { key: "history",       Icon: ClipboardList, label: "HISTORY",     badge: historyCount || null,    inMenuOnly: false },
-    { key: "prs",           Icon: Trophy,        label: "PRs",         badge: prCount || null,         inMenuOnly: false },
-    { key: "buddies",       Icon: Users,         label: "BUDDIES",     badge: buddyCount || null,      inMenuOnly: false },
-    { key: "chat",          Icon: MessagesSquare, label: "CHAT",       badge: unreadChat || null,      inMenuOnly: false },
-    { key: "regimes",       Icon: Calendar,      label: "REGIMES",     badge: assignmentCount || null, inMenuOnly: false },
-    { key: "coaching",      Icon: GraduationCap, label: "COACHING",    badge: null,                    inMenuOnly: !isTrainer },
-    { key: "trainees",      Icon: GraduationCap, label: "TRAINEES",    badge: traineeCount || null,    inMenuOnly: !isTrainer },
-    { key: "health",        Icon: Heart,         label: "HEALTH",      badge: null,                    inMenuOnly: true },
-    { key: "coach",         Icon: Brain,         label: "COACH",       badge: coachCount || null,      inMenuOnly: true },
-    { key: "exercises",     Icon: Wrench,        label: "EXERCISES",   badge: null,                    inMenuOnly: true },
-    { key: "notifications", Icon: Bell,          label: "NOTIFICATIONS", badge: unreadNotif || null,   inMenuOnly: true  },
-    { key: "profile",       Icon: User,          label: "PROFILE",     badge: null,                    inMenuOnly: false },
-    { key: "settings",      Icon: Settings,      label: "SETTINGS",    badge: null,                    inMenuOnly: true  },
+    { key: "workout",       Icon: Zap,           label: workoutLabel,  badge: null },
+    { key: "exercises",     Icon: Wrench,        label: "EXERCISES",   badge: null },
+    { key: "history",       Icon: ClipboardList, label: "HISTORY",     badge: historyCount || null },
+    { key: "prs",           Icon: Trophy,        label: "PRs",         badge: prCount || null },
+    { key: "coach",         Icon: Brain,         label: "TRENDS",      badge: coachCount || null },
+    { key: "health",        Icon: Heart,         label: "BODY",        badge: null },
+    { key: "buddies",       Icon: Users,         label: "BUDDIES",     badge: buddyCount || null },
+    { key: "chat",          Icon: MessagesSquare, label: "CHAT",       badge: unreadChat || null },
+    { key: "notifications", Icon: Bell,          label: "ALERTS",      badge: unreadNotif || null },
+    { key: "regimes",       Icon: Calendar,      label: "REGIMES",     badge: assignmentCount || null },
+    { key: "coaching",      Icon: GraduationCap, label: "COACHING",    badge: null },
+    { key: "trainees",      Icon: GraduationCap, label: "TRAINEES",    badge: traineeCount || null },
+    { key: "profile",       Icon: User,          label: "ME",          badge: null },
   ];
 
-  // Hamburger menu structure: top-level items (important) + collapsible groups.
   type MenuItem = { key: string };
-  type MenuGroup = { id: string; label: string; items: MenuItem[] };
-  type MenuEntry = MenuItem | MenuGroup;
-  const isGroup = (e: MenuEntry): e is MenuGroup => "items" in e;
+  type MenuGroup = { id: string; label: string; Icon: typeof Zap; items: MenuItem[] };
 
-  const coachingItems: MenuItem[] = [{ key: "coaching" }, { key: "regimes" }];
-  if (isTrainer) coachingItems.push({ key: "trainees" });
-  const menuStructure: MenuEntry[] = [
-    { key: "workout" },
-    { id: "progress", label: "Progress", items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
-    { id: "social",   label: "Social",   items: [{ key: "buddies" }, { key: "chat" }, { key: "notifications" }] },
-    { id: "coaching", label: isTrainer ? "Coaching" : "Coaching & Plans", items: coachingItems },
-    { key: "exercises" },
-    { key: "profile" },
-    { key: "settings" },
+  const planItems: MenuItem[] = [{ key: "regimes" }, { key: "coaching" }];
+  if (isTrainer) planItems.push({ key: "trainees" });
+  const sections: MenuGroup[] = [
+    { id: "train",    label: "Train",    Icon: Zap,        items: [{ key: "workout" }, { key: "exercises" }] },
+    { id: "progress", label: "Progress", Icon: TrendingUp, items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
+    { id: "social",   label: "Social",   Icon: Users,      items: [{ key: "buddies" }, { key: "chat" }, { key: "notifications" }] },
+    { id: "plans",    label: "Plans",    Icon: Calendar,   items: planItems },
+    { id: "me",       label: "Me",       Icon: User,       items: [{ key: "profile" }] },
   ];
+  const menuStructure = sections;
+  const isGroup = (_e: MenuGroup): _e is MenuGroup => true;
 
   const tabByKey = Object.fromEntries(tabs.map(t => [t.key, t]));
 
   // Auto-expand whichever group contains the active tab so the user can see where they are.
-  const groupForTab = (key: string) =>
-    menuStructure.find((e): e is MenuGroup => isGroup(e) && e.items.some(i => i.key === key))?.id;
+  const groupForTab = (key: string) => sections.find(g => g.items.some(i => i.key === key))?.id;
+  const currentSection = sections.find(g => g.id === groupForTab(tab)) ?? sections[0];
+  const badgeOf = (g: MenuGroup) =>
+    g.items.reduce((sum, i) => sum + (typeof tabByKey[i.key]?.badge === "number" ? (tabByKey[i.key].badge as number) : 0), 0);
+  // A section reopens on the page it was last left on.
+  const openSection = (g: MenuGroup) => {
+    if (g.id === currentSection.id) return;
+    setTab(lastPage[g.id] && g.items.some(i => i.key === lastPage[g.id]) ? lastPage[g.id] : g.items[0].key);
+  };
+  // The page strip steps aside while a workout is being built or logged.
+  const focused = tab === "workout" && (active || wStep > 0);
 
   const handleTabSelect = (key: string) => {
     setTab(key);
@@ -113,6 +120,10 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
   };
 
   const activeTabDef = tabs.find(t => t.key === tab);
+  const sectionId = currentSection.id;
+  useEffect(() => {
+    setLastPage(prev => (prev[sectionId] === tab ? prev : { ...prev, [sectionId]: tab }));
+  }, [sectionId, tab]);
 
   return (
     <>
@@ -137,7 +148,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
           <div className="hdr-actions">
             {notifBell}
             <button
-              className={`logout-btn hdr-settings-btn${tab === "settings" ? " active" : ""}`}
+              className="logout-btn hdr-settings-btn"
               onClick={() => setTab("settings")}
               title={t("Settings", "Settings", "Settings")}
               aria-label="Settings"
@@ -169,23 +180,38 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
           </div>
         </div>
         <div className="tabs">
-          {tabs.filter(t => !t.inMenuOnly).map(({ key, Icon, label, badge }) => (
-            <button key={key} className={`tab ${tab === key ? "active" : ""}`} onClick={() => setTab(key)}>
-              <Icon size={12} />
-              <span className="tab-label">{label}</span>
-              {badge !== null && <span className="tab-badge">{badge}</span>}
-            </button>
-          ))}
+          {sections.map(g => {
+            const badge = badgeOf(g);
+            return (
+              <button key={g.id} className={`tab ${currentSection.id === g.id ? "active" : ""}`} onClick={() => openSection(g)}>
+                <g.Icon size={12} />
+                <span className="tab-label">{g.label.toUpperCase()}</span>
+                {badge > 0 && currentSection.id !== g.id && <span className="tab-badge">{badge}</span>}
+              </button>
+            );
+          })}
         </div>
+        {currentSection.items.length > 1 && !focused && (
+          <div className="subtabs" role="tablist" aria-label={currentSection.label}>
+            {currentSection.items.map(i => {
+              const def = tabByKey[i.key];
+              if (!def) return null;
+              return (
+                <button key={i.key} role="tab" aria-selected={tab === i.key} className={`subtab${tab === i.key ? " active" : ""}`} onClick={() => setTab(i.key)}>
+                  {def.label}
+                  {def.badge !== null && <span className="tab-badge">{def.badge}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {menuOpen && (
           <nav className="mobile-nav">
             {menuStructure.map(entry => {
-              if (!isGroup(entry)) return renderMenuItem(entry.key);
+              if (!isGroup(entry)) return null;
+              if (entry.items.length === 1) return renderMenuItem(entry.items[0].key);
               const open = isGroupOpen(entry.id);
-              const groupBadge = entry.items.reduce((sum, i) => {
-                const b = tabByKey[i.key]?.badge;
-                return sum + (typeof b === "number" ? b : 0);
-              }, 0);
+              const groupBadge = badgeOf(entry);
               return (
                 <div key={entry.id} className={`mobile-nav-group${open ? " open" : ""}`}>
                   <button
@@ -254,6 +280,25 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
       </div>
       {menuOpen && (
         <div className="mobile-nav-backdrop" onClick={() => setMenuOpen(false)} />
+      )}
+      {/* Phones: the five sections along the bottom, under the thumb. It
+          steps aside while a workout is being built or logged. */}
+      {!focused && (
+        <nav className="bottom-nav" aria-label="Sections">
+          {sections.map(g => {
+            const badge = badgeOf(g);
+            const on = currentSection.id === g.id;
+            return (
+              <button key={g.id} type="button" className={`bottom-nav-btn${on ? " active" : ""}`} aria-current={on ? "page" : undefined} onClick={() => openSection(g)}>
+                <span className="bottom-nav-icon">
+                  <g.Icon size={20} />
+                  {badge > 0 && !on && <span className="bottom-nav-badge">{badge > 99 ? "99+" : badge}</span>}
+                </span>
+                <span className="bottom-nav-label">{g.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       )}
     </>
   );

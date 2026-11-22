@@ -10,6 +10,8 @@ import { prescribeExercise, weightForRpe } from "../../analysis";
 import { orm1 } from "../../utils";
 import { UPPER_IDS } from "../../constants";
 import NumField from "../NumField";
+import Stepper from "../Stepper";
+import EffortPicker from "../EffortPicker";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -263,16 +265,8 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         <div className="re-popover-section">
           <div className="re-popover-row">
             <span style={{ fontSize: 12, color: "var(--muted)" }}>Effort (RPE)</span>
-            <strong style={{ fontSize: 16 }}>{rpe}</strong>
           </div>
-          <input
-            type="range" min={1} max={10} step={1} value={rpe}
-            onChange={e => setExerciseConfig(exId, { rpe: Number(e.target.value) })}
-            style={{ width: "100%" }}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)" }}>
-            <span>1 easy</span><span>10 max</span>
-          </div>
+          <EffortPicker value={rpe} onChange={v => setExerciseConfig(exId, { rpe: v })} label="Effort (1 easy, 10 max)" />
         </div>
 
         <div className="re-popover-section">
@@ -308,34 +302,13 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         <div className="re-popover-section">
           <div className="re-popover-grid">
             <label>Warmup sets
-              <NumField
-                key={exId}
-                value={warmupSets}
-                min={0}
-                max={6}
-                fallback={DEFAULT_WARMUP_SETS}
-                onCommit={v => setExerciseConfig(exId, { warmup_sets: v })}
-              />
+              <Stepper value={warmupSets} min={0} max={6} label="Warmup sets" onChange={v => setExerciseConfig(exId, { warmup_sets: v })} />
             </label>
             <label>Working sets
-              <NumField
-                key={exId}
-                value={workingSets}
-                min={1}
-                max={10}
-                fallback={DEFAULT_WORKING_SETS}
-                onCommit={v => setExerciseConfig(exId, { working_sets: v })}
-              />
+              <Stepper value={workingSets} min={1} max={10} label="Working sets" onChange={v => setExerciseConfig(exId, { working_sets: v })} />
             </label>
             <label>Reps / set
-              <NumField
-                key={exId}
-                value={workingReps}
-                min={1}
-                max={30}
-                fallback={DEFAULT_WORKING_REPS}
-                onCommit={v => setExerciseConfig(exId, { working_reps: v })}
-              />
+              <Stepper value={workingReps} min={1} max={30} label="Reps per set" onChange={v => setExerciseConfig(exId, { working_reps: v })} />
             </label>
           </div>
         </div>

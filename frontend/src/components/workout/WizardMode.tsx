@@ -115,7 +115,7 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
 
       {/* Mode cards */}
       <div className="wm-options">
-        <div className="focus-card" onClick={onSingle} style={{ gridColumn: "1 / -1" }}>
+        <button type="button" className="focus-card" onClick={onSingle} style={{ gridColumn: "1 / -1" }}>
           <div className="focus-icon"><Zap size={24} /></div>
           <div className="focus-name">{t("One-Off", "Go Rogue", "Off-Script")}</div>
           <div className="focus-desc">
@@ -125,9 +125,9 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
               "Pick your moves up front. Save 'em as a template, add more ad-hoc as you go."
             )}
           </div>
-        </div>
+        </button>
 
-        <div className="focus-card" onClick={onSetupPlan} style={{ gridColumn: "1 / -1" }}>
+        <button type="button" className="focus-card" onClick={onSetupPlan} style={{ gridColumn: "1 / -1" }}>
           <div className="focus-icon"><Calendar size={24} /></div>
           <div className="focus-name">
             {hasAnyPlan ? t("Edit Regime", "Edit The Regime", "Edit The Era") : t("Weekly Regime", "Build The Regime", "Map The Era")}
@@ -137,7 +137,7 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
               ? t("Edit your recurring weekly regime.", "Tweak your weekly regime.", "Tweak your weekly era.")
               : t("Set up a recurring weekly regime — same routine, same days.", "Build a weekly regime. Same routine, same days. Show up. Grow.", "Map a weekly regime, bestie. Same routine, same days. Show up. Glow up.")}
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Saved templates — one tap loads a blueprint straight into the build step.

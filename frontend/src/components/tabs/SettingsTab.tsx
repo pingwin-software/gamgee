@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Timer, MapPin } from "lucide-react";
+import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info } from "lucide-react";
 import { useTxt, type ToneMode } from "../../context/ToneContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import {
@@ -10,6 +10,9 @@ import type { RestPrefs, WizardTransitionStyle, ThemeMode, GymPrefs } from "../.
 import { DEFAULT_REST_PREFS, DEFAULT_GYM_RADIUS_M } from "../../types";
 import { APP_VERSION } from "../../version";
 import PasskeysCard from "../PasskeysCard";
+import ProgressionCard from "../ProgressionCard";
+import type { ProgressionPrefs } from "../../progressionPrefs";
+import "../../simple.css";
 
 type Gender = "female" | "male" | "non_binary" | "other" | "prefer_not_to_say";
 
@@ -44,6 +47,26 @@ interface Props {
   theme:                    ThemeMode;
   onThemeChange:            (next: ThemeMode) => void;
   authFetch:       (url: string, opts?: RequestInit) => Promise<Response>;
+  progressionPrefs:         ProgressionPrefs;
+  onProgressionPrefsChange: (next: ProgressionPrefs) => void;
+}
+
+/** One group of settings: a row that opens. Closed, the page is a short list
+ * of seven rows; which ones are open is remembered for the visit. */
+function Group({ id, title, Icon, children }: { id: string; title: string; Icon: typeof Bell; children: React.ReactNode }) {
+  const key = `gamgee_settings_open_${id}`;
+  const [open, setOpen] = useState(() => sessionStorage.getItem(key) === "1");
+  const toggle = () => setOpen(o => { sessionStorage.setItem(key, o ? "0" : "1"); return !o; });
+  return (
+    <section className={`set-group${open ? " open" : ""}`}>
+      <button type="button" className="set-group-head" aria-expanded={open} onClick={toggle}>
+        <span className="set-group-icon"><Icon size={17} /></span>
+        <span className="set-group-title">{title}</span>
+        <ChevronDown size={17} className={`set-group-chev${open ? " flip" : ""}`} />
+      </button>
+      {open && <div className="set-group-body">{children}</div>}
+    </section>
+  );
 }
 
 const PALETTE = [
@@ -973,52 +996,62 @@ export default function SettingsTab({
   wizardTransition, onWizardTransitionChange,
   reducedMotion, onReducedMotionChange,
   theme, onThemeChange,
-  authFetch,
+  authFetch, progressionPrefs, onProgressionPrefsChange,
 }: Props) {
   const t = useTxt();
 
   return (
-    <div className="tab-anim">
-      <div className="profile-section">{t("Profile", "Profile")}</div>
-      <EditProfileCard
-        name={name}
-        email={email}
-        gender={gender}
-        bodyweightKg={bodyweightKg}
-        heightCm={heightCm}
-        token={token}
-        onSave={onProfileUpdate}
-      />
+    <div className="tab-anim set-groups">
+      <div className="profile-section">{t("Settings", "Settings", "Settings")}</div>
 
-      <div className="profile-section">{t("Appearance", "Appearance")}</div>
-      <ThemeCard value={theme} onChange={onThemeChange} />
-      <ToneToggle toneMode={toneMode} onToneChange={onToneChange} />
-      <ColorPicker color={primaryColor} onChange={onColorChange} token={token} />
-      <WizardTransitionCard value={wizardTransition} onChange={onWizardTransitionChange} />
-      <ReducedMotionCard value={reducedMotion} onChange={onReducedMotionChange} />
+      <Group id="profile" title={t("Profile", "Profile")} Icon={UserRound}>
+        <EditProfileCard
+          name={name}
+          email={email}
+          gender={gender}
+          bodyweightKg={bodyweightKg}
+          heightCm={heightCm}
+          token={token}
+          onSave={onProfileUpdate}
+        />
+      </Group>
 
-      <div className="profile-section">{t("Workout", "Workout")}</div>
-      <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
-      <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />
+      <Group id="workout" title={t("Workout", "Workout")} Icon={Dumbbell}>
+        <ProgressionCard prefs={progressionPrefs} onChange={onProgressionPrefsChange} />
+        <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
+        <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />
+      </Group>
 
-      <div className="profile-section">{t("Notifications", "Notifications")}</div>
-      <PushToggleCard authFetch={authFetch} />
-      <NotificationTypesCard authFetch={authFetch} />
+      <Group id="appearance" title={t("Appearance", "Appearance")} Icon={Palette}>
+        <ThemeCard value={theme} onChange={onThemeChange} />
+        <ColorPicker color={primaryColor} onChange={onColorChange} token={token} />
+        <ToneToggle toneMode={toneMode} onToneChange={onToneChange} />
+        <WizardTransitionCard value={wizardTransition} onChange={onWizardTransitionChange} />
+        <ReducedMotionCard value={reducedMotion} onChange={onReducedMotionChange} />
+      </Group>
 
-      <div className="profile-section">{t("Guidance", "Guidance", "Guidance")}</div>
-      <OnboardingCard />
+      <Group id="notifications" title={t("Notifications", "Notifications")} Icon={BellRing}>
+        <PushToggleCard authFetch={authFetch} />
+        <NotificationTypesCard authFetch={authFetch} />
+      </Group>
 
-      <div className="profile-section">{t("Account", "Account")}</div>
-      <ChangePasswordCard token={token} />
-      <PasskeysCard authFetch={authFetch} />
+      <Group id="account" title={t("Account", "Account")} Icon={ShieldCheck}>
+        <ChangePasswordCard token={token} />
+        <PasskeysCard authFetch={authFetch} />
+      </Group>
 
-      <AboutCard authFetch={authFetch} />
+      <Group id="guidance" title={t("Guidance", "Guidance", "Guidance")} Icon={Compass}>
+        <OnboardingCard />
+      </Group>
+
+      <Group id="about" title={t("About", "About", "About")} Icon={Info}>
+        <AboutCard authFetch={authFetch} />
+      </Group>
     </div>
   );
 }
 
 function AboutCard({ authFetch }: { authFetch: (url: string, opts?: RequestInit) => Promise<Response> }) {
-  const t = useTxt();
   const [apiVersion, setApiVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1032,7 +1065,6 @@ function AboutCard({ authFetch }: { authFetch: (url: string, opts?: RequestInit)
 
   return (
     <>
-      <div className="profile-section">{t("About", "About", "About")}</div>
       <div className="profile-card">
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)" }}>
           <span>App version</span>

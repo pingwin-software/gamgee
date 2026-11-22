@@ -1,6 +1,7 @@
 import type { WorkoutSession, WorkoutSet, StatusDef, ExerciseConfig, ProgressionOverride } from "./types";
 import { UPPER_IDS, STATUS } from "./constants";
 import { orm1, e1rmWithRir, rpeToRir } from "./utils";
+import { getProgressionPrefs, type ProgressionPrefs } from "./progressionPrefs";
 
 export interface SessionSummary {
   date: string;
@@ -67,6 +68,9 @@ export function analyzeEx(
   exId: string,
   history: WorkoutSession[],
   override?: ProgressionOverride | null,
+  /** How the suggestion behaves (rep range, weight jumps, when to skip ahead,
+   * what to do when slipping). Defaults to the user's saved settings. */
+  prefs: ProgressionPrefs = getProgressionPrefs(),
 ): AnalysisResult | null {
   // Fold a manual steer over a computed result: keep the trend/sessions/est1RM
   // but hand back the user's target and flag it as steered.
@@ -111,8 +115,10 @@ export function analyzeEx(
   if (!sessions.length) return null;
 
   const last = sessions[sessions.length - 1];
-  const plate = UPPER_IDS.has(exId) ? 2.5 : 5;
-  const roundPlate = (raw: number) => Math.max(plate, Math.round(raw / plate) * plate);
+  const plate = UPPER_IDS.has(exId) ? prefs.stepUpperKg : prefs.stepLowerKg;
+  // Round to the jump size (hundredths kept so 1.25 kg steps survive float maths).
+  const roundPlate = (raw: number) => Math.max(plate, Math.round(Math.round(raw / plate) * plate * 100) / 100);
+  const easyAt = prefs.easyRir;
   const targetReps = last.topR > 0 ? last.topR : 8;
   const est1RM = last.topR > 0 ? last.e1rm : null;
 
@@ -123,7 +129,7 @@ export function analyzeEx(
     let nextWeight = last.topW;
     let nextReps = targetReps;
     let reason: string;
-    if (rir != null && rir >= 3) {
+    if (rir != null && easyAt != null && rir >= easyAt) {
       nextWeight = roundPlate(last.topW + plate);
       reason = `First time logging this — you left ~${rir} in the tank, so add ${plate}kg next time.`;
     } else if (rir != null && rir <= 1) {
@@ -159,13 +165,13 @@ export function analyzeEx(
     .filter(s => Math.abs(s.topW - last.topW) < 1e-6 && s.topR > 0)
     .map(s => s.topR);
   const floor = repsAtTopW.length ? Math.min(...repsAtTopW) : (last.topR > 0 ? last.topR : 8);
-  const repWindow = floor <= 5 ? 2 : 3;
+  const repWindow = prefs.repsBeforeWeight ?? (floor <= 5 ? 2 : 3);
   const ceiling = floor + repWindow;
   const plateUp = roundPlate(last.topW + plate);
   const rir = last.topRir;
   // A top set with reps still in the tank earns the plate early — no need to
   // grind out every rep in the range first when the load was clearly light.
-  const easyHeadroom = rir != null && rir >= 3;
+  const easyHeadroom = rir != null && easyAt != null && rir >= easyAt;
   const atCeiling = last.topR >= ceiling;
 
   let status: StatusDef;
@@ -177,7 +183,10 @@ export function analyzeEx(
     // Genuinely slipping and already at the bottom of the range — back the load
     // off a plate and rebuild the reps from there.
     status = STATUS.SLIPPING;
-    nextWeight = Math.max(plate, roundPlate(last.topW - plate));
+    nextWeight =
+      prefs.onSlip === "hold"    ? last.topW :
+      prefs.onSlip === "percent" ? Math.max(plate, Math.min(roundPlate(last.topW * 0.9), roundPlate(last.topW - plate))) :
+                                   Math.max(plate, roundPlate(last.topW - plate));
     nextReps = ceiling;
     reason = nextWeight < last.topW
       ? `Drifting down lately. Drop to ${nextWeight}kg and rebuild toward ${ceiling} reps before pushing on.`
@@ -429,9 +438,10 @@ export interface ExercisePrescription {
 
 /** Round to the nearest plate increment we'd actually load on a barbell. */
 function roundToPlate(weight: number, exId: string): number {
-  const plate = UPPER_IDS.has(exId) ? 2.5 : 5;
+  const prefs = getProgressionPrefs();
+  const plate = UPPER_IDS.has(exId) ? prefs.stepUpperKg : prefs.stepLowerKg;
   if (!Number.isFinite(weight) || weight <= 0) return 0;
-  return Math.max(plate, Math.round(weight / plate) * plate);
+  return Math.max(plate, Math.round(Math.round(weight / plate) * plate * 100) / 100);
 }
 
 /** Pick a working weight that the user could complete for `target_reps` at

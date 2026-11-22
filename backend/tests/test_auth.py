@@ -271,3 +271,29 @@ def test_gym_preferences_rejects_out_of_range(client: TestClient, auth_headers):
     assert res.status_code == 422
     res = client.patch("/api/auth/gym-preferences", json={"gym_radius_m": 1}, headers=auth_headers)
     assert res.status_code == 422
+
+
+def test_progression_prefs_are_saved_checked_and_cleared(client, auth_headers):
+    prefs = {"repsBeforeWeight": 1, "stepUpperKg": 1.25, "stepLowerKg": 5, "easyRir": None, "onSlip": "hold"}
+    res = client.patch("/api/auth/preferences", json={"progression_prefs": prefs}, headers=auth_headers)
+    assert res.status_code == 200, res.text
+    assert client.get("/api/auth/me", headers=auth_headers).json()["progression_prefs"] == prefs
+
+    bad = client.patch("/api/auth/preferences", json={"progression_prefs": {"stepUpperKg": 500}}, headers=auth_headers)
+    assert bad.status_code == 422
+    bad = client.patch("/api/auth/preferences", json={"progression_prefs": {"onSlip": "panic"}}, headers=auth_headers)
+    assert bad.status_code == 422
+
+    # Another preference leaves it alone; an explicit null clears it.
+    client.patch("/api/auth/preferences", json={"primary_color": "#28D1FF"}, headers=auth_headers)
+    assert client.get("/api/auth/me", headers=auth_headers).json()["progression_prefs"] == prefs
+    client.patch("/api/auth/preferences", json={"progression_prefs": None}, headers=auth_headers)
+    assert client.get("/api/auth/me", headers=auth_headers).json()["progression_prefs"] is None
+
+
+def test_a_session_in_use_gets_a_fresh_token(client, auth_headers):
+    res = client.post("/api/auth/refresh", headers=auth_headers)
+    assert res.status_code == 200, res.text
+    fresh = {"Authorization": f"Bearer {res.json()['access_token']}"}
+    assert client.get("/api/auth/me", headers=fresh).status_code == 200
+    assert client.post("/api/auth/refresh").status_code == 401
