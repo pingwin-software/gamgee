@@ -285,23 +285,32 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
       {menuOpen && (
         <div className="mobile-nav-backdrop" onClick={() => setMenuOpen(false)} />
       )}
-      {/* Phones: the five sections along the bottom, under the thumb. It
-          steps aside while a workout is being built or logged. */}
+      {/* Phones: the five sections in a dock floating at the bottom, under the
+          thumb. One solid pill glides to the picked section, stretching as it
+          goes; the mark it lands on jumps. The dock steps aside while a
+          workout is being built or logged. */}
       {!focused && (
         <nav className="bottom-nav" aria-label="Sections">
-          {sections.map(g => {
-            const badge = badgeOf(g);
-            const on = currentSection.id === g.id;
-            return (
-              <button key={g.id} type="button" className={`bottom-nav-btn${on ? " active" : ""}`} aria-current={on ? "page" : undefined} onClick={() => openSection(g)}>
-                <span className="bottom-nav-icon">
-                  <g.Icon size={20} />
-                  {badge > 0 && !on && <span className="bottom-nav-badge">{badge > 99 ? "99+" : badge}</span>}
-                </span>
-                <span className="bottom-nav-label">{g.label}</span>
-              </button>
-            );
-          })}
+          <div className="bottom-nav-track" style={{ ["--tab" as string]: sections.findIndex(g => g.id === currentSection.id), ["--tabs" as string]: sections.length }}>
+            <span className="bottom-nav-glider" aria-hidden="true">
+              {/* Keyed, so the pill stretches as it sets off each time. */}
+              <span key={currentSection.id} className="bottom-nav-glider-pill" />
+            </span>
+            {sections.map(g => {
+              const badge = badgeOf(g);
+              const on = currentSection.id === g.id;
+              return (
+                <button key={g.id} type="button" className={`bottom-nav-btn${on ? " active" : ""}`} aria-current={on ? "page" : undefined} onClick={() => openSection(g)}>
+                  <span className="bottom-nav-icon">
+                    {/* Keyed, so the mark jumps each time its tab is picked. */}
+                    <g.Icon key={on ? "on" : "off"} size={26} strokeWidth={on ? 2.6 : 2} className="bottom-nav-mark" />
+                    {badge > 0 && !on && <span className="bottom-nav-badge">{badge > 99 ? "99+" : badge}</span>}
+                  </span>
+                  <span className="bottom-nav-label">{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </nav>
       )}
     </>

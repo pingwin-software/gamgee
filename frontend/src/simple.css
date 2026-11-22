@@ -210,39 +210,82 @@ button.focus-card { font: inherit; color: inherit; width: 100%; display: block; 
 .bottom-nav { display: none; }
 @media (max-width: 480px) {
   .bottom-nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-    display: flex; justify-content: space-around;
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--s1) 88%, transparent);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    border-top: 1px solid var(--border);
+    position: fixed; z-index: 90;
+    left: 10px; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom));
+    display: block; height: 74px; padding: 8px 6px;
+    border-radius: 26px; border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--s1) 84%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent);
+    animation: dock-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bottom-nav { background: var(--s1); }
   }
+  .bottom-nav-track { position: relative; display: grid; grid-template-columns: repeat(var(--tabs, 5), 1fr); height: 100%; }
+  .bottom-nav-glider {
+    position: absolute; top: 0; left: 0; height: 38px; width: calc(100% / var(--tabs, 5));
+    transform: translateX(calc(var(--tab, 0) * 100%));
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .bottom-nav-glider-pill {
+    position: absolute; inset: 0; width: 58px; margin: 0 auto; border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 45%, transparent);
+    animation: dock-stretch 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* The ring that spreads from the pill as it lands. */
+  .bottom-nav-glider-pill::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    border: 2px solid var(--primary); opacity: 0;
+    animation: dock-ring 0.6s 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
   .bottom-nav-btn {
-    flex: 1; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    background: none; border: none; cursor: pointer; color: var(--muted); border-radius: 12px;
-    -webkit-tap-highlight-color: transparent;
+    position: relative; min-width: 0; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s;
   }
-  .bottom-nav-icon { position: relative; display: grid; place-items: center; width: 44px; height: 26px; border-radius: 999px; transition: background 0.2s, transform 0.2s; }
+  .bottom-nav-icon {
+    position: relative; display: grid; place-items: center; width: 58px; height: 38px; border-radius: 999px;
+    transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* The press: the mark sinks under the finger before it jumps. */
+  .bottom-nav-btn:active .bottom-nav-icon { transform: scale(0.84); }
   .bottom-nav-btn.active { color: var(--accent); }
-  .bottom-nav-btn.active .bottom-nav-icon { background: var(--ad2); animation: nav-pop 0.3s ease; }
-  .bottom-nav-btn:active .bottom-nav-icon { transform: scale(0.9); }
-  .bottom-nav-label { font-size: 10px; font-weight: 700; }
+  .bottom-nav-btn.active .bottom-nav-icon { color: #04161E; }
+  .bottom-nav-btn.active .bottom-nav-mark { animation: dock-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .bottom-nav-btn:not(.active) .bottom-nav-mark { animation: dock-settle 0.25s ease-out; }
+  .bottom-nav-label { font-size: 11px; font-weight: 700; line-height: 1.1; transition: transform 0.25s, letter-spacing 0.25s; }
+  .bottom-nav-btn.active .bottom-nav-label { font-weight: 800; transform: translateY(-1px); letter-spacing: 0.02em; }
+  .bottom-nav-btn:focus-visible { outline: none; }
+  .bottom-nav-btn:focus-visible .bottom-nav-icon { box-shadow: 0 0 0 2px var(--s1), 0 0 0 4px var(--accent); }
   .bottom-nav-badge {
-    position: absolute; top: -4px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px;
-    border-radius: 999px; background: var(--red, #FF6B6B); color: #fff;
-    font-size: 9px; font-weight: 800; display: grid; place-items: center;
+    position: absolute; top: -2px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 999px; background: var(--red, #FF6B6B); color: #fff; border: 2px solid var(--s1);
+    font-size: 10px; font-weight: 800; display: grid; place-items: center;
+    animation: dock-badge 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  /* Room for the bar under the page, and the hamburger is no longer needed to get around. */
-  .content { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  /* Room for the dock under the page. */
+  .content { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
   .subtabs { margin: 0 -12px; padding: 0 12px 8px; }
 }
-@keyframes nav-pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+@keyframes dock-in { from { transform: translateY(130%); } }
+/* A jump with a tilt: up past its place, a small lean each way, then still. */
+@keyframes dock-pop {
+  0%   { transform: scale(0.6) translateY(6px) rotate(-14deg); }
+  45%  { transform: scale(1.22) translateY(-5px) rotate(8deg); }
+  70%  { transform: scale(0.95) translateY(1px) rotate(-3deg); }
+  100% { transform: none; }
+}
+@keyframes dock-settle { from { transform: scale(0.86); opacity: 0.6; } }
+@keyframes dock-stretch { 0% { transform: none; } 35% { transform: scaleX(1.34) scaleY(0.8); } 100% { transform: none; } }
+@keyframes dock-ring { from { opacity: 0.7; transform: scale(1); } to { opacity: 0; transform: scale(1.4, 1.65); } }
+@keyframes dock-badge { from { transform: scale(0); } }
 @media (prefers-reduced-motion: reduce) {
-  .bottom-nav-btn.active .bottom-nav-icon { animation: none; }
-  .bottom-nav-icon, .subtab { transition: none; }
+  .bottom-nav, .bottom-nav-glider-pill, .bottom-nav-glider-pill::after, .bottom-nav-mark, .bottom-nav-badge { animation: none !important; }
+  .bottom-nav-glider, .bottom-nav-icon, .bottom-nav-label, .subtab { transition: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .bottom-nav { background: var(--s1); -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -320,3 +363,15 @@ button.focus-card { font: inherit; color: inherit; width: 100%; display: block; 
   top: 2px; left: 50%; right: auto; transform: translateX(-50%);
   background: none; font-size: 9px; white-space: nowrap; animation: none;
 }
+
+/* The in-app Reduce motion switch (Settings, Appearance) stops the same loops
+   and jumps as the system setting. */
+:root[data-reduced-motion="1"] .bottom-nav,
+:root[data-reduced-motion="1"] .bottom-nav-glider-pill,
+:root[data-reduced-motion="1"] .bottom-nav-glider-pill::after,
+:root[data-reduced-motion="1"] .bottom-nav-mark,
+:root[data-reduced-motion="1"] .bottom-nav-badge,
+:root[data-reduced-motion="1"] .week-day.done .week-dot,
+:root[data-reduced-motion="1"] .set-group-body { animation: none !important; }
+:root[data-reduced-motion="1"] .bottom-nav-glider { transition: none; }
+@media (max-width: 480px) { .bottom-nav-label { font-size: 12px; } }
