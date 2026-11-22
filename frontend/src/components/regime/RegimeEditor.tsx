@@ -9,6 +9,7 @@ import { ALL_EX } from "../../data/exercises";
 import { prescribeExercise, weightForRpe } from "../../analysis";
 import { orm1 } from "../../utils";
 import { UPPER_IDS } from "../../constants";
+import NumField from "../NumField";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
@@ -280,23 +281,25 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
           </div>
           <div className="re-popover-grid">
             <label>Max weight (kg)
-              <input
-                type="number" min={0} step={2.5} value={maxW}
+              <NumField
+                key={exId}
+                value={cfg.max_weight}
+                min={0}
+                max={1000}
+                step={2.5}
+                decimal
                 placeholder="e.g. 100"
-                onChange={e => {
-                  const v = e.target.value === "" ? undefined : Math.max(0, Number(e.target.value) || 0);
-                  setExerciseConfig(exId, { max_weight: v });
-                }}
+                onCommit={v => setExerciseConfig(exId, { max_weight: v })}
               />
             </label>
             <label>Max reps @ that
-              <input
-                type="number" min={1} max={20} value={maxR}
+              <NumField
+                key={exId}
+                value={cfg.max_reps}
+                min={1}
+                max={30}
                 placeholder="e.g. 5"
-                onChange={e => {
-                  const v = e.target.value === "" ? undefined : Math.max(1, Number(e.target.value) || 1);
-                  setExerciseConfig(exId, { max_reps: v });
-                }}
+                onCommit={v => setExerciseConfig(exId, { max_reps: v })}
               />
             </label>
           </div>
@@ -305,21 +308,33 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
         <div className="re-popover-section">
           <div className="re-popover-grid">
             <label>Warmup sets
-              <input
-                type="number" min={0} max={6} value={warmupSets}
-                onChange={e => setExerciseConfig(exId, { warmup_sets: Math.max(0, Math.min(6, Number(e.target.value) || 0)) })}
+              <NumField
+                key={exId}
+                value={warmupSets}
+                min={0}
+                max={6}
+                fallback={DEFAULT_WARMUP_SETS}
+                onCommit={v => setExerciseConfig(exId, { warmup_sets: v })}
               />
             </label>
             <label>Working sets
-              <input
-                type="number" min={1} max={10} value={workingSets}
-                onChange={e => setExerciseConfig(exId, { working_sets: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
+              <NumField
+                key={exId}
+                value={workingSets}
+                min={1}
+                max={10}
+                fallback={DEFAULT_WORKING_SETS}
+                onCommit={v => setExerciseConfig(exId, { working_sets: v })}
               />
             </label>
             <label>Reps / set
-              <input
-                type="number" min={1} max={30} value={workingReps}
-                onChange={e => setExerciseConfig(exId, { working_reps: Math.max(1, Math.min(30, Number(e.target.value) || 1)) })}
+              <NumField
+                key={exId}
+                value={workingReps}
+                min={1}
+                max={30}
+                fallback={DEFAULT_WORKING_REPS}
+                onCommit={v => setExerciseConfig(exId, { working_reps: v })}
               />
             </label>
           </div>

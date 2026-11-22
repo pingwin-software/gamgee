@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dumbbell, Trophy, Activity, Brain } from "lucide-react";
+import { Dumbbell, Trophy, Activity, Brain, KeyRound } from "lucide-react";
+import { PasskeyCancelled, passkeysSupported, usePasskey } from "../passkeys";
+import "../whatsnew/WhatsNew.css";
 import { useTxt } from "../context/ToneContext";
 
 interface Props {
@@ -312,6 +314,30 @@ export default function AuthScreen({ onLogin, initialView = "login", initialToke
     }
   };
 
+  /** Use a passkey this device holds: no username, no password. */
+  const signInWithPasskey = async () => {
+    setErr(""); setBusy(true);
+    try {
+      const start = await fetch("/api/auth/passkey-login/options", { method: "POST" });
+      if (!start.ok) { setErr(extractError(await start.json().catch(() => ({})))); return; }
+      const { token, options } = await start.json();
+      const credential = await usePasskey(options);
+      const res = await fetch("/api/auth/passkey-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, credential }),
+      });
+      if (!res.ok) { setErr(extractError(await res.json().catch(() => ({})))); return; }
+      const data = await res.json();
+      localStorage.setItem("iron_log_token", data.access_token);
+      onLogin(data.access_token);
+    } catch (error) {
+      if (!(error instanceof PasskeyCancelled)) setErr(error instanceof Error ? error.message : "Network error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // ── Render helpers ─────────────────────────────────────────────────────────
 
   const heading =
@@ -598,6 +624,11 @@ export default function AuthScreen({ onLogin, initialView = "login", initialToke
 
         {view === "login" && (
           <>
+            {passkeysSupported() && (
+              <button type="button" className="auth-passkey" onClick={signInWithPasskey} disabled={busy}>
+                <KeyRound size={15} /> Use a passkey
+              </button>
+            )}
             <button className="auth-toggle" onClick={() => goto("forgot")}>
               Forgot your password?
             </button>

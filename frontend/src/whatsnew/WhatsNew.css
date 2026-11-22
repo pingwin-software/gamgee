@@ -1,0 +1,92 @@
+/* What's new sheet. The art's base styles are the end state of each loop:
+   under reduced motion (system or the in-app switch) the loops stop there. */
+.wn-modal { max-width: 420px; gap: 14px; }
+.wn-heading {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+}
+.wn-art {
+  height: 170px; border-radius: 12px; overflow: hidden;
+  background: var(--ad); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+/* Every page's words share one grid cell, so the sheet keeps one height. */
+.wn-cell { display: grid; }
+.wn-page { grid-area: 1 / 1; }
+.wn-page.is-ghost { visibility: hidden; }
+.wn-title { font-size: 18px; font-weight: 800; color: var(--text); margin: 0 0 6px; }
+.wn-body { font-size: 13px; line-height: 1.55; color: var(--muted); margin: 0; }
+.wn-body b { color: var(--text); font-weight: 700; }
+.wn-foot { display: flex; align-items: center; gap: 8px; }
+.wn-step { flex: 1; text-align: center; font-size: 11px; color: var(--muted); }
+.wn-foot .btn-secondary, .wn-foot .btn-primary { min-height: 44px; min-width: 88px; }
+.wn-foot .is-ghost { visibility: hidden; }
+
+/* ── Passkeys ─────────────────────────────────────────────────────────── */
+.wn-pk { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 210px; }
+.wn-pk-field {
+  width: 100%; height: 30px; border-radius: 8px; padding: 0 10px;
+  background: var(--s2); border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px; opacity: 0.35;
+  animation: wn-pk-field 5s ease-in-out infinite;
+}
+.wn-pk-field span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.wn-pk-btn {
+  width: 100%; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: var(--bg, #000); background: var(--accent);
+  animation: wn-pk-press 5s ease-in-out infinite;
+}
+.wn-pk-scan { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+.wn-pk-print { color: var(--accent); opacity: 0; animation: wn-pk-print 5s ease-in-out infinite; }
+.wn-pk-ok {
+  position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center;
+  background: var(--green, #4CA87C); color: #fff;
+  animation: wn-pk-ok 5s ease-in-out infinite;
+}
+@keyframes wn-pk-field {
+  0%, 12% { opacity: 1; }
+  24%, 100% { opacity: 0.35; }
+}
+@keyframes wn-pk-press {
+  0%, 26% { transform: scale(1); }
+  32% { transform: scale(0.94); }
+  38%, 100% { transform: scale(1); }
+}
+@keyframes wn-pk-print {
+  0%, 36% { opacity: 0; transform: scale(0.8); }
+  44%, 62% { opacity: 1; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes wn-pk-ok {
+  0%, 64% { opacity: 0; transform: scale(0.5); }
+  72%, 100% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wn-art * { animation: none !important; }
+}
+
+/* ── Passkeys card (Settings) and sign-in button ──────────────────────── */
+.pk-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pk-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  background: var(--s2); border: 1px solid var(--border); border-radius: 8px;
+}
+.pk-row-main { flex: 1; min-width: 0; }
+.pk-row-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pk-row-meta { font-size: 11px; color: var(--muted); }
+.pk-remove {
+  min-width: 44px; min-height: 44px; display: grid; place-items: center;
+  background: none; border: none; color: var(--muted); cursor: pointer; border-radius: 8px;
+}
+.pk-remove:hover { color: var(--text); background: var(--ad); }
+.pk-form { display: flex; flex-direction: column; gap: 8px; }
+.pk-hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+.auth-passkey {
+  width: 100%; min-height: 44px; margin-top: 10px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: none; border: 1px solid var(--border); color: var(--text);
+  font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s;
+}
+.auth-passkey:hover:not(:disabled) { border-color: var(--accent); }
+.auth-passkey:disabled { opacity: 0.55; cursor: not-allowed; }

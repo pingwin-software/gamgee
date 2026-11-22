@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Zap, ClipboardList, Trophy, Heart, Brain, User, LogOut, Menu, X, Shield, Wrench, Users, Bell, MessageSquare, ChevronDown, HelpCircle, GraduationCap, MessagesSquare, Calendar, Settings } from "lucide-react";
+import { Zap, ClipboardList, Trophy, Heart, Brain, User, LogOut, Menu, X, Shield, Wrench, Users, Bell, MessageSquare, ChevronDown, HelpCircle, GraduationCap, MessagesSquare, Calendar, Settings, Sparkles } from "lucide-react";
 import { fmtClock } from "../utils";
 import { useTxt } from "../context/ToneContext";
 import { useOnboarding } from "../context/OnboardingContext";
@@ -24,9 +24,10 @@ interface Props {
   isAdmin?:     boolean;
   notifBell?:   ReactNode;
   onOpenFeedback?: () => void;
+  onOpenWhatsNew?: () => void;
 }
 
-export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback }: Props) {
+export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback, onOpenWhatsNew }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const t = useTxt();
@@ -212,6 +213,15 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
               <HelpCircle size={18} />
               <span>Help &amp; tour</span>
             </button>
+            {onOpenWhatsNew && (
+              <button
+                className="mobile-nav-item"
+                onClick={() => { setMenuOpen(false); onOpenWhatsNew(); }}
+              >
+                <Sparkles size={18} />
+                <span>What's new</span>
+              </button>
+            )}
             {onOpenFeedback && (
               <button
                 className="mobile-nav-item"

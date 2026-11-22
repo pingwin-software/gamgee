@@ -5,6 +5,7 @@ import { prescribeExercise } from "../../analysis";
 import { MI } from "../../data/muscles";
 import { EM } from "../../data/exercises";
 import { useTxt } from "../../context/ToneContext";
+import NumField from "../NumField";
 
 interface Props {
   planned: ExerciseDef[];
@@ -55,18 +56,6 @@ function rpeLabel(level: number): string {
   if (level <= 8) return "Hard";
   if (level <= 9) return "Brutal";
   return "Max effort";
-}
-
-function clampInt(v: string, min: number, max: number): number | null {
-  const n = parseInt(v, 10);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(min, Math.min(max, n));
-}
-
-function clampFloat(v: string, min: number, max: number): number | null {
-  const n = parseFloat(v);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(min, Math.min(max, n));
 }
 
 export default function WizardPrescribe({ planned, prs, history, initialConfigs, onBack, onStart }: Props) {
@@ -221,27 +210,24 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
               <div className="prescribe-row">
                 <label className="prescribe-field">
                   <span className="prescribe-field-label">Max weight (kg)</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
+                  <NumField
+                    value={cfg.max_weight}
                     min={0}
+                    max={1000}
                     step={0.5}
-                    value={cfg.max_weight ?? ""}
-                    onChange={e => setCfg(ex.id, { max_weight: clampFloat(e.target.value, 0, 1000) ?? undefined })}
+                    decimal
                     placeholder="—"
+                    onCommit={v => setCfg(ex.id, { max_weight: v })}
                   />
                 </label>
                 <label className="prescribe-field">
                   <span className="prescribe-field-label">× reps</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
+                  <NumField
+                    value={cfg.max_reps}
                     min={1}
                     max={30}
-                    step={1}
-                    value={cfg.max_reps ?? ""}
-                    onChange={e => setCfg(ex.id, { max_reps: clampInt(e.target.value, 1, 30) ?? undefined })}
                     placeholder="—"
+                    onCommit={v => setCfg(ex.id, { max_reps: v })}
                   />
                 </label>
                 {refSource && hasRef && (
@@ -252,38 +238,32 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
               <div className="prescribe-row">
                 <label className="prescribe-field">
                   <span className="prescribe-field-label">Warmup sets</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
+                  <NumField
+                    value={cfg.warmup_sets ?? DEFAULT_WARMUP_SETS}
                     min={0}
                     max={6}
-                    step={1}
-                    value={cfg.warmup_sets ?? DEFAULT_WARMUP_SETS}
-                    onChange={e => setCfg(ex.id, { warmup_sets: clampInt(e.target.value, 0, 6) ?? 0 })}
+                    fallback={DEFAULT_WARMUP_SETS}
+                    onCommit={v => setCfg(ex.id, { warmup_sets: v })}
                   />
                 </label>
                 <label className="prescribe-field">
                   <span className="prescribe-field-label">Working sets</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
+                  <NumField
+                    value={cfg.working_sets ?? DEFAULT_WORKING_SETS}
                     min={1}
                     max={10}
-                    step={1}
-                    value={cfg.working_sets ?? DEFAULT_WORKING_SETS}
-                    onChange={e => setCfg(ex.id, { working_sets: clampInt(e.target.value, 1, 10) ?? DEFAULT_WORKING_SETS })}
+                    fallback={DEFAULT_WORKING_SETS}
+                    onCommit={v => setCfg(ex.id, { working_sets: v })}
                   />
                 </label>
                 <label className="prescribe-field">
                   <span className="prescribe-field-label">Target reps</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
+                  <NumField
+                    value={cfg.working_reps ?? DEFAULT_WORKING_REPS}
                     min={1}
                     max={30}
-                    step={1}
-                    value={cfg.working_reps ?? DEFAULT_WORKING_REPS}
-                    onChange={e => setCfg(ex.id, { working_reps: clampInt(e.target.value, 1, 30) ?? DEFAULT_WORKING_REPS })}
+                    fallback={DEFAULT_WORKING_REPS}
+                    onCommit={v => setCfg(ex.id, { working_reps: v })}
                   />
                 </label>
               </div>

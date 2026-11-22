@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from typing import Any, Literal
 
@@ -107,6 +108,7 @@ class UserOut(BaseModel):
     gym_longitude: float | None = None
     gym_radius_m: int | None = None
     training_reminders_enabled: bool = True
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

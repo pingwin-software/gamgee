@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
+from .. import models, ratelimit, schemas
 from ..auth import (
     create_access_token,
     get_current_user,
@@ -98,7 +98,15 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
         user = db.query(models.User).filter(func.lower(models.User.email) == identifier).first()
     else:
         user = db.query(models.User).filter(func.lower(models.User.username) == identifier).first()
+    # Only failures count, per identifier typed: a wrong-password storm on one
+    # account locks that account's door for a while, not everyone's.
+    if ratelimit.login_failures.full(identifier):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many sign-in attempts. Wait 15 minutes and try again, or reset your password.",
+        )
     if not user or not verify_password(form.password, user.hashed_password):
+        ratelimit.login_failures.hit(identifier)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -107,6 +115,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     if password_needs_rehash(form.password, user.hashed_password):
         user.hashed_password = hash_password(form.password)
         db.commit()
+    ratelimit.login_failures.forget(identifier)
     token = create_access_token({"sub": user.username})
     return {"access_token": token, "token_type": "bearer"}
 
@@ -277,6 +286,9 @@ def reset_password(body: schemas.ResetPassword, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(exc))
     user.hashed_password = hash_password(body.new_password)
     record.used_at = now_utc()
+    ratelimit.login_failures.forget(user.username.lower())
+    if user.email:
+        ratelimit.login_failures.forget(user.email.lower())
     db.commit()
 
 

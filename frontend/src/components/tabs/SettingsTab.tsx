@@ -9,6 +9,7 @@ import {
 import type { RestPrefs, WizardTransitionStyle, ThemeMode, GymPrefs } from "../../types";
 import { DEFAULT_REST_PREFS, DEFAULT_GYM_RADIUS_M } from "../../types";
 import { APP_VERSION } from "../../version";
+import PasskeysCard from "../PasskeysCard";
 
 type Gender = "female" | "male" | "non_binary" | "other" | "prefer_not_to_say";
 
@@ -1009,6 +1010,7 @@ export default function SettingsTab({
 
       <div className="profile-section">{t("Account", "Account")}</div>
       <ChangePasswordCard token={token} />
+      <PasskeysCard authFetch={authFetch} />
 
       <AboutCard authFetch={authFetch} />
     </div>

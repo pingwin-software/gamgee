@@ -7,7 +7,7 @@ from sqlalchemy import text
 from .database import Base, engine
 from .routers import (
     items, workouts, prs, auth, health, admin, buddies, notifications, live,
-    feedback, events, content, trainers, regimes, assignments, chat, templates,
+    feedback, events, content, trainers, regimes, assignments, chat, templates, passkeys,
 )
 from .version import __version__
 
@@ -89,6 +89,8 @@ if engine.dialect.name == "postgresql":
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gym_longitude DOUBLE PRECISION"))
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gym_radius_m INTEGER"))
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS training_reminders_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
+        # Account creation time (null for accounts that predate the column).
+        _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ"))
         # Post-session RPE on workout records (used to scale next session's jump).
         _conn.execute(text("ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS rpe INTEGER"))
         # Live session rich-broadcast columns
@@ -131,6 +133,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api")
+app.include_router(passkeys.router, prefix="/api")
 app.include_router(items.router, prefix="/api")
 app.include_router(workouts.router, prefix="/api")
 app.include_router(prs.router, prefix="/api")

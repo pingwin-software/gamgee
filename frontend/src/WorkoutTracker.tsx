@@ -33,6 +33,8 @@ import RegimesTab from "./components/tabs/RegimesTab";
 import LiveSessionViewer from "./components/LiveSessionViewer";
 import NotificationBell from "./components/NotificationBell";
 import FeedbackModal from "./components/FeedbackModal";
+import WhatsNewModal from "./whatsnew/WhatsNewModal";
+import { WHATS_NEW, loadSeen, markSeen, unseen, type WhatsNewEntry } from "./whatsnew/whatsNew";
 import OnboardingWelcome from "./components/Onboarding";
 import { ALL_EX, subscribeCustomExercises } from "./data/exercises";
 import { analyzeEx, prescribeExercise, rampedSetsFromHistory } from "./analysis";
@@ -261,6 +263,10 @@ export default function WorkoutTracker({
   // wizards and tabs that read ALL_EX/EM to re-render against the mutated catalog.
   const [, setCustomExBump] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // What's new: the entries on show (null = closed). Opens by itself once
+  // per account and browser for entries newer than the account; the menu
+  // item shows them all.
+  const [whatsNew, setWhatsNew] = useState<readonly WhatsNewEntry[] | null>(null);
 
   useEffect(() => subscribeCustomExercises(() => setCustomExBump(v => v + 1)), []);
 
@@ -288,7 +294,11 @@ export default function WorkoutTracker({
   }, []);
 
   const tokenRef = useRef(token);
-  useEffect(() => { tokenRef.current = token; }, [token]);
+  // Kept current during render, not in an effect: a child's mount effect runs
+  // before this component's effects, so right after sign-in a child calling
+  // authFetch would send the old (empty) token, get a 401 and sign the user
+  // straight back out.
+  tokenRef.current = token;
 
   const authFetch = useCallback((url: string, opts: RequestInit = {}) =>
     fetch(url, {
@@ -489,7 +499,7 @@ export default function WorkoutTracker({
         setPrs(dict);
       }).catch(() => {});
     authFetch("/api/auth/me")
-      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean }) => {
+      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean; created_at?: string | null }) => {
         setUsername(d.username);
         setName(d.name ?? null);
         setEmail(d.email ?? null);
@@ -500,6 +510,10 @@ export default function WorkoutTracker({
         setIsVerified(d.is_verified ?? true);
         setIsTrainer(d.is_trainer ?? false);
         setCurrentUserId(d.id ?? null);
+        if (d.id != null) {
+          const fresh = unseen(WHATS_NEW, loadSeen(d.id), d.created_at);
+          if (fresh.length) setWhatsNew(fresh);
+        }
         if (d.primary_color) setPrimaryColor(d.primary_color);
         const clamp = (n: number | null | undefined, fallback: number) =>
           n != null && Number.isFinite(n) && n >= 5 && n <= 3600 ? Math.round(n) : fallback;
@@ -1233,6 +1247,7 @@ export default function WorkoutTracker({
         tab={tab} setTab={setTab} onLogout={logout} isAdmin={isAdmin}
         onLogoClick={() => { setTab("workout"); setWStep(0); }}
         onOpenFeedback={() => setFeedbackOpen(true)}
+        onOpenWhatsNew={() => setWhatsNew(WHATS_NEW)}
         notifBell={
           <NotificationBell
             notifications={notifications}
@@ -1379,6 +1394,12 @@ export default function WorkoutTracker({
         {!completed && tab === "settings"  && <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} />}
       </div>
       {feedbackOpen && <FeedbackModal authFetch={authFetch} onClose={() => setFeedbackOpen(false)} />}
+      {whatsNew && !active && (
+        <WhatsNewModal
+          entries={whatsNew}
+          onClose={() => { if (currentUserId != null) markSeen(currentUserId, whatsNew); setWhatsNew(null); }}
+        />
+      )}
       {viewedLiveSession && (
         <LiveSessionViewer
           session={viewedLiveSession}

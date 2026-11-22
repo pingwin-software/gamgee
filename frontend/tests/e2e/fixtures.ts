@@ -68,6 +68,9 @@ export async function mockApi(page: Page, state: MockState = defaultState()): Pr
     json(route, {
       id: 1, username: state.username, name: "Tester", email: "tester@example.com",
       is_admin: false, is_verified: true, is_trainer: false,
+      // A brand-new account: What's new has nothing to show it, so the
+      // sheet never covers the screen (whatsnew.spec.ts overrides this).
+      created_at: "2999-01-01T00:00:00Z",
     }),
   );
 
