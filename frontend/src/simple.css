@@ -39,6 +39,14 @@
 }
 .chip-btn:hover { border-color: var(--accent); }
 .chip-btn.on { background: var(--ad2); border-color: var(--accent); color: var(--accent); }
+/* Me before the first workout: one line, then Settings. */
+.me-empty {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 12px;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 12px;
+  color: var(--muted); font-size: 14px; line-height: 1.4;
+}
+.me-empty > svg { flex-shrink: 0; color: var(--accent); }
+.duck-btn.duck-inline { margin-top: 0; padding: 0 4px; }
 /* The end of Me: What's new, feedback, admin, log out. */
 .me-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .me-actions .chip-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; }
