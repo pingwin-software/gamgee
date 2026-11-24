@@ -273,9 +273,6 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
                 </div>
               </div>
             ))}
-            <button type="button" className="hx-body-edit" onClick={() => setEditingSession(w)}>
-              <Pencil size={15} /> Edit or delete
-            </button>
           </div>
         )}
       </div>

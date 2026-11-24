@@ -36,8 +36,9 @@ test("the five sections and their pages", async ({ page }) => {
   await expect(page.getByText(/next 60 kg × 10|next 62.5 kg × 8/)).toBeVisible();
 });
 
-test("clicking logout returns to the auth screen", async ({ page }) => {
-  await page.locator(".logout-btn", { hasText: "Logout" }).first().click();
+test("log out from the end of Me returns to the auth screen", async ({ page }) => {
+  await page.locator(".tabs .tab", { hasText: "ME" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
   await expect(page.locator('input[autocomplete="username"]')).toBeVisible();
   const token = await page.evaluate(() => localStorage.getItem("iron_log_token"));
   expect(token).toBeNull();

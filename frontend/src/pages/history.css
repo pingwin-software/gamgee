@@ -135,13 +135,6 @@
   font-size: 13px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums;
 }
 .hx-set.pr { border-color: var(--pr); color: var(--pr); background: var(--ad); }
-.hx-body-edit {
-  align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 700;
-  transition: border-color 0.15s, color 0.15s;
-}
-.hx-body-edit:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Records ──────────────────────────────────────────────────────────── */
 .hx-pr-head { display: flex; align-items: center; gap: 12px; }
@@ -268,7 +261,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hx-day, .hx-card, .hx-body, .hx-bar span, .hx-pr, .hx-pr-cup { animation: none !important; }
-  .hx-day, .hx-card, .hx-card-icon, .hx-chev, .hx-card-edit, .hx-round, .hx-body-edit, .hx-pr-del,
+  .hx-day, .hx-card, .hx-card-icon, .hx-chev, .hx-card-edit, .hx-round, .hx-pr-del,
   .hx-edit .hx-icon-btn, .hx-edit .hx-edit-add, .hx-edit .hx-edit-del, .hx-edit .hx-edit-save { transition: none; }
   .hx-day:not(:disabled):hover, .hx-day:not(:disabled):active, .hx-edit .hx-edit-save:active { transform: none; }
 }
@@ -284,7 +277,6 @@
 :root[data-reduced-motion="1"] .hx-chev,
 :root[data-reduced-motion="1"] .hx-card-edit,
 :root[data-reduced-motion="1"] .hx-round,
-:root[data-reduced-motion="1"] .hx-body-edit,
 :root[data-reduced-motion="1"] .hx-pr-del,
 :root[data-reduced-motion="1"] .hx-edit .hx-icon-btn,
 :root[data-reduced-motion="1"] .hx-edit .hx-edit-add,

@@ -338,9 +338,7 @@ export default function WizardWeeklySetup({ initial, onPersist, onDone, authFetc
       <div className="wz-hdr wz-hdr-sticky">
         <button className="wz-back" onClick={onDone}><ArrowLeft size={13} /> BACK</button>
         <span className="wz-focus-label">{t("WEEKLY PLAN", "THE PROGRAM", "WEEKLY ERA")}</span>
-        <button className="wz-next" onClick={onDone}>
-          DONE <Check size={13} />
-        </button>
+        <span className="wz-hdr-end" aria-hidden="true" />
       </div>
 
       <div className="wizard-title">{t("Your Weekly Routine", "The Weekly Program", "Your Weekly Era")}</div>

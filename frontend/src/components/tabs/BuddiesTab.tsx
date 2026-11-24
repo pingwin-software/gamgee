@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, type CSSProperties } from "react";
 import {
   Users, UserPlus, Search, Check, X as XIcon, Trash2, Send,
-  Trophy, Flame, Zap, Play, LogOut, Crown, Medal, Eye, ChevronDown,
+  Trophy, Flame, Zap, Play, LogOut, Crown, Medal, ChevronDown,
   Dumbbell, Radio, Clock,
   MessageCircle,
 } from "lucide-react";
@@ -525,9 +525,6 @@ function BuddyCard({ buddy, stats, authFetch, refresh, onToast, onLoading, onMot
         </button>
         <button type="button" className="so-act" onClick={onOpenChat}>
           <MessageCircle size={18} aria-hidden="true" /> Chat
-        </button>
-        <button type="button" className="so-act so-act-icon" onClick={onOpenProfile} aria-label={`View ${name}'s profile`} title="View profile">
-          <Eye size={18} aria-hidden="true" />
         </button>
       </div>
       <button type="button" className="disclose" aria-expanded={open} onClick={() => setOpen(o => !o)}>

@@ -1,4 +1,4 @@
-import { Calendar, Check, Fingerprint, KeyRound, Play, TrendingUp, User, Users, Zap } from "lucide-react";
+import { Calendar, Check, Fingerprint, KeyRound, Menu, Play, TrendingUp, User, Users, Zap } from "lucide-react";
 import type { WhatsNewId } from "./whatsNew";
 
 /**
@@ -9,11 +9,31 @@ import type { WhatsNewId } from "./whatsNew";
 export default function WhatsNewArt({ demo }: { demo: WhatsNewId }) {
   return (
     <div className="wn-art" aria-hidden="true">
+      {demo === "oneWay" && <OneWayArt />}
       {demo === "yourApp" && <YourAppArt />}
       {demo === "freshPages" && <FreshPagesArt />}
       {demo === "progression" && <ProgressionArt />}
       {demo === "quickStart" && <QuickStartArt />}
       {demo === "passkeys" && <PasskeysArt />}
+    </div>
+  );
+}
+
+/** The header's menu button folds away; the bottom bar is the way around. */
+function OneWayArt() {
+  return (
+    <div className="wn-ow">
+      <div className="wn-ow-hdr">
+        <span className="wn-ow-logo" />
+        <span className="wn-ow-menu"><Menu size={16} /></span>
+      </div>
+      <div className="wn-ya-nav wn-ow-nav">
+        <Zap size={14} />
+        <TrendingUp size={14} className="on" />
+        <Users size={14} />
+        <Calendar size={14} />
+        <User size={14} />
+      </div>
     </div>
   );
 }

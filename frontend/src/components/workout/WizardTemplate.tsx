@@ -137,9 +137,7 @@ export default function WizardTemplate({ initial, onSaveTemplate, onUpdateTempla
         <span className="wz-focus-label">
           <Bookmark size={14} /> {isEdit ? t("EDIT TEMPLATE", "EDIT TEMPLATE", "EDIT TEMPLATE") : t("NEW TEMPLATE", "NEW TEMPLATE", "NEW TEMPLATE")}
         </span>
-        <button className="wz-next" onClick={handleSave} disabled={!canSave}>
-          {saved ? <>SAVED <Check size={14} /></> : <>SAVE <Check size={14} /></>}
-        </button>
+        <span className="wz-hdr-end" aria-hidden="true" />
       </div>
 
       <div className="wizard-title">

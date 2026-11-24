@@ -8,7 +8,7 @@
  * in this browser, dated after the day it joined: a newcomer is not handed
  * the history.
  */
-export type WhatsNewId = "yourApp" | "freshPages" | "progression" | "quickStart" | "passkeys";
+export type WhatsNewId = "oneWay" | "yourApp" | "freshPages" | "progression" | "quickStart" | "passkeys";
 
 export interface WhatsNewEntry {
   /** Stable: it is what "seen" remembers. */
@@ -18,6 +18,7 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  { id: "oneWay", date: "2026-11-24" },
   { id: "yourApp", date: "2026-11-24" },
   { id: "freshPages", date: "2026-11-22" },
   { id: "progression", date: "2026-11-22" },
@@ -27,6 +28,11 @@ export const WHATS_NEW: readonly WhatsNewEntry[] = [
 
 /** Title and a few lines per entry. `**words**` show in bold. */
 export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }> = {
+  oneWay: {
+    title: "Less clutter, same app",
+    body:
+      "The **menu button is gone**: it only repeated the bar at the bottom. Every page is now one tap on that bar, and it **stays put mid-workout**, so you can peek at History and get back to your sets. **What's new**, **feedback** and **Log out** live at the end of **Me**, and a handful of buttons that did the same thing as the button next to them have left the building.",
+  },
   yourApp: {
     title: "Your app, your way",
     body:
