@@ -1,36 +1,73 @@
+import type { ProgressionPrefs } from "./progressionPrefs";
+
 /**
  * What someone uses Gamgee for, from the first-run questionnaire
- * (components/UsageQuestionnaire.tsx). The app shows only the pages and
- * workout steps that serve those answers.
+ * (components/UsageQuestionnaire.tsx). Every answer switches something off:
+ * the app shows only the pages, workout steps and logging the answers ask for.
  *
- * Stored in localStorage (`gamgee_usage_profile`) and on the account
- * (`users.usage_profile` via PATCH /auth/preferences). `null` means not
- * answered yet: the questionnaire opens, and until then everything shows.
+ * Stored in localStorage (`gamgee_usage_profile`, with the user id) and on
+ * the account (`users.usage_profile` via PATCH /auth/preferences). `null`
+ * means not answered yet: the questionnaire opens, and until then everything
+ * shows.
  */
-export type UsageStyle = "spot" | "plan" | "both";
+
+/** Ways a workout gets made. Any mix, at least one:
+ * - `regime`: a weekly plan, each weekday's workout set in advance;
+ * - `templates`: saved workouts picked from (Push, Pull, Legs), no calendar;
+ * - `spot`: built impromptu, lifts picked there and then. */
+export type UsageWay = "regime" | "templates" | "spot";
+/** How the next weights are found: suggested by Gamgee from history, the
+ * same fixed jump for every lift, or typed by the user with no suggestions. */
+export type UsageProgression = "auto" | "fixed" | "manual";
+/** What a workout logs beyond weight and reps. */
+export type UsageLog = "rest" | "effort" | "cardio";
 export type UsageExtra = "progress" | "body" | "social" | "coach";
 
 export interface UsageProfile {
-  /** How workouts are made: on the spot, from a plan (regime), or both. */
-  style: UsageStyle;
-  /** Everything else they want, beyond logging workouts. */
+  ways: UsageWay[];
+  progression: UsageProgression;
+  /** The jump, kg, every lift gets each session when `progression` is fixed. */
+  fixedStepKg: number;
+  /** Rest timer, effort ratings (reps left, session effort), cardio. */
+  logging: UsageLog[];
+  /** Everything else wanted beyond logging workouts. */
   extras: UsageExtra[];
 }
 
+export const USAGE_WAYS: readonly UsageWay[] = ["regime", "templates", "spot"];
+export const USAGE_LOGS: readonly UsageLog[] = ["rest", "effort", "cardio"];
 export const USAGE_EXTRAS: readonly UsageExtra[] = ["progress", "body", "social", "coach"];
+export const FIXED_STEPS = [1.25, 2.5, 5] as const;
 
 /** The whole app, as it was before the questionnaire. */
-export const EVERYTHING: UsageProfile = { style: "both", extras: [...USAGE_EXTRAS] };
+export const EVERYTHING: UsageProfile = {
+  ways: [...USAGE_WAYS], progression: "auto", fixedStepKg: 2.5, logging: [...USAGE_LOGS], extras: [...USAGE_EXTRAS],
+};
+
+/** Whether a profile turns nothing off. */
+export const isEverything = (p: UsageProfile) =>
+  p.ways.length === USAGE_WAYS.length && p.progression === "auto" &&
+  p.logging.length === USAGE_LOGS.length && p.extras.length === USAGE_EXTRAS.length;
 
 const KEY = "gamgee_usage_profile";
 
 /** Untrusted input (localStorage, the server) to a valid profile, or null. */
 export function normalizeUsageProfile(raw: unknown): UsageProfile | null {
   if (!raw || typeof raw !== "object") return null;
-  const r = raw as { style?: unknown; extras?: unknown };
-  if (r.style !== "spot" && r.style !== "plan" && r.style !== "both") return null;
-  const extras = Array.isArray(r.extras) ? r.extras : [];
-  return { style: r.style, extras: USAGE_EXTRAS.filter(e => extras.includes(e)) };
+  const r = raw as { ways?: unknown; extras?: unknown; progression?: unknown; fixedStepKg?: unknown; logging?: unknown };
+  const inList = <T extends string>(all: readonly T[], v: unknown, fallback: readonly T[]): T[] => {
+    const list: unknown[] = Array.isArray(v) ? v : [...fallback];
+    return all.filter(x => list.includes(x));
+  };
+  const ways = inList(USAGE_WAYS, r.ways, []);
+  if (ways.length === 0) return null;
+  return {
+    ways,
+    progression: r.progression === "fixed" || r.progression === "manual" ? r.progression : "auto",
+    fixedStepKg: FIXED_STEPS.find(v => v === r.fixedStepKg) ?? 2.5,
+    logging: inList(USAGE_LOGS, r.logging, USAGE_LOGS),
+    extras: inList(USAGE_EXTRAS, r.extras, []),
+  };
 }
 
 /** The last answers kept in this browser, and whose they are. */
@@ -62,6 +99,26 @@ export function saveUsageProfile(userId: number | null, p: UsageProfile | null):
   } catch { /* private mode: the account copy still applies */ }
 }
 
+/* ── What the answers switch on ─────────────────────────────────────────── */
+
+/** Impromptu workouts: the focus pick and the build screen. */
+export const buildsOnTheSpot = (p: UsageProfile | null) => !p || p.ways.includes("spot");
+/** The weekly regime: today's plan, the week editor, regimes. */
+export const usesRegime = (p: UsageProfile | null) => !p || p.ways.includes("regime");
+/** Saved workout templates. */
+export const usesTemplates = (p: UsageProfile | null) => !p || p.ways.includes("templates");
+/** Whether there is a plan screen (regime or templates) between start and build. */
+export const followsPlans = (p: UsageProfile | null) => usesRegime(p) || usesTemplates(p);
+/** Whether Gamgee suggests next weights (history ramp, coach hints, Apply, Progress, effort setup). */
+export const suggestsWeights = (p: UsageProfile | null) => !p || p.progression !== "manual";
+/** Whether a workout logs this extra (rest timer, effort, cardio). */
+export const logs = (p: UsageProfile | null, what: UsageLog) => !p || p.logging.includes(what);
+
+/** Progression prefs for "the same jump on every lift, every session". */
+export function fixedProgressionPrefs(stepKg: number): ProgressionPrefs {
+  return { repsBeforeWeight: 0, stepUpperKg: stepKg, stepLowerKg: stepKg, easyRir: null, onSlip: "hold" };
+}
+
 /** Every page key, in the order AppHeader lists them. */
 export const ALL_PAGES = [
   "workout", "exercises", "history", "prs", "coach", "health",
@@ -79,12 +136,14 @@ export function visiblePages(p: UsageProfile | null, isTrainer: boolean): Set<st
   }
   const has = (e: UsageExtra) => p.extras.includes(e);
   const pages = new Set<string>(["workout", "history", "profile"]);
-  // Building on the spot needs the exercise library; a plan user picks
-  // exercises inside the plan editor instead.
-  if (p.style !== "plan") pages.add("exercises");
-  // A trainer hands plans over as regimes, so coaching brings Regimes along.
-  if (p.style !== "spot" || has("coach")) pages.add("regimes");
-  if (has("progress")) { pages.add("prs"); pages.add("coach"); }
+  // The exercise library (and custom exercises) serves picking lifts by
+  // hand: impromptu workouts and templates. A regime is filled in its editor.
+  if (buildsOnTheSpot(p) || usesTemplates(p)) pages.add("exercises");
+  // Plans holds regimes and templates; a trainer hands plans over as
+  // regimes, so coaching brings it along too.
+  if (usesRegime(p) || usesTemplates(p) || has("coach")) pages.add("regimes");
+  // Trends draws each lift's next target: no use to someone who wants no suggestions.
+  if (has("progress")) { pages.add("prs"); if (p.progression !== "manual") pages.add("coach"); }
   if (has("body")) pages.add("health");
   if (has("social")) pages.add("buddies");
   // Chat and alerts carry both buddy and trainer traffic.
@@ -94,14 +153,9 @@ export function visiblePages(p: UsageProfile | null, isTrainer: boolean): Set<st
   return pages;
 }
 
-/** Whether the workout builder offers one-off workouts (focus, build). */
-export const buildsOnTheSpot = (p: UsageProfile | null) => !p || p.style !== "plan";
-/** Whether the workout builder offers the weekly plan, regimes and templates. */
-export const followsPlans = (p: UsageProfile | null) => !p || p.style !== "spot";
-
 /**
  * Where Back goes from a builder step. Step 3 (cardio) is gone, so Build
- * goes to Focus; with no one-off workouts it goes to the plan screen (a
+ * goes to Focus; with no impromptu workouts it goes to the plan screen (a
  * template or today's plan brought them there), and with no plan screen
  * Focus goes back to the start.
  */

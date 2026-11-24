@@ -406,6 +406,31 @@ describe("prescribeExercise", () => {
 });
 
 describe("rampedSetsFromHistory", () => {
+  const warmAndWork: WorkoutSession = {
+    id: "sm", date: "2026-05-01", duration: 0,
+    exercises: [{
+      id: "bench", name: "Bench Press", type: "strength", uid: "bench_sm",
+      sets: [
+        { weight: "40", reps: "10", done: true, is_warmup: true },
+        { weight: "60", reps: "8", done: true },
+        { weight: "62.5", reps: "6", done: true },
+      ],
+    }],
+  };
+
+  it("adds the same fixed jump to every working set when asked to", () => {
+    const sets = rampedSetsFromHistory("bench", "strength", false, [warmAndWork], null, { mode: "fixed", stepKg: 2.5 })!;
+    expect(sets.map(s => s.weight)).toEqual(["40", "62.5", "65"]);
+    expect(sets.map(s => s.reps)).toEqual(["10", "8", "6"]);
+    expect(sets[0].is_warmup).toBe(true);
+  });
+
+  it("repeats last time's numbers with no suggestion for manual lifters", () => {
+    const sets = rampedSetsFromHistory("bench", "strength", false, [warmAndWork], { weight: 100, reps: 3 }, { mode: "carry" })!;
+    expect(sets.map(s => [s.weight, s.reps])).toEqual([["40", "10"], ["60", "8"], ["62.5", "6"]]);
+    sets.forEach(s => expect(s.done).toBe(false));
+  });
+
   it("returns null for an exercise with no history (treated as brand-new)", () => {
     expect(rampedSetsFromHistory("bench", "strength", false, [])).toBeNull();
     // History exists but not for this exercise.

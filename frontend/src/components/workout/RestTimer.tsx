@@ -15,6 +15,9 @@ interface Props {
   onPickTier: (tier: Exclude<RestTier, "custom">) => void;
   onAdjust:   (deltaSec: number) => void;
   onStartCustom: (seconds: number) => void;
+  /** False for people who want no rest timer: only Add set and Done show,
+   * no countdown, no alarm. */
+  timer?: boolean;
 }
 
 const fmt = (sec: number) => {
@@ -22,22 +25,22 @@ const fmt = (sec: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export default function SetRestButton({ prefs, rest, onAddSet, onFinishExercise, onPickTier, onAdjust, onStartCustom }: Props) {
+export default function SetRestButton({ prefs, rest, onAddSet, onFinishExercise, onPickTier, onAdjust, onStartCustom, timer = true }: Props) {
   const [now, setNow] = useState(Date.now());
   const [customOpen, setCustomOpen] = useState(false);
   const [customVal, setCustomVal] = useState<string>(String(prefs.medium));
   const firedRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!rest) return;
+    if (!rest || !timer) return;
     const id = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(id);
-  }, [rest]);
+  }, [rest, timer]);
 
   // Ring + vibrate the moment the bar fills up. firedRef keys on endAt so a
   // fresh timer (new endAt) is allowed to fire again.
   useEffect(() => {
-    if (!rest) return;
+    if (!rest || !timer) return;
     if (rest.endAt <= now && firedRef.current !== rest.endAt) {
       firedRef.current = rest.endAt;
       playTimerAlarm();
@@ -46,6 +49,24 @@ export default function SetRestButton({ prefs, rest, onAddSet, onFinishExercise,
   }, [now, rest]);
 
   if (!rest) return null;
+
+  if (!timer) {
+    return (
+      <div className="rest-block">
+        <button className="btn-add-set btn-add-set-resting rest-done" onClick={onAddSet} aria-label="Add a set">
+          <span className="rest-fg"><Plus size={18} strokeWidth={3} /><span>ADD SET</span></span>
+        </button>
+        <button
+          type="button"
+          className="btn-finish-ex"
+          onClick={onFinishExercise}
+          aria-label="Finish this exercise — don't add another set"
+        >
+          <Check size={15} strokeWidth={3} /> DONE — NO MORE SETS
+        </button>
+      </div>
+    );
+  }
 
   const remainingMs = rest.endAt - now;
   const remaining   = remainingMs / 1000;

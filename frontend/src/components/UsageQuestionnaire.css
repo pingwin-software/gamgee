@@ -32,6 +32,14 @@
 .uq-option.on .uq-tick, .uq-extra.on .uq-tick { background: var(--accent); border-color: var(--accent); }
 
 .uq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+/* Three choices: one column of wide rows reads better than a 2 + 1 grid. */
+.uq-grid-3 { grid-template-columns: 1fr; }
+.uq-grid-3 .uq-extra { min-height: 0; display: grid; grid-template-columns: 22px 1fr; column-gap: 12px; align-items: center; padding: 14px 44px 14px 14px; }
+.uq-grid-3 .uq-extra > svg { grid-row: 1 / span 2; }
+.uq-grid-3 .uq-extra .uq-option-title { margin-top: 0; }
+.uq-grid-3 .uq-extra .uq-tick { top: 50%; transform: translateY(-50%); right: 14px; }
+.uq-steps { display: flex; flex-direction: column; gap: 6px; }
+.uq-steps-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .uq-extra {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
   min-height: 112px; padding: 14px 12px 12px; border-radius: 14px; cursor: pointer; text-align: left;

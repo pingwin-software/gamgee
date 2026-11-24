@@ -358,6 +358,11 @@ const SET_WEIGHT_STEP = 5;
  * actually logged get pre-populated.
  *
  * `history` is expected newest-first (the order the API returns it).
+ *
+ * `how` follows the user's questionnaire answer (usageProfile.ts): "ramp"
+ * is the suggestion above; "fixed" adds the same `stepKg` to every working set
+ * of last time and nothing else; "carry" repeats last time's numbers with no
+ * suggestion at all.
  */
 export function rampedSetsFromHistory(
   exId: string,
@@ -365,6 +370,7 @@ export function rampedSetsFromHistory(
   isAssisted: boolean,
   history: WorkoutSession[],
   override?: ProgressionOverride | null,
+  how: { mode: "ramp" | "fixed" | "carry"; stepKg?: number } = { mode: "ramp" },
 ): WorkoutSet[] | null {
   const lastSession = history.find(s => s.exercises.some(e => e.id === exId));
   if (!lastSession) return null;
@@ -382,7 +388,21 @@ export function rampedSetsFromHistory(
   // sets carry forward verbatim.
   let openWeight: number | null = null;
   let openReps: string | null = null;
-  if (isStrength) {
+  if (isStrength && how.mode === "fixed") {
+    const step = how.stepKg ?? SET_WEIGHT_STEP;
+    return lastEx.sets.map(s => {
+      const w = parseFloat(s.weight);
+      const bump = !s.is_warmup && Number.isFinite(w) && w > 0;
+      return {
+        weight: bump ? String(w + step) : s.weight,
+        reps: s.reps,
+        done: false,
+        prefilled: !!(s.weight || s.reps),
+        ...(s.is_warmup ? { is_warmup: true } : {}),
+      };
+    });
+  }
+  if (isStrength && how.mode === "ramp") {
     if (override && Number.isFinite(override.weight) && override.weight > 0) {
       openWeight = override.weight;
       openReps = String(Math.max(1, Math.round(override.reps)));

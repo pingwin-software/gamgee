@@ -239,9 +239,11 @@ class UserPreferences(BaseModel):
             out["onSlip"] = value["onSlip"]
         return out
 
-    # What the app is used for: {"style": "spot"|"plan"|"both", "extras":
-    # [subset of progress, body, social, coach]}. Omit to leave alone; null
-    # clears it, so the questionnaire is asked again.
+    # What the app is used for (first-run questionnaire): {"ways": subset of
+    # regime, templates, spot (at least one), "progression": auto|fixed|manual,
+    # "fixedStepKg": 1.25|2.5|5, "logging": subset of rest, effort, cardio,
+    # "extras": subset of progress, body, social, coach}. Omit to leave alone;
+    # null clears it, so the questionnaire is asked again.
     usage_profile: dict[str, Any] | None = None
 
     @field_validator("usage_profile")
@@ -249,14 +251,29 @@ class UserPreferences(BaseModel):
     def _usage_profile(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
         if value is None:
             return None
-        style = value.get("style")
-        if style not in ("spot", "plan", "both"):
-            raise ValueError("style must be spot, plan or both")
-        extras = value.get("extras", [])
-        allowed = ("progress", "body", "social", "coach")
-        if not isinstance(extras, list) or any(e not in allowed for e in extras):
-            raise ValueError(f"extras must be a list drawn from {', '.join(allowed)}")
-        return {"style": style, "extras": [e for e in allowed if e in extras]}
+
+        def subset(key: str, allowed: tuple[str, ...], default: list[str]) -> list[str]:
+            items = value.get(key, default)
+            if not isinstance(items, list) or any(i not in allowed for i in items):
+                raise ValueError(f"{key} must be a list drawn from {', '.join(allowed)}")
+            return [a for a in allowed if a in items]
+
+        ways = subset("ways", ("regime", "templates", "spot"), [])
+        if not ways:
+            raise ValueError("ways needs at least one of regime, templates, spot")
+        progression = value.get("progression", "auto")
+        if progression not in ("auto", "fixed", "manual"):
+            raise ValueError("progression must be auto, fixed or manual")
+        step = value.get("fixedStepKg", 2.5)
+        if isinstance(step, bool) or step not in (1.25, 2.5, 5):
+            raise ValueError("fixedStepKg must be 1.25, 2.5 or 5")
+        return {
+            "ways": ways,
+            "progression": progression,
+            "fixedStepKg": step,
+            "logging": subset("logging", ("rest", "effort", "cardio"), ["rest", "effort", "cardio"]),
+            "extras": subset("extras", ("progress", "body", "social", "coach"), []),
+        }
 
     # RPE→step multiplier overrides. Use {} to clear back to the client default
     # table; omit to leave the existing value untouched.

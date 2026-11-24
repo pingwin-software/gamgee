@@ -12,7 +12,7 @@ import { APP_VERSION } from "../../version";
 import PasskeysCard from "../PasskeysCard";
 import ProgressionCard from "../ProgressionCard";
 import type { ProgressionPrefs } from "../../progressionPrefs";
-import { EVERYTHING, type UsageProfile } from "../../usageProfile";
+import { isEverything, logs, suggestsWeights, type UsageProfile } from "../../usageProfile";
 import "../../simple.css";
 
 type Gender = "female" | "male" | "non_binary" | "other" | "prefer_not_to_say";
@@ -843,34 +843,54 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
   );
 }
 
-const STYLE_LABEL: Record<UsageProfile["style"], string> = {
-  spot: "Workouts made on the spot",
-  plan: "Following a plan",
-  both: "A plan, plus workouts on the spot",
+const WAY_LABEL: Record<UsageProfile["ways"][number], string> = {
+  regime: "a weekly regime", templates: "templates", spot: "impromptu workouts",
+};
+const PROGRESSION_LABEL = (p: UsageProfile) =>
+  p.progression === "auto" ? "weights suggested for you"
+  : p.progression === "fixed" ? `+${p.fixedStepKg} kg on every lift each session`
+  : "no weight suggestions";
+const LOG_LABEL: Record<UsageProfile["logging"][number], string> = {
+  rest: "rest timer", effort: "effort ratings", cardio: "cardio",
 };
 const EXTRA_LABEL: Record<UsageProfile["extras"][number], string> = {
   progress: "progress", body: "body tracking", social: "friends", coach: "a trainer",
 };
+const list = (items: string[]) =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 
 /** What the app is used for (the first-run questionnaire), which decides the
- * pages and workout steps on show. Answer again, or bring everything back. */
+ * pages, workout steps and logging on show. Answer again, or bring
+ * everything back. */
 function UsageCard({ profile, onEdit, onShowEverything }: {
   profile: UsageProfile | null; onEdit: () => void; onShowEverything: () => void;
 }) {
-  const everything = !!profile && profile.style === EVERYTHING.style && profile.extras.length === EVERYTHING.extras.length;
-  const extras = profile?.extras.map(e => EXTRA_LABEL[e]) ?? [];
+  const everything = !!profile && isEverything(profile);
+  const rows: [string, string][] = profile ? [
+    ["Workouts", list(profile.ways.map(w => WAY_LABEL[w]))],
+    ["Weights", PROGRESSION_LABEL(profile)],
+    ["While lifting", profile.logging.length ? list(profile.logging.map(l => LOG_LABEL[l])) : "just weight and reps"],
+    ["Also", profile.extras.length ? list(profile.extras.map(e => EXTRA_LABEL[e])) : "nothing else"],
+  ] : [];
   return (
     <div className="profile-card">
       <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         What you use Gamgee for
       </div>
-      <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text)", lineHeight: 1.45 }}>
-        {!profile
-          ? "Not answered yet, so everything shows."
-          : everything
-            ? "Everything: all pages and every way to build a workout."
-            : `${STYLE_LABEL[profile.style]}${extras.length ? `, with ${extras.join(", ")}` : ", nothing extra"}. Pages you don't need are hidden.`}
-      </p>
+      {!profile || everything ? (
+        <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text)", lineHeight: 1.45 }}>
+          {!profile ? "Not answered yet, so everything shows." : "Everything: every page, step and option."}
+        </p>
+      ) : (
+        <dl style={{ margin: "0 0 10px", display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 12px", fontSize: 14, lineHeight: 1.45 }}>
+          {rows.map(([k, v]) => (
+            <div key={k} style={{ display: "contents" }}>
+              <dt style={{ color: "var(--muted)" }}>{k}</dt>
+              <dd style={{ margin: 0, color: "var(--text)" }}>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         <button type="button" className="chip-btn" onClick={onEdit}>Change my answers</button>
         {!everything && <button type="button" className="chip-btn" onClick={onShowEverything}>Show everything</button>}
@@ -1063,8 +1083,9 @@ export default function SettingsTab({
 
       <Group id="workout" title={t("Workout", "Workout")} Icon={Dumbbell}>
         <UsageCard profile={usageProfile} onEdit={onEditUsage} onShowEverything={onShowEverything} />
-        <ProgressionCard prefs={progressionPrefs} onChange={onProgressionPrefsChange} />
-        <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
+        {/* Only the settings for what is switched on. */}
+        {suggestsWeights(usageProfile) && <ProgressionCard prefs={progressionPrefs} onChange={onProgressionPrefsChange} />}
+        {logs(usageProfile, "rest") && <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />}
         <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />
       </Group>
 
@@ -1076,10 +1097,13 @@ export default function SettingsTab({
         <ReducedMotionCard value={reducedMotion} onChange={onReducedMotionChange} />
       </Group>
 
-      <Group id="notifications" title={t("Notifications", "Notifications")} Icon={BellRing}>
-        <PushToggleCard authFetch={authFetch} />
-        <NotificationTypesCard authFetch={authFetch} />
-      </Group>
+      {/* Pings come from buddies and trainers: nothing to set without either. */}
+      {(!usageProfile || usageProfile.extras.includes("social") || usageProfile.extras.includes("coach")) && (
+        <Group id="notifications" title={t("Notifications", "Notifications")} Icon={BellRing}>
+          <PushToggleCard authFetch={authFetch} />
+          <NotificationTypesCard authFetch={authFetch} />
+        </Group>
+      )}
 
       <Group id="account" title={t("Account", "Account")} Icon={ShieldCheck}>
         <ChangePasswordCard token={token} />

@@ -297,19 +297,40 @@ def test_usage_profile_is_saved_checked_and_cleared(client, auth_headers):
 
     res = client.patch(
         "/api/auth/preferences",
-        json={"usage_profile": {"style": "plan", "extras": ["social", "progress", "social"]}},
+        json={"usage_profile": {
+            "ways": ["spot", "templates", "spot"], "progression": "fixed", "fixedStepKg": 5,
+            "logging": ["cardio"], "extras": ["social", "progress"],
+        }},
         headers=auth_headers,
     )
     assert res.status_code == 200, res.text
     # Stored in a fixed order, duplicates dropped.
-    assert res.json()["usage_profile"] == {"style": "plan", "extras": ["progress", "social"]}
+    assert res.json()["usage_profile"] == {
+        "ways": ["templates", "spot"], "progression": "fixed", "fixedStepKg": 5,
+        "logging": ["cardio"], "extras": ["progress", "social"],
+    }
 
-    for bad in ({"style": "whatever"}, {"style": "spot", "extras": ["juggling"]}, {"style": "spot", "extras": "body"}):
+    # Left-out answers take the full-app defaults.
+    res = client.patch("/api/auth/preferences", json={"usage_profile": {"ways": ["regime"]}}, headers=auth_headers)
+    assert res.json()["usage_profile"] == {
+        "ways": ["regime"], "progression": "auto", "fixedStepKg": 2.5,
+        "logging": ["rest", "effort", "cardio"], "extras": [],
+    }
+
+    for bad in (
+        {"ways": []},
+        {"ways": ["juggling"]},
+        {"ways": "spot"},
+        {"ways": ["spot"], "progression": "vibes"},
+        {"ways": ["spot"], "fixedStepKg": 50},
+        {"ways": ["spot"], "logging": ["naps"]},
+        {"ways": ["spot"], "extras": ["juggling"]},
+    ):
         assert client.patch("/api/auth/preferences", json={"usage_profile": bad}, headers=auth_headers).status_code == 422
 
     # Another preference leaves it alone; an explicit null clears it.
     client.patch("/api/auth/preferences", json={"primary_color": "#28D1FF"}, headers=auth_headers)
-    assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"]["style"] == "plan"
+    assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"]["ways"] == ["regime"]
     client.patch("/api/auth/preferences", json={"usage_profile": None}, headers=auth_headers)
     assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"] is None
 

@@ -9,6 +9,8 @@ import type { WorkoutSession, WorkoutTemplate, WorkoutTemplateDraft } from "../t
  */
 export interface TemplatesApi {
   templates: WorkoutTemplate[];
+  /** False when the user said they don't use templates: no template lists anywhere. */
+  enabled:   boolean;
   /** For the editor's suggestions (favourites by focus). */
   history:   WorkoutSession[];
   save:   (draft: WorkoutTemplateDraft) => Promise<WorkoutTemplate | null>;

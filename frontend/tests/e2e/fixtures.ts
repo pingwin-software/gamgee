@@ -76,7 +76,7 @@ export async function mockApi(page: Page, state: MockState = defaultState()): Pr
       // Already answered "everything", so the questionnaire stays shut and
       // every page shows (usage.spec.ts asks).
       usage_profile: state.usageProfile === undefined
-        ? { style: "both", extras: ["progress", "body", "social", "coach"] }
+        ? { ways: ["regime", "templates", "spot"], progression: "auto", fixedStepKg: 2.5, logging: ["rest", "effort", "cardio"], extras: ["progress", "body", "social", "coach"] }
         : state.usageProfile,
     }),
   );

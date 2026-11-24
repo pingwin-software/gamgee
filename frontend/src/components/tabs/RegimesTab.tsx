@@ -18,8 +18,10 @@ interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
   weeklyPlan: WeeklyPlan | null;
   setWeeklyPlan: (plan: WeeklyPlan) => void;
-  /** Show the saved-templates section (people who follow a plan). */
+  /** Show the saved-templates section (people who use templates). */
   showTemplates?: boolean;
+  /** Show the regimes section (people who follow a weekly regime, or a trainer's). */
+  showRegimes?: boolean;
 }
 
 const WEEK_KEYS: WeekPlanDay[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -111,7 +113,7 @@ function weekSig(days: DayMap): string {
 }
 const REST_WEEK = WEEK_KEYS.map(() => "-").join("|");
 
-export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showTemplates = true }: Props) {
+export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showTemplates = true, showRegimes = true }: Props) {
   const t = useTxt();
   const { templates, remove: removeTemplate, start: startTemplate } = useTemplates();
   const [editingTpl, setEditingTpl] = useState<WorkoutTemplate | null | "new">(null);
@@ -176,6 +178,7 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showT
 
   return (
     <div className="regimes-tab tab-anim pl-page">
+      {showRegimes && (
       <section className="pl-section">
         <h2 className="pl-head">
           <Calendar size={18} /> {t("My regimes", "My programs", "My eras")}
@@ -276,6 +279,8 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showT
           </div>
         )}
       </section>
+
+      )}
 
       {/* Saved templates: single-session blueprints. Each can be started,
           edited or deleted here, same as on the workout-type screen and in the

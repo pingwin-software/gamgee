@@ -37,15 +37,15 @@ import NotificationBell from "./components/NotificationBell";
 import FeedbackModal from "./components/FeedbackModal";
 import WhatsNewModal from "./whatsnew/WhatsNewModal";
 import {
-  loadProgressionPrefs, normalizeProgressionPrefs, saveProgressionPrefs, setProgressionPrefs,
+  DEFAULT_PROGRESSION_PREFS, loadProgressionPrefs, normalizeProgressionPrefs, saveProgressionPrefs, setProgressionPrefs,
   type ProgressionPrefs,
 } from "./progressionPrefs";
 import { WHATS_NEW, loadSeen, markSeen, unseen, type WhatsNewEntry } from "./whatsnew/whatsNew";
 import OnboardingWelcome from "./components/Onboarding";
 import UsageQuestionnaire from "./components/UsageQuestionnaire";
 import {
-  EVERYTHING, loadUsageProfile, loadUsageProfileFor, normalizeUsageProfile, saveUsageProfile,
-  visiblePages, wizardBackStep, type UsageProfile,
+  EVERYTHING, fixedProgressionPrefs, loadUsageProfile, loadUsageProfileFor, logs, normalizeUsageProfile,
+  saveUsageProfile, usesRegime, usesTemplates, visiblePages, wizardBackStep, type UsageProfile,
 } from "./usageProfile";
 import { TemplatesProvider, type TemplatesApi } from "./context/TemplatesContext";
 import { ALL_EX, subscribeCustomExercises } from "./data/exercises";
@@ -359,6 +359,10 @@ export default function WorkoutTracker({
   /** New questionnaire answers: on screen at once, kept here and on the
    * account. A page the answers hide is left for the workout page. */
   const updateUsageProfile = useCallback((next: UsageProfile) => {
+    // "Same jump, every lift": the suggestion rules become exactly that. Moving
+    // off it puts the standard rules back.
+    if (next.progression === "fixed") updateProgressionPrefs(fixedProgressionPrefs(next.fixedStepKg));
+    else if (usageProfile?.progression === "fixed") updateProgressionPrefs(DEFAULT_PROGRESSION_PREFS);
     setUsageProfile(next);
     setUsageAsk(null);
     saveUsageProfile(currentUserId, next);
@@ -368,7 +372,7 @@ export default function WorkoutTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usage_profile: next }),
     }).catch(() => { /* offline: sent again from this browser's copy on the next sign-in */ });
-  }, [authFetch, currentUserId, isTrainer]);
+  }, [authFetch, currentUserId, isTrainer, usageProfile, updateProgressionPrefs]);
 
   // A session in use slides: once a day the token is swapped for a fresh one,
   // so someone who opens the app every week never meets the sign-in screen.
@@ -938,6 +942,14 @@ export default function WorkoutTracker({
 
   // ── Workout handlers ──
 
+  // How weights are filled in from history: suggested, a fixed jump, or
+  // last time's numbers as they were (the questionnaire's progression answer).
+  const prefillHow = !usageProfile || usageProfile.progression === "auto"
+    ? { mode: "ramp" as const }
+    : usageProfile.progression === "fixed"
+      ? { mode: "fixed" as const, stepKg: usageProfile.fixedStepKg }
+      : { mode: "carry" as const };
+
   const startFromWizard = (
     autoFill = false,
     /** Override the configs read from state — used by the RPE-driven prescribe
@@ -989,7 +1001,7 @@ export default function WorkoutTracker({
         // Pre-populate from saved history: reproduce the last session's set
         // layout with the working sets ramped to the next progression target.
         // Exercises with no history stay blank, like a brand-new lift.
-        const ramped = rampedSetsFromHistory(ex.id, ex.type, !!ex.is_assisted, history, progressionOverrides[ex.id]);
+        const ramped = rampedSetsFromHistory(ex.id, ex.type, !!ex.is_assisted, history, progressionOverrides[ex.id], prefillHow);
         if (ramped) initSets = ramped;
       }
       return { ...ex, uid: `${ex.id}_${Date.now()}_${Math.random()}`, sets: initSets };
@@ -1029,7 +1041,7 @@ export default function WorkoutTracker({
     setExercises(p => {
       // An ad-hoc add mid-workout also benefits from history: ramp it from the
       // last session if we've logged it before, otherwise leave it blank.
-      const ramped = rampedSetsFromHistory(ex.id, ex.type, !!ex.is_assisted, history, progressionOverrides[ex.id]);
+      const ramped = rampedSetsFromHistory(ex.id, ex.type, !!ex.is_assisted, history, progressionOverrides[ex.id], prefillHow);
       return [...p, { ...ex, uid: `${ex.id}_${Date.now()}`, sets: ramped ?? [{ weight: "", reps: "", done: false }] }];
     });
 
@@ -1354,7 +1366,7 @@ export default function WorkoutTracker({
   const asking = usageAsk !== null && !active;
   // Every list of templates gets the same actions (start, edit, delete).
   const templatesApi: TemplatesApi = {
-    templates, history,
+    templates, history, enabled: usesTemplates(usageProfile),
     save: saveTemplate, update: editTemplate, remove: removeTemplate,
     start: tpl => { setTab("workout"); loadTemplate(tpl); },
   };
@@ -1417,7 +1429,7 @@ export default function WorkoutTracker({
           <WorkoutComplete
             session={completed}
             onDone={dismissCompleted}
-            onSetRpe={rpe => saveSessionRpe(completed.id, rpe)}
+            onSetRpe={logs(usageProfile, "effort") ? rpe => saveSessionRpe(completed.id, rpe) : undefined}
           />
         )}
         {!completed && tab === "workout" && (
@@ -1520,7 +1532,8 @@ export default function WorkoutTracker({
             authFetch={authFetch}
             weeklyPlan={weeklyPlan}
             setWeeklyPlan={setWeeklyPlan}
-            showTemplates={usageProfile?.style !== "spot"}
+            showTemplates={usesTemplates(usageProfile)}
+            showRegimes={usesRegime(usageProfile) || !usageProfile || usageProfile.extras.includes("coach")}
           />
         )}
         {!completed && tab === "health"  && <HealthTab healthMetrics={healthMetrics} fetchHealthMetrics={fetchHealthMetrics} authFetch={authFetch} />}

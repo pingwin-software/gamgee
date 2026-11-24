@@ -30,7 +30,7 @@ export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }>
   yourApp: {
     title: "Your app, your way",
     body:
-      "Two quick questions on the way in: do you **make workouts up on the spot**, **follow a plan**, or both, and do you want **progress**, **body tracking**, **friends** or **a trainer**? Gamgee then hides every page and step you would never touch. Spot lifters go straight from start to picking lifts; plan people get their plan and templates. Changed your mind? **Me, Settings, Workout**. Also, every list of **templates** now lets you start, edit and delete them, wherever it shows up.",
+      "Four quick questions on the way in, and whatever you don't use **disappears**. Do you train from a **weekly regime**, **templates** (Push, Pull, Legs) or **impromptu**? Should weights go up by **Gamgee's suggestion**, the **same jump on every lift**, or **only when you say so**? Want a **rest timer**, **effort ratings**, **cardio**? Progress, body, friends, a trainer? Changed your mind: **Me, Settings, Workout**. Also, every list of **templates** now lets you start, edit and delete them, wherever it shows up.",
   },
   freshPages: {
     title: "Every page hit the gym",

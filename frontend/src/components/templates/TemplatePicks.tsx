@@ -9,11 +9,10 @@ import "./templates.css";
 /**
  * "From template" in a plan's day editor: tap a template's name to fill the
  * day with it; the pencil edits it, the bin deletes it (tap twice), and New
- * makes another. Nothing shows when there are no templates and none can be
- * made from here.
+ * makes another. Nothing shows for someone who doesn't use templates.
  */
 export default function TemplatePicks({ onApply }: { onApply: (tpl: WorkoutTemplate) => void }) {
-  const { templates, remove } = useTemplates();
+  const { templates, remove, enabled } = useTemplates();
   const [editing, setEditing] = useState<WorkoutTemplate | null | "new">(null);
   const [armed, setArmed] = useState<number | null>(null);
   const timer = useRef<number | null>(null);
@@ -26,6 +25,7 @@ export default function TemplatePicks({ onApply }: { onApply: (tpl: WorkoutTempl
     timer.current = window.setTimeout(() => setArmed(null), 4000);
   };
 
+  if (!enabled) return null;
   return (
     <div className="ww-template-row tpl-picks">
       <span className="ww-template-lbl"><Bookmark size={11} /> From template</span>

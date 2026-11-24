@@ -23,7 +23,7 @@ function YourAppArt() {
   return (
     <div className="wn-ya">
       <div className="wn-ya-card">
-        <Zap size={14} /><b>I make it up on the spot</b>
+        <Zap size={14} /><b>Impromptu</b>
         <span className="wn-ya-tick"><Check size={11} strokeWidth={3} /></span>
       </div>
       <div className="wn-ya-nav">

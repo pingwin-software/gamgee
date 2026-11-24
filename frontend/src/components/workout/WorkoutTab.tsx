@@ -9,7 +9,7 @@ import WizardBuild from "./WizardBuild";
 import WizardPrescribe from "./WizardPrescribe";
 import WizardWeeklySetup from "./WizardWeeklySetup";
 import WizardTemplate from "./WizardTemplate";
-import { buildsOnTheSpot, followsPlans, wizardBackStep, type UsageProfile } from "../../usageProfile";
+import { buildsOnTheSpot, followsPlans, logs, suggestsWeights, usesRegime, usesTemplates, wizardBackStep, type UsageProfile } from "../../usageProfile";
 import ActiveWorkout from "./ActiveWorkout";
 
 interface Props {
@@ -75,11 +75,17 @@ export default function WorkoutTab({
   updateSet, setSetRpe, toggleSet, addSet, removeSet, toggleExerciseLock, isNewPr, finishWorkout, cancelWorkout, applyProgressionAll,
   usage = null,
 }: Props) {
-  // On-the-spot only: no plan screen, straight from the start to the focus
-  // pick, no weekly plan or templates. Plan only: the start opens the plan
-  // screen, without the one-off option.
+  // Only the ways the user builds workouts (questionnaire): impromptu only
+  // skips the plan screen and goes straight to the focus pick; without
+  // impromptu the start opens the plan screen with no one-off option; the
+  // weekly regime and templates each show only when picked.
   const onTheSpot = buildsOnTheSpot(usage);
   const plans     = followsPlans(usage);
+  const regime    = usesRegime(usage);
+  const tpls      = usesTemplates(usage);
+  const startLabel = onTheSpot ? "BUILD WORKOUT"
+    : regime && tpls ? "MY PLAN & TEMPLATES"
+    : regime ? "MY PLAN" : "MY TEMPLATES";
   const buildBackStep = wizardBackStep(4, usage);
   const prevStepRef = useRef(wStep);
   const goingBack   = wStep < prevStepRef.current;
@@ -159,9 +165,9 @@ export default function WorkoutTab({
           )}
           <WizardStart
             history={history}
-            weeklyPlan={plans ? weeklyPlan : null}
+            weeklyPlan={regime ? weeklyPlan : null}
             onStart={() => setWStepQuake(plans ? 1 : 2)}
-            buildLabel={onTheSpot ? "BUILD WORKOUT" : "MY PLAN & TEMPLATES"}
+            buildLabel={startLabel}
             onQuickStart={(exs, f, plan) => { triggerQuake(); onQuickStart(exs, f, plan); }}
             onLoadToday={onLoadTodayQuake}
           />
@@ -183,6 +189,8 @@ export default function WorkoutTab({
             onSetupPlan={() => setWStepQuake(6)}
             onBack={() => setWStepQuake(0)}
             allowOneOff={onTheSpot}
+            showRegime={regime}
+            showTemplates={tpls}
           />
         </div>
       )}
@@ -210,8 +218,10 @@ export default function WorkoutTab({
             onStart={startFromWizardQuake}
             cardio={cardio}
             setCardio={setCardio}
-            onConfigureRpe={() => setWStepQuake(5)}
-            onSaveTemplate={plans ? onSaveTemplate : undefined}
+            onConfigureRpe={suggestsWeights(usage) && logs(usage, "effort") ? () => setWStepQuake(5) : undefined}
+            onSaveTemplate={tpls ? onSaveTemplate : undefined}
+            showCardio={logs(usage, "cardio")}
+            suggests={suggestsWeights(usage)}
             history={history}
           />
         </div>
@@ -279,6 +289,9 @@ export default function WorkoutTab({
             toggleExerciseLock={toggleExerciseLock}
             isNewPr={isNewPr}
             applyProgressionAll={applyProgressionAll}
+            suggests={suggestsWeights(usage)}
+            restTimer={logs(usage, "rest")}
+            rateEffort={logs(usage, "effort")}
           />
         </div>
       )}

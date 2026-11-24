@@ -11,7 +11,7 @@ test("a long-standing account is shown What's new once", async ({ page }) => {
       body: JSON.stringify({
         id: 1, username: "tester", name: "Tester", email: "tester@example.com",
         is_admin: false, is_verified: true, is_trainer: false, created_at: null,
-        usage_profile: { style: "both", extras: ["progress", "body", "social", "coach"] },
+        usage_profile: { ways: ["regime", "templates", "spot"], progression: "auto", fixedStepKg: 2.5, logging: ["rest", "effort", "cardio"], extras: ["progress", "body", "social", "coach"] },
       }),
     }),
   );
