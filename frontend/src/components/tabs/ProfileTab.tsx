@@ -18,18 +18,17 @@ export default function ProfileTab({ username, name, history, isAdmin }: Props) 
 
   if (history.length === 0) {
     return (
-      <div className="tab-anim">
-        <div className="empty">
-          <div className="empty-icon"><User size={40} /></div>
-          <div className="empty-label">
-            {t(
-              "Log your first workout to build your profile",
-              "Drop your first session and this page goes hard",
-              "Log your first session, bestie. This page goes off.",
-            )}
-          </div>
-        </div>
-        <Duck isAdmin={isAdmin} />
+      // One line, not a full-screen placeholder: Settings follows right under it.
+      <div className="tab-anim me-empty">
+        <User size={18} aria-hidden="true" />
+        <span>
+          {t(
+            "Your stats show up here after your first workout.",
+            "Drop your first session and this page goes hard.",
+            "Log your first session, bestie. This page goes off.",
+          )}
+        </span>
+        <Duck isAdmin={isAdmin} inline />
       </div>
     );
   }
@@ -187,7 +186,7 @@ const GRL_DUCK_MSGS = [
   "Plot twist: the duck was the main character.",
 ];
 
-function Duck({ isAdmin }: { isAdmin?: boolean }) {
+function Duck({ isAdmin, inline = false }: { isAdmin?: boolean; inline?: boolean }) {
   const mode = useToneMode();
   const [msg, setMsg]       = useState<string | null>(null);
   const [bounce, setBounce] = useState(false);
@@ -210,9 +209,9 @@ function Duck({ isAdmin }: { isAdmin?: boolean }) {
   }, [mode]);
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div style={inline ? { marginLeft: "auto" } : { textAlign: "center" }}>
       {msg && <div className="health-toast">{msg}</div>}
-      <button className={`duck-btn${isAdmin ? " admin" : ""}${bounce ? " bounce" : ""}`} onClick={handleDuck} aria-label="duck">
+      <button className={`duck-btn${inline ? " duck-inline" : ""}${isAdmin ? " admin" : ""}${bounce ? " bounce" : ""}`} onClick={handleDuck} aria-label="duck">
         <DuckIcon size={22} />
       </button>
     </div>
