@@ -1,0 +1,35 @@
+/* Shared template controls (TemplatePicks, TemplateEditorSheet). Prefix: tpl- */
+.tpl-sheet {
+  position: fixed; inset: 0; z-index: 1050; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg); animation: fadeUp 0.15s ease both;
+  /* No app header above the sheet: the builder's sticky bars pin to its top. */
+  --hdr-h: 0px;
+}
+.tpl-sheet-inner { max-width: 700px; margin: 0 auto; padding: 16px 16px 48px; }
+
+.tpl-pick {
+  display: inline-flex; align-items: stretch; border: 1px solid var(--border); border-radius: 20px;
+  background: var(--s1); overflow: hidden;
+}
+.tpl-pick-use, .tpl-pick-act, .tpl-pick-new {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 5px 10px;
+  background: none; border: none; color: var(--muted); font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: color 0.15s, background 0.15s;
+}
+.tpl-pick-use { color: var(--text); }
+.tpl-pick-use:hover { color: var(--accent); background: var(--ad); }
+.tpl-pick-act { padding: 5px 8px; border-left: 1px solid var(--border); }
+.tpl-pick-act:hover { color: var(--accent); }
+.tpl-pick-act.danger:hover, .tpl-pick-act.armed { color: var(--red); }
+.tpl-pick-act.armed { background: color-mix(in srgb, var(--red) 12%, transparent); }
+.tpl-pick-new { border: 1px dashed var(--border); border-radius: 20px; }
+.tpl-pick-new:hover { color: var(--accent); border-color: var(--accent); }
+.tpl-pick-use:focus-visible, .tpl-pick-act:focus-visible, .tpl-pick-new:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Phones and touch: every control at least 44 px (see the phone block in simple.css). */
+@media (max-width: 480px), (pointer: coarse) {
+  .tpl-pick-use, .tpl-pick-act, .tpl-pick-new { min-height: 44px; }
+  .tpl-pick-act { min-width: 44px; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .tpl-sheet { animation: none; } }
+:root[data-reduced-motion="1"] .tpl-sheet { animation: none; }

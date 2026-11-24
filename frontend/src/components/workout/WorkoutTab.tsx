@@ -9,6 +9,7 @@ import WizardBuild from "./WizardBuild";
 import WizardPrescribe from "./WizardPrescribe";
 import WizardWeeklySetup from "./WizardWeeklySetup";
 import WizardTemplate from "./WizardTemplate";
+import { buildsOnTheSpot, followsPlans, logs, suggestsWeights, usesRegime, usesTemplates, wizardBackStep, type UsageProfile } from "../../usageProfile";
 import ActiveWorkout from "./ActiveWorkout";
 
 interface Props {
@@ -62,6 +63,8 @@ interface Props {
   finishWorkout:   () => void;
   cancelWorkout:   () => void;
   applyProgressionAll: () => void;
+  /** The questionnaire answers: which workout steps to offer. */
+  usage?:          UsageProfile | null;
 }
 
 export default function WorkoutTab({
@@ -70,7 +73,20 @@ export default function WorkoutTab({
   weeklyPlan, setWeeklyPlan, templates, onSaveTemplate, onUpdateTemplate, onDeleteTemplate, onLoadTemplate, progressionOverrides, restPrefs, bodyweight, wizardTransition, authFetch, onLoadToday,
   startFromWizard, onQuickStart, suggestion, onStartSuggestion, onDismissSuggestion, prescribeInitialConfigs, startFromPrescribe, addExercise, removeExercise,
   updateSet, setSetRpe, toggleSet, addSet, removeSet, toggleExerciseLock, isNewPr, finishWorkout, cancelWorkout, applyProgressionAll,
+  usage = null,
 }: Props) {
+  // Only the ways the user builds workouts (questionnaire): impromptu only
+  // skips the plan screen and goes straight to the focus pick; without
+  // impromptu the start opens the plan screen with no one-off option; the
+  // weekly regime and templates each show only when picked.
+  const onTheSpot = buildsOnTheSpot(usage);
+  const plans     = followsPlans(usage);
+  const regime    = usesRegime(usage);
+  const tpls      = usesTemplates(usage);
+  const startLabel = onTheSpot ? "BUILD WORKOUT"
+    : regime && tpls ? "MY PLAN & TEMPLATES"
+    : regime ? "MY PLAN" : "MY TEMPLATES";
+  const buildBackStep = wizardBackStep(4, usage);
   const prevStepRef = useRef(wStep);
   const goingBack   = wStep < prevStepRef.current;
   prevStepRef.current = wStep;
@@ -149,8 +165,9 @@ export default function WorkoutTab({
           )}
           <WizardStart
             history={history}
-            weeklyPlan={weeklyPlan}
-            onStart={() => setWStepQuake(1)}
+            weeklyPlan={regime ? weeklyPlan : null}
+            onStart={() => setWStepQuake(plans ? 1 : 2)}
+            buildLabel={startLabel}
             onQuickStart={(exs, f, plan) => { triggerQuake(); onQuickStart(exs, f, plan); }}
             onLoadToday={onLoadTodayQuake}
           />
@@ -171,6 +188,9 @@ export default function WorkoutTab({
             onDeleteTemplate={onDeleteTemplate}
             onSetupPlan={() => setWStepQuake(6)}
             onBack={() => setWStepQuake(0)}
+            allowOneOff={onTheSpot}
+            showRegime={regime}
+            showTemplates={tpls}
           />
         </div>
       )}
@@ -181,7 +201,7 @@ export default function WorkoutTab({
           <WizardFocus
             focus={focus}
             setFocus={setFocus}
-            onBack={() => setWStepQuake(1)}
+            onBack={() => setWStepQuake(wizardBackStep(2, usage))}
             onNext={() => setWStepQuake(4)}
           />
         </div>
@@ -194,12 +214,14 @@ export default function WorkoutTab({
             focus={focus}
             planned={planned}
             setPlanned={setPlanned}
-            onBack={() => setWStepQuake(2)}
+            onBack={() => setWStepQuake(buildBackStep)}
             onStart={startFromWizardQuake}
             cardio={cardio}
             setCardio={setCardio}
-            onConfigureRpe={() => setWStepQuake(5)}
-            onSaveTemplate={onSaveTemplate}
+            onConfigureRpe={suggestsWeights(usage) && logs(usage, "effort") ? () => setWStepQuake(5) : undefined}
+            onSaveTemplate={tpls ? onSaveTemplate : undefined}
+            showCardio={logs(usage, "cardio")}
+            suggests={suggestsWeights(usage)}
             history={history}
           />
         </div>
@@ -226,7 +248,6 @@ export default function WorkoutTab({
             initial={weeklyPlan}
             onPersist={setWeeklyPlan}
             onDone={() => setWStepQuake(1)}
-            templates={templates}
             authFetch={authFetch}
           />
         </div>
@@ -268,6 +289,9 @@ export default function WorkoutTab({
             toggleExerciseLock={toggleExerciseLock}
             isNewPr={isNewPr}
             applyProgressionAll={applyProgressionAll}
+            suggests={suggestsWeights(usage)}
+            restTimer={logs(usage, "rest")}
+            rateEffort={logs(usage, "effort")}
           />
         </div>
       )}

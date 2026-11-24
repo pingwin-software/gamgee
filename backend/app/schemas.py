@@ -109,6 +109,9 @@ class UserOut(BaseModel):
     gym_radius_m: int | None = None
     training_reminders_enabled: bool = True
     progression_prefs: dict[str, Any] | None = None
+    # What the user said they use Gamgee for (first-run questionnaire); the
+    # client hides the pages and steps they don't need. null = not asked yet.
+    usage_profile: dict[str, Any] | None = None
     created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
@@ -235,6 +238,42 @@ class UserPreferences(BaseModel):
                 raise ValueError("onSlip must be step, percent or hold")
             out["onSlip"] = value["onSlip"]
         return out
+
+    # What the app is used for (first-run questionnaire): {"ways": subset of
+    # regime, templates, spot (at least one), "progression": auto|fixed|manual,
+    # "fixedStepKg": 1.25|2.5|5, "logging": subset of rest, effort, cardio,
+    # "extras": subset of progress, body, social, coach}. Omit to leave alone;
+    # null clears it, so the questionnaire is asked again.
+    usage_profile: dict[str, Any] | None = None
+
+    @field_validator("usage_profile")
+    @classmethod
+    def _usage_profile(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+
+        def subset(key: str, allowed: tuple[str, ...], default: list[str]) -> list[str]:
+            items = value.get(key, default)
+            if not isinstance(items, list) or any(i not in allowed for i in items):
+                raise ValueError(f"{key} must be a list drawn from {', '.join(allowed)}")
+            return [a for a in allowed if a in items]
+
+        ways = subset("ways", ("regime", "templates", "spot"), [])
+        if not ways:
+            raise ValueError("ways needs at least one of regime, templates, spot")
+        progression = value.get("progression", "auto")
+        if progression not in ("auto", "fixed", "manual"):
+            raise ValueError("progression must be auto, fixed or manual")
+        step = value.get("fixedStepKg", 2.5)
+        if isinstance(step, bool) or step not in (1.25, 2.5, 5):
+            raise ValueError("fixedStepKg must be 1.25, 2.5 or 5")
+        return {
+            "ways": ways,
+            "progression": progression,
+            "fixedStepKg": step,
+            "logging": subset("logging", ("rest", "effort", "cardio"), ["rest", "effort", "cardio"]),
+            "extras": subset("extras", ("progress", "body", "social", "coach"), []),
+        }
 
     # RPE→step multiplier overrides. Use {} to clear back to the client default
     # table; omit to leave the existing value untouched.

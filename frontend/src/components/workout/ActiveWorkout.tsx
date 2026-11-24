@@ -29,6 +29,12 @@ interface Props {
   toggleExerciseLock: (uid: string) => void;
   isNewPr:        (exId: string, weight: string) => boolean;
   applyProgressionAll: () => void;
+  /** Weight suggestions (coach line, Apply, Progress). Off for "I'll decide myself". */
+  suggests?:      boolean;
+  /** Count down rest between sets. Off: a plain Add set / Done bar instead. */
+  restTimer?:     boolean;
+  /** Ask how many reps were left after each set. */
+  rateEffort?:    boolean;
 }
 
 interface RestState {
@@ -41,7 +47,7 @@ interface RestState {
 export default function ActiveWorkout({
   exercises, prs, history, doneSets, progressionOverrides, restPrefs, bodyweight,
   onFinish, onCancel, addExercise, removeExercise, updateSet, setSetRpe, toggleSet, addSet, removeSet, toggleExerciseLock, isNewPr,
-  applyProgressionAll,
+  applyProgressionAll, suggests = true, restTimer = true, rateEffort = true,
 }: Props) {
   const [showPick, setShowPick] = useState(false);
   // Most recent tier the user picked, reused as the auto-start default on the
@@ -76,7 +82,7 @@ export default function ActiveWorkout({
   // exercise has prior history (analyzeEx returns null otherwise) and nothing
   // has been logged yet — once you start checking sets, the per-card APPLY
   // remains available for surgical adjustments.
-  const hasAnyAnalysis = exercises.some(ex => ex.type === "strength" && !ex.is_assisted && analyzeEx(ex.id, history, progressionOverrides[ex.id]) !== null);
+  const hasAnyAnalysis = suggests && exercises.some(ex => ex.type === "strength" && !ex.is_assisted && analyzeEx(ex.id, history, progressionOverrides[ex.id]) !== null);
 
   const tierSeconds = (tier: RestTier) =>
     tier === "custom" ? lastCustomSec : restPrefs[tier];
@@ -104,7 +110,11 @@ export default function ActiveWorkout({
     const set = ex?.sets[idx];
     toggleSet(uid, idx);
     if (!ex || !set || set.done) return;
-    if (ex.type === "strength") {
+    if (ex.type === "strength" && !restTimer) {
+      // No timer: the next queued set stays in view; once none is left,
+      // bring up Add set / Done for this card.
+      if (!ex.sets.some((s, i) => i !== idx && !s.done)) setRest({ uid, endAt: Date.now(), totalSec: 1, tier: lastTier });
+    } else if (ex.type === "strength") {
       const secs = tierSeconds(lastTier);
       setRest({ uid, endAt: Date.now() + secs * 1000, totalSec: secs, tier: lastTier });
     } else if (idx === ex.sets.length - 1) {
@@ -150,7 +160,9 @@ export default function ActiveWorkout({
       key={ex.uid}
       ex={ex}
       pr={prs[ex.id]}
-      analysis={ex.type === "strength" && !ex.is_assisted ? analyzeEx(ex.id, history, progressionOverrides[ex.id]) : null}
+      analysis={suggests && ex.type === "strength" && !ex.is_assisted ? analyzeEx(ex.id, history, progressionOverrides[ex.id]) : null}
+      restTimer={restTimer}
+      rateEffort={rateEffort}
       restPrefs={restPrefs}
       bodyweight={bodyweight}
       rest={rest?.uid === ex.uid ? { endAt: rest.endAt, totalSec: rest.totalSec, tier: rest.tier } : null}

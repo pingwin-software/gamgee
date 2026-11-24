@@ -8,7 +8,7 @@
  * in this browser, dated after the day it joined: a newcomer is not handed
  * the history.
  */
-export type WhatsNewId = "freshPages" | "progression" | "quickStart" | "passkeys";
+export type WhatsNewId = "yourApp" | "freshPages" | "progression" | "quickStart" | "passkeys";
 
 export interface WhatsNewEntry {
   /** Stable: it is what "seen" remembers. */
@@ -18,6 +18,7 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  { id: "yourApp", date: "2026-11-24" },
   { id: "freshPages", date: "2026-11-22" },
   { id: "progression", date: "2026-11-22" },
   { id: "quickStart", date: "2026-11-22" },
@@ -26,6 +27,11 @@ export const WHATS_NEW: readonly WhatsNewEntry[] = [
 
 /** Title and a few lines per entry. `**words**` show in bold. */
 export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }> = {
+  yourApp: {
+    title: "Your app, your way",
+    body:
+      "Four quick questions on the way in, and whatever you don't use **disappears**. Do you train from a **weekly regime**, **templates** (Push, Pull, Legs) or **impromptu**? Should weights go up by **Gamgee's suggestion**, the **same jump on every lift**, or **only when you say so**? Want a **rest timer**, **effort ratings**, **cardio**? Progress, body, friends, a trainer? Changed your mind: **Me, Settings, Workout**. Also, every list of **templates** now lets you start, edit and delete them, wherever it shows up.",
+  },
   freshPages: {
     title: "Every page hit the gym",
     body:

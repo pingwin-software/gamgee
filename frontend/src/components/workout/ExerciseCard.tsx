@@ -25,6 +25,10 @@ interface Props {
   onPickRestTier: (tier: Exclude<RestTier, "custom">) => void;
   onAdjustRest:   (deltaSec: number) => void;
   onStartCustomRest: (seconds: number) => void;
+  /** False: the bar after a set is plain Add set / Done, no countdown. */
+  restTimer?: boolean;
+  /** False: no "reps left" picker under finished sets. */
+  rateEffort?: boolean;
 }
 
 const colLabels = (ex: WorkoutExercise): [string, string] =>
@@ -104,7 +108,7 @@ function TimedSetRow({ set, idx, setCount, disabled, updateSet, toggleSet, remov
   );
 }
 
-export default function ExerciseCard({ ex, pr, analysis, restPrefs, rest, bodyweight, onRemove, onToggleLock, updateSet, setSetRpe, toggleSet, addSet, removeSet, isNewPr, onPickRestTier, onAdjustRest, onStartCustomRest }: Props) {
+export default function ExerciseCard({ ex, pr, analysis, restPrefs, rest, bodyweight, onRemove, onToggleLock, updateSet, setSetRpe, toggleSet, addSet, removeSet, isNewPr, onPickRestTier, onAdjustRest, onStartCustomRest, restTimer = true, rateEffort = true }: Props) {
   const [wL, rL] = colLabels(ex);
   const [inspectOpen, setInspectOpen] = useState(false);
   const doneCt = ex.sets.filter(s => s.done).length;
@@ -264,7 +268,7 @@ export default function ExerciseCard({ ex, pr, analysis, restPrefs, rest, bodywe
             // set is done so it doesn't crowd the in-progress input row. Stored
             // as RPE under the hood (RIR = 10 - RPE) so existing data and the
             // analyzer keep working.
-            const showRirPicker = ex.type === "strength" && !set.is_warmup && set.done;
+            const showRirPicker = rateEffort && ex.type === "strength" && !set.is_warmup && set.done;
             const rowCls   = [
               "set-row",
               set.done   ? "set-done"   : "",
@@ -397,6 +401,7 @@ export default function ExerciseCard({ ex, pr, analysis, restPrefs, rest, bodywe
             onPickTier={onPickRestTier}
             onAdjust={onAdjustRest}
             onStartCustom={onStartCustomRest}
+            timer={restTimer}
           />
         )}
       </div>

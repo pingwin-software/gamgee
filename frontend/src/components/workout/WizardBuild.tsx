@@ -20,15 +20,22 @@ interface Props {
   onStart:    (autoFill: boolean) => void;
   /** Opt the user into the RPE-driven prescribe step: pick a target effort
    * per exercise and let the app generate sets/reps from your reference max. */
-  onConfigureRpe: () => void;
-  /** Persist the current build (focus + exercise list) as a reusable template. */
-  onSaveTemplate: (draft: WorkoutTemplateDraft) => Promise<WorkoutTemplate | null>;
+  /** The effort-driven setup (step 5). Left out for people who don't rate
+   * effort or want no weight suggestions. */
+  onConfigureRpe?: () => void;
+  /** Offer cardio before or after (questionnaire: cardio). */
+  showCardio?: boolean;
+  /** Whether weights are suggested from history; otherwise last time's numbers are carried. */
+  suggests?: boolean;
+  /** Persist the current build (focus + exercise list) as a reusable template.
+   * Left out for people who only build on the spot (no templates for them). */
+  onSaveTemplate?: (draft: WorkoutTemplateDraft) => Promise<WorkoutTemplate | null>;
   history:    WorkoutSession[];
   cardio:     CardioPlan;
   setCardio:  (c: CardioPlan) => void;
 }
 
-export default function WizardBuild({ focus, planned, setPlanned, onBack, onStart, onConfigureRpe, onSaveTemplate, history, cardio, setCardio }: Props) {
+export default function WizardBuild({ focus, planned, setPlanned, onBack, onStart, onConfigureRpe, onSaveTemplate, history, cardio, setCardio, showCardio = true, suggests = true }: Props) {
   const t = useTxt();
   const [hovEx,           setHovEx]           = useState<ExerciseDef | null>(null);
   const [search,          setSearch]          = useState("");
@@ -41,6 +48,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
   const handleSaveTemplate = async () => {
     const name = templateName.trim();
     if (!name) return;
+    if (!onSaveTemplate) return;
     const saved = await onSaveTemplate({
       name,
       focus,
@@ -245,7 +253,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
             </div>
           )}
 
-          <CardioInline plan={cardio} setPlan={setCardio} />
+          {showCardio && <CardioInline plan={cardio} setPlan={setCardio} />}
 
           {planned.length > 0 && (
             <div className="build-planned">
@@ -272,9 +280,11 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
                 style={{ width: "100%", marginTop: 10, padding: 16, fontSize: 15 }}
                 onClick={() => onStart(true)}
               >
-                {anyPlannedHasHistory ? <>START WITH SMART WEIGHTS <ChevronRight size={16} /></> : <>START WORKOUT <ChevronRight size={16} /></>}
+                {anyPlannedHasHistory
+                  ? <>{suggests ? "START WITH SMART WEIGHTS" : "START WITH LAST TIME'S NUMBERS"} <ChevronRight size={16} /></>
+                  : <>START WORKOUT <ChevronRight size={16} /></>}
               </button>
-              <button
+              {onConfigureRpe && <button
                 className="wz-back wz-rpe-cta"
                 style={{ width: "100%", marginTop: 8, padding: 13, fontSize: 13 }}
                 onClick={onConfigureRpe}
@@ -286,7 +296,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
                   "Set the effort, auto sets & reps",
                   "Pick effort, we'll do the math"
                 )}
-              </button>
+              </button>}
               {anyPlannedHasHistory && (
                 <button
                   className="wz-back"
@@ -298,7 +308,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
               )}
 
               {/* Save the current build as a reusable template. */}
-              {savingTemplate ? (
+              {onSaveTemplate && (savingTemplate ? (
                 <div className="tpl-save-row">
                   <input
                     className="search-input tpl-save-input"
@@ -327,7 +337,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
                     ? t("Saved as template ✓", "Saved as template ✓", "Saved as template ✓")
                     : t("Save as template", "Save as template", "Save as template")}
                 </button>
-              )}
+              ))}
             </div>
           )}
         </div>

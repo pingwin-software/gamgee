@@ -9,10 +9,30 @@ import type { WhatsNewId } from "./whatsNew";
 export default function WhatsNewArt({ demo }: { demo: WhatsNewId }) {
   return (
     <div className="wn-art" aria-hidden="true">
+      {demo === "yourApp" && <YourAppArt />}
       {demo === "freshPages" && <FreshPagesArt />}
       {demo === "progression" && <ProgressionArt />}
       {demo === "quickStart" && <QuickStartArt />}
       {demo === "passkeys" && <PasskeysArt />}
+    </div>
+  );
+}
+
+/** An answer ticked, then the bottom bar trims itself to what was picked. */
+function YourAppArt() {
+  return (
+    <div className="wn-ya">
+      <div className="wn-ya-card">
+        <Zap size={14} /><b>Impromptu</b>
+        <span className="wn-ya-tick"><Check size={11} strokeWidth={3} /></span>
+      </div>
+      <div className="wn-ya-nav">
+        <Zap size={14} className="on" />
+        <TrendingUp size={14} />
+        <Users size={14} className="wn-ya-gone" />
+        <Calendar size={14} className="wn-ya-gone" />
+        <User size={14} />
+      </div>
     </div>
   );
 }

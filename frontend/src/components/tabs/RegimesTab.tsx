@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Bookmark, Calendar, CalendarCheck, Check, ChevronUp, Dumbbell, Pencil, Trash2, Wand2, X,
+  Bookmark, Calendar, CalendarCheck, Check, ChevronUp, Dumbbell, Pencil, Play, Plus, Trash2, Wand2, X,
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { DayPlan, Regime, WeeklyPlan, WeekPlanDay, WeekPlan, WorkoutTemplate } from "../../types";
@@ -9,6 +9,8 @@ import { getFocusDef } from "../../data/focuses";
 import { useTxt } from "../../context/ToneContext";
 import RegimeQuestionnairePanel from "../regime/RegimeQuestionnaire";
 import RegimeEditor from "../regime/RegimeEditor";
+import TemplateEditorSheet from "../templates/TemplateEditorSheet";
+import { useTemplates } from "../../context/TemplatesContext";
 import "../../simple.css";
 import "../../pages/plans.css";
 
@@ -16,8 +18,10 @@ interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
   weeklyPlan: WeeklyPlan | null;
   setWeeklyPlan: (plan: WeeklyPlan) => void;
-  templates: WorkoutTemplate[];
-  onDeleteTemplate: (id: number) => Promise<boolean>;
+  /** Show the saved-templates section (people who use templates). */
+  showTemplates?: boolean;
+  /** Show the regimes section (people who follow a weekly regime, or a trainer's). */
+  showRegimes?: boolean;
 }
 
 const WEEK_KEYS: WeekPlanDay[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -109,8 +113,10 @@ function weekSig(days: DayMap): string {
 }
 const REST_WEEK = WEEK_KEYS.map(() => "-").join("|");
 
-export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templates, onDeleteTemplate }: Props) {
+export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showTemplates = true, showRegimes = true }: Props) {
   const t = useTxt();
+  const { templates, remove: removeTemplate, start: startTemplate } = useTemplates();
+  const [editingTpl, setEditingTpl] = useState<WorkoutTemplate | null | "new">(null);
   const [regimes, setRegimes] = useState<Regime[]>([]);
   const [building, setBuilding] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -155,7 +161,6 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templ
       <RegimeEditor
         authFetch={authFetch}
         regime={editing}
-        templates={templates}
         onSaved={() => { setEditing(null); refresh(); }}
         onCancel={() => setEditing(null)}
       />
@@ -173,6 +178,7 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templ
 
   return (
     <div className="regimes-tab tab-anim pl-page">
+      {showRegimes && (
       <section className="pl-section">
         <h2 className="pl-head">
           <Calendar size={18} /> {t("My regimes", "My programs", "My eras")}
@@ -274,16 +280,24 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templ
         )}
       </section>
 
-      {/* Saved templates: single-session blueprints. Loaded into a workout
-          from the Workout tab, or dropped onto a weekday in the plan editor or
-          a regime's day; here the user can just review and prune them. */}
+      )}
+
+      {/* Saved templates: single-session blueprints. Each can be started,
+          edited or deleted here, same as on the workout-type screen and in the
+          day editors. */}
+      {showTemplates && (
       <section className="pl-section">
         <h2 className="pl-head">
           <Bookmark size={18} /> My templates
           {templates.length > 0 && <span className="pl-count">{templates.length}</span>}
         </h2>
+        <div className="pl-starts">
+          <button type="button" className="pl-btn" onClick={() => setEditingTpl("new")}>
+            <Plus size={18} /> New template
+          </button>
+        </div>
         {templates.length === 0 ? (
-          <p className="pl-muted">No templates yet. Build a workout and tap “Save as template” to reuse it any time.</p>
+          <p className="pl-muted">No templates yet. Make one here, or build a workout and tap “Save as template”.</p>
         ) : (
           <div className="pl-grid pl-grid-tight">
             {templates.map(tpl => {
@@ -291,26 +305,38 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, templ
               const Icon = fd?.icon ?? Dumbbell;
               const n = tpl.exercise_ids.length;
               return (
-                <div key={tpl.id} className="pl-row">
-                  <span className="pl-icon"><Icon size={22} /></span>
-                  <div className="pl-card-id">
-                    <span className="pl-name">{tpl.name}</span>
-                    <span className="pl-sub">{fd ? `${fd.name} · ` : ""}{n} exercise{n !== 1 ? "s" : ""}</span>
+                <article key={tpl.id} className="pl-card pl-tpl">
+                  <div className="pl-row pl-row-flat">
+                    <span className="pl-icon"><Icon size={22} /></span>
+                    <div className="pl-card-id">
+                      <span className="pl-name">{tpl.name}</span>
+                      <span className="pl-sub">{fd ? `${fd.name} · ` : ""}{n} exercise{n !== 1 ? "s" : ""}</span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className="pl-btn pl-btn-icon pl-btn-danger"
-                    onClick={() => onDeleteTemplate(tpl.id)}
-                    aria-label={`Delete template ${tpl.name}`}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+                  <div className="pl-actions">
+                    <button type="button" className="pl-btn pl-btn-main" onClick={() => startTemplate(tpl)}>
+                      <Play size={18} /> Start
+                    </button>
+                    <button type="button" className="pl-btn" onClick={() => setEditingTpl(tpl)}>
+                      <Pencil size={18} /> Edit
+                    </button>
+                    <ConfirmButton
+                      label="Delete"
+                      armedLabel="Tap again"
+                      icon={<Trash2 size={18} />}
+                      onConfirm={() => { removeTemplate(tpl.id); }}
+                    />
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
       </section>
+      )}
+      {editingTpl && (
+        <TemplateEditorSheet initial={editingTpl === "new" ? null : editingTpl} onClose={() => setEditingTpl(null)} />
+      )}
     </div>
   );
 }

@@ -117,6 +117,29 @@
 @keyframes wn-pg-a { 0%, 44% { opacity: 1; } 52%, 100% { opacity: 0; } }
 @keyframes wn-pg-b { 0%, 46% { opacity: 0; transform: translateY(4px); } 56%, 100% { opacity: 1; transform: none; } }
 
+/* ── Your app (questionnaire) ─────────────────────────────────────────── */
+.wn-ya { width: 220px; display: flex; flex-direction: column; gap: 14px; }
+.wn-ya-card {
+  display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 10px;
+  background: var(--ad); border: 1px solid var(--accent); color: var(--accent);
+  animation: wn-ya-tap 5s ease-in-out infinite;
+}
+.wn-ya-card b { flex: 1; font-size: 12px; color: var(--text); }
+.wn-ya-tick {
+  width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #000; animation: wn-ya-tick 5s ease-in-out infinite;
+}
+.wn-ya-nav {
+  display: flex; justify-content: space-around; padding: 7px 0; border-radius: 10px;
+  background: var(--s2); border: 1px solid var(--border); color: var(--muted);
+}
+.wn-ya-nav .on { color: var(--accent); }
+/* End state: gone. The loop shows them first, then trims them away. */
+.wn-ya-gone { width: 0; opacity: 0; animation: wn-ya-gone 5s ease-in-out infinite; }
+@keyframes wn-ya-tap { 0%, 14% { transform: scale(1); } 20% { transform: scale(0.95); } 28%, 100% { transform: scale(1); } }
+@keyframes wn-ya-tick { 0%, 18% { transform: scale(0); } 26%, 100% { transform: scale(1); } }
+@keyframes wn-ya-gone { 0%, 42% { width: 14px; opacity: 1; } 58%, 100% { width: 0; opacity: 0; } }
+
 /* ── Quick start ──────────────────────────────────────────────────────── */
 .wn-qs { width: 220px; display: flex; flex-direction: column; gap: 9px; }
 .wn-qs-card {

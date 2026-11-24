@@ -77,6 +77,7 @@ if engine.dialect.name == "postgresql":
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS rpe_multipliers JSONB"))
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS rpe_multipliers_by_exercise JSONB"))
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS progression_prefs JSONB"))
+        _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_profile JSONB"))
         # Physical attributes — bodyweight is the baseline for assisted-machine
         # exercises (offset logged relative to it), height is informational.
         _conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bodyweight_kg DOUBLE PRECISION"))

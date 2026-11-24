@@ -8,6 +8,8 @@ export interface MockState {
   prs: unknown[];
   loginShouldFail?: boolean;
   registerShouldFailWith?: { status: number; detail: string };
+  /** The questionnaire answers /auth/me returns; null makes it ask. */
+  usageProfile?: unknown;
 }
 
 export function defaultState(): MockState {
@@ -71,8 +73,14 @@ export async function mockApi(page: Page, state: MockState = defaultState()): Pr
       // A brand-new account: What's new has nothing to show it, so the
       // sheet never covers the screen (whatsnew.spec.ts overrides this).
       created_at: "2999-01-01T00:00:00Z",
+      // Already answered "everything", so the questionnaire stays shut and
+      // every page shows (usage.spec.ts asks).
+      usage_profile: state.usageProfile === undefined
+        ? { ways: ["regime", "templates", "spot"], progression: "auto", fixedStepKg: 2.5, logging: ["rest", "effort", "cardio"], extras: ["progress", "body", "social", "coach"] }
+        : state.usageProfile,
     }),
   );
+  await page.route("**/api/auth/preferences", route => json(route, {}));
 
   await page.route("**/api/workouts", route => json(route, state.workouts));
   await page.route("**/api/prs", route => json(route, state.prs));

@@ -26,9 +26,11 @@ interface Props {
   notifBell?:   ReactNode;
   onOpenFeedback?: () => void;
   onOpenWhatsNew?: () => void;
+  /** The pages to show (usageProfile.ts); sections left empty are dropped. */
+  pages?:       Set<string>;
 }
 
-export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback, onOpenWhatsNew }: Props) {
+export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback, onOpenWhatsNew, pages }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lastPage, setLastPage] = useState<Record<string, string>>({});
@@ -67,13 +69,18 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
 
   const planItems: MenuItem[] = [{ key: "regimes" }, { key: "coaching" }];
   if (isTrainer) planItems.push({ key: "trainees" });
-  const sections: MenuGroup[] = [
+  // Only the pages the user's answers call for (Workout and Me always stay);
+  // a section with none of them left is not shown at all.
+  const shown = (items: MenuItem[]) => (pages ? items.filter(i => pages.has(i.key)) : items);
+  const sections: MenuGroup[] = ([
     { id: "train",    label: "Train",    Icon: Zap,        items: [{ key: "workout" }, { key: "exercises" }] },
     { id: "progress", label: "Progress", Icon: TrendingUp, items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
     { id: "social",   label: "Social",   Icon: Users,      items: [{ key: "buddies" }, { key: "chat" }, { key: "notifications" }] },
     { id: "plans",    label: "Plans",    Icon: Calendar,   items: planItems },
     { id: "me",       label: "Me",       Icon: User,       items: [{ key: "profile" }] },
-  ];
+  ] as MenuGroup[])
+    .map(g => ({ ...g, items: shown(g.items) }))
+    .filter(g => g.items.length > 0);
   const menuStructure = sections;
   const isGroup = (_e: MenuGroup): _e is MenuGroup => true;
 
