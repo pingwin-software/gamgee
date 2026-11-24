@@ -42,6 +42,12 @@ import {
 } from "./progressionPrefs";
 import { WHATS_NEW, loadSeen, markSeen, unseen, type WhatsNewEntry } from "./whatsnew/whatsNew";
 import OnboardingWelcome from "./components/Onboarding";
+import UsageQuestionnaire from "./components/UsageQuestionnaire";
+import {
+  EVERYTHING, loadUsageProfile, loadUsageProfileFor, normalizeUsageProfile, saveUsageProfile,
+  visiblePages, wizardBackStep, type UsageProfile,
+} from "./usageProfile";
+import { TemplatesProvider, type TemplatesApi } from "./context/TemplatesContext";
 import { ALL_EX, subscribeCustomExercises } from "./data/exercises";
 import { analyzeEx, prescribeExercise, rampedSetsFromHistory } from "./analysis";
 import { loadPrescribeConfigs, mergePrescribeConfigs } from "./data/prescribeConfigs";
@@ -290,6 +296,12 @@ export default function WorkoutTracker({
   // per account and browser for entries newer than the account; the menu
   // item shows them all.
   const [whatsNew, setWhatsNew] = useState<readonly WhatsNewEntry[] | null>(null);
+  // What the app is used for (the first-run questionnaire): decides which
+  // pages and workout steps show. null = not answered, everything shows.
+  // `usageAsk` is the questionnaire on screen: "first" opens by itself for
+  // an account that never answered, "edit" is reopened from Settings.
+  const [usageProfile, setUsageProfile] = useState<UsageProfile | null>(loadUsageProfile);
+  const [usageAsk, setUsageAsk] = useState<"first" | "edit" | null>(null);
 
   useEffect(() => subscribeCustomExercises(() => setCustomExBump(v => v + 1)), []);
 
@@ -343,6 +355,20 @@ export default function WorkoutTracker({
       body: JSON.stringify({ progression_prefs: next }),
     }).catch(() => { /* offline: the local copy still applies */ });
   }, [authFetch]);
+
+  /** New questionnaire answers: on screen at once, kept here and on the
+   * account. A page the answers hide is left for the workout page. */
+  const updateUsageProfile = useCallback((next: UsageProfile) => {
+    setUsageProfile(next);
+    setUsageAsk(null);
+    saveUsageProfile(currentUserId, next);
+    setTabRaw(prev => (visiblePages(next, isTrainer).has(prev) ? prev : "workout"));
+    authFetch("/api/auth/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usage_profile: next }),
+    }).catch(() => { /* offline: sent again from this browser's copy on the next sign-in */ });
+  }, [authFetch, currentUserId, isTrainer]);
 
   // A session in use slides: once a day the token is swapped for a fresh one,
   // so someone who opens the app every week never meets the sign-in screen.
@@ -556,7 +582,7 @@ export default function WorkoutTracker({
         setPrs(dict);
       }).catch(() => {});
     authFetch("/api/auth/me")
-      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean; created_at?: string | null; progression_prefs?: unknown }) => {
+      .then(r => r.json()).then((d: { id?: number; username: string; name?: string | null; email?: string | null; gender?: string | null; bodyweight_kg?: number | null; height_cm?: number | null; primary_color?: string | null; is_admin?: boolean; is_verified?: boolean; is_trainer?: boolean; rest_short_seconds?: number | null; rest_medium_seconds?: number | null; rest_long_seconds?: number | null; gym_name?: string | null; gym_latitude?: number | null; gym_longitude?: number | null; gym_radius_m?: number | null; training_reminders_enabled?: boolean; created_at?: string | null; progression_prefs?: unknown; usage_profile?: unknown }) => {
         setUsername(d.username);
         setName(d.name ?? null);
         setEmail(d.email ?? null);
@@ -572,6 +598,26 @@ export default function WorkoutTracker({
           if (fresh.length) setWhatsNew(fresh);
         }
         if (d.primary_color) setPrimaryColor(d.primary_color);
+        // The account's answers win. None there but some kept in this
+        // browser for this account (answered offline): send those up. None
+        // at all: ask, new accounts and accounts from before the
+        // questionnaire alike.
+        const serverUsage = normalizeUsageProfile(d.usage_profile);
+        const localUsage = d.id != null ? loadUsageProfileFor(d.id) : null;
+        if (serverUsage) {
+          setUsageProfile(serverUsage);
+          saveUsageProfile(d.id ?? null, serverUsage);
+        } else if (localUsage) {
+          setUsageProfile(localUsage);
+          authFetch("/api/auth/preferences", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usage_profile: localUsage }),
+          }).catch(() => {});
+        } else {
+          setUsageProfile(null);
+          setUsageAsk("first");
+        }
         if (d.progression_prefs) {
           const serverPrefs = normalizeProgressionPrefs(d.progression_prefs);
           setProgressionPrefsState(serverPrefs);
@@ -1286,8 +1332,7 @@ export default function WorkoutTracker({
     else if (tab === "chat" && activeConvId != null) { setActiveConvId(null); consumed = true; }
     else if (tab !== "workout")                 { setTab("workout"); consumed = true; }
     else if (active)                            { consumed = true; }
-    else if (wStep === 6 || wStep === 7)        { setWStep(1); consumed = true; }
-    else if (wStep > 0)                         { setWStep(wStep - 1); consumed = true; }
+    else if (wStep > 0)                         { setWStep(wizardBackStep(wStep, usageProfile)); consumed = true; }
     if (consumed) setBackFxId(Date.now() + Math.random());
     return consumed;
   });
@@ -1303,10 +1348,23 @@ export default function WorkoutTracker({
       </ToneProvider>
     );
 
+  // The pages the questionnaire answers call for.
+  const pages = visiblePages(usageProfile, isTrainer);
+  // The questionnaire waits for a workout in progress to end.
+  const asking = usageAsk !== null && !active;
+  // Every list of templates gets the same actions (start, edit, delete).
+  const templatesApi: TemplatesApi = {
+    templates, history,
+    save: saveTemplate, update: editTemplate, remove: removeTemplate,
+    start: tpl => { setTab("workout"); loadTemplate(tpl); },
+  };
+
   return (
   <ToneProvider value={toneMode}>
+    <TemplatesProvider value={templatesApi}>
     <OnboardingProvider historyLen={history.length}>
-    <OnboardingWelcome />
+    {/* The welcome tour waits for the questionnaire: it walks the pages the answers leave. */}
+    {!asking && <OnboardingWelcome />}
     <div className="app">
       <AppHeader
         active={active} elapsed={elapsed} wStep={wStep}
@@ -1321,7 +1379,8 @@ export default function WorkoutTracker({
         onLogoClick={() => { setTab("workout"); setWStep(0); }}
         onOpenFeedback={() => setFeedbackOpen(true)}
         onOpenWhatsNew={() => setWhatsNew(WHATS_NEW)}
-        notifBell={
+        pages={pages}
+        notifBell={pages.has("notifications") &&
           <NotificationBell
             notifications={notifications}
             unreadCount={unreadCount}
@@ -1388,6 +1447,7 @@ export default function WorkoutTracker({
             toggleExerciseLock={toggleExerciseLock}
             isNewPr={isNewPr} finishWorkout={finishWorkout} cancelWorkout={cancelWorkout}
             applyProgressionAll={applyProgressionAll}
+            usage={usageProfile}
           />
         )}
         {!completed && tab === "history" && <HistoryTab history={history} prs={prs} bodyweight={bodyweightKg} onDelete={deleteWorkout} onUpdate={updateWorkout} />}
@@ -1460,8 +1520,7 @@ export default function WorkoutTracker({
             authFetch={authFetch}
             weeklyPlan={weeklyPlan}
             setWeeklyPlan={setWeeklyPlan}
-            templates={templates}
-            onDeleteTemplate={removeTemplate}
+            showTemplates={usageProfile?.style !== "spot"}
           />
         )}
         {!completed && tab === "health"  && <HealthTab healthMetrics={healthMetrics} fetchHealthMetrics={fetchHealthMetrics} authFetch={authFetch} />}
@@ -1471,13 +1530,20 @@ export default function WorkoutTracker({
           <>
             <ProfileTab username={username} name={name} history={history} isAdmin={isAdmin} />
             <div id="me-settings" className="me-settings">
-              <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} progressionPrefs={progressionPrefs} onProgressionPrefsChange={updateProgressionPrefs} />
+              <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} progressionPrefs={progressionPrefs} onProgressionPrefsChange={updateProgressionPrefs} usageProfile={usageProfile} onEditUsage={() => setUsageAsk("edit")} onShowEverything={() => updateUsageProfile(EVERYTHING)} />
             </div>
           </>
         )}
       </div>
       {feedbackOpen && <FeedbackModal authFetch={authFetch} onClose={() => setFeedbackOpen(false)} />}
-      {whatsNew && !active && (
+      {asking && (
+        <UsageQuestionnaire
+          initial={usageAsk === "edit" ? usageProfile : null}
+          onDone={updateUsageProfile}
+          onCancel={usageAsk === "edit" ? () => setUsageAsk(null) : undefined}
+        />
+      )}
+      {whatsNew && !active && !asking && (
         <WhatsNewModal
           entries={whatsNew}
           onClose={() => { if (currentUserId != null) markSeen(currentUserId, whatsNew); setWhatsNew(null); }}
@@ -1494,6 +1560,7 @@ export default function WorkoutTracker({
       {backFxId != null && <div key={backFxId} className="back-gesture-fx" aria-hidden />}
     </div>
     </OnboardingProvider>
+    </TemplatesProvider>
   </ToneProvider>
   );
 }

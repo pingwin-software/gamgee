@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Save, Search, X, Plus, Settings2, Check, Copy, Trash2, Bookmark } from "lucide-react";
+import { ArrowLeft, Save, Search, X, Plus, Settings2, Check, Copy, Trash2 } from "lucide-react";
 import type {
   Regime, DayPlan, WeekPlanDay, ExerciseConfig, ExerciseDef, WeekPlan, WorkoutTemplate,
 } from "../../types";
 import { WEEK_DAYS } from "../../data/weeklyPlan";
-import { getFocusDef } from "../../data/focuses";
 import { ALL_EX } from "../../data/exercises";
 import { prescribeExercise, weightForRpe } from "../../analysis";
 import { orm1 } from "../../utils";
@@ -12,11 +11,11 @@ import { UPPER_IDS } from "../../constants";
 import NumField from "../NumField";
 import Stepper from "../Stepper";
 import EffortPicker from "../EffortPicker";
+import TemplatePicks from "../templates/TemplatePicks";
 
 interface Props {
   authFetch: (url: string, opts?: RequestInit) => Promise<Response>;
   regime: Regime;
-  templates?: WorkoutTemplate[];
   onSaved: (regime: Regime) => void;
   onCancel: () => void;
 }
@@ -54,7 +53,7 @@ function regimeToWeeks(r: Regime): WeekPlan[] {
   return [cloneWeek({ label: "Week 1", days: r.days || {} })];
 }
 
-export default function RegimeEditor({ authFetch, regime, templates = [], onSaved, onCancel }: Props) {
+export default function RegimeEditor({ authFetch, regime, onSaved, onCancel }: Props) {
   const [name, setName] = useState(regime.name);
   const [description, setDescription] = useState(regime.description ?? "");
   const [weeks, setWeeks] = useState<WeekPlan[]>(() => regimeToWeeks(regime));
@@ -466,25 +465,7 @@ export default function RegimeEditor({ authFetch, regime, templates = [], onSave
           </label>
         </div>
 
-        {day.enabled && templates.length > 0 && (
-          <div className="ww-template-row">
-            <span className="ww-template-lbl"><Bookmark size={11} /> From template</span>
-            {templates.map(tpl => {
-              const fd = tpl.focus ? getFocusDef(tpl.focus) : null;
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  className="ww-focus-chip"
-                  title={`${fd ? `${fd.name} · ` : ""}${tpl.exercise_ids.length} exercise${tpl.exercise_ids.length !== 1 ? "s" : ""} — replaces this day`}
-                  onClick={() => applyTemplate(tpl)}
-                >
-                  {tpl.name}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {day.enabled && <TemplatePicks onApply={applyTemplate} />}
 
         {day.enabled && (
           <>

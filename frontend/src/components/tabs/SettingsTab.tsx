@@ -12,6 +12,7 @@ import { APP_VERSION } from "../../version";
 import PasskeysCard from "../PasskeysCard";
 import ProgressionCard from "../ProgressionCard";
 import type { ProgressionPrefs } from "../../progressionPrefs";
+import { EVERYTHING, type UsageProfile } from "../../usageProfile";
 import "../../simple.css";
 
 type Gender = "female" | "male" | "non_binary" | "other" | "prefer_not_to_say";
@@ -49,6 +50,10 @@ interface Props {
   authFetch:       (url: string, opts?: RequestInit) => Promise<Response>;
   progressionPrefs:         ProgressionPrefs;
   onProgressionPrefsChange: (next: ProgressionPrefs) => void;
+  /** The questionnaire answers that decide which pages show. */
+  usageProfile:             UsageProfile | null;
+  onEditUsage:              () => void;
+  onShowEverything:         () => void;
 }
 
 /** One group of settings: a row that opens. Closed, the page is a short list
@@ -838,6 +843,42 @@ function RestTimerCard({ prefs, onChange }: { prefs: RestPrefs; onChange: (next:
   );
 }
 
+const STYLE_LABEL: Record<UsageProfile["style"], string> = {
+  spot: "Workouts made on the spot",
+  plan: "Following a plan",
+  both: "A plan, plus workouts on the spot",
+};
+const EXTRA_LABEL: Record<UsageProfile["extras"][number], string> = {
+  progress: "progress", body: "body tracking", social: "friends", coach: "a trainer",
+};
+
+/** What the app is used for (the first-run questionnaire), which decides the
+ * pages and workout steps on show. Answer again, or bring everything back. */
+function UsageCard({ profile, onEdit, onShowEverything }: {
+  profile: UsageProfile | null; onEdit: () => void; onShowEverything: () => void;
+}) {
+  const everything = !!profile && profile.style === EVERYTHING.style && profile.extras.length === EVERYTHING.extras.length;
+  const extras = profile?.extras.map(e => EXTRA_LABEL[e]) ?? [];
+  return (
+    <div className="profile-card">
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        What you use Gamgee for
+      </div>
+      <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text)", lineHeight: 1.45 }}>
+        {!profile
+          ? "Not answered yet, so everything shows."
+          : everything
+            ? "Everything: all pages and every way to build a workout."
+            : `${STYLE_LABEL[profile.style]}${extras.length ? `, with ${extras.join(", ")}` : ", nothing extra"}. Pages you don't need are hidden.`}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <button type="button" className="chip-btn" onClick={onEdit}>Change my answers</button>
+        {!everything && <button type="button" className="chip-btn" onClick={onShowEverything}>Show everything</button>}
+      </div>
+    </div>
+  );
+}
+
 function OnboardingCard() {
   const t = useTxt();
   const { openWelcome, resetHints, dismissedHints } = useOnboarding();
@@ -1000,6 +1041,7 @@ export default function SettingsTab({
   reducedMotion, onReducedMotionChange,
   theme, onThemeChange,
   authFetch, progressionPrefs, onProgressionPrefsChange,
+  usageProfile, onEditUsage, onShowEverything,
 }: Props) {
   const t = useTxt();
 
@@ -1020,6 +1062,7 @@ export default function SettingsTab({
       </Group>
 
       <Group id="workout" title={t("Workout", "Workout")} Icon={Dumbbell}>
+        <UsageCard profile={usageProfile} onEdit={onEditUsage} onShowEverything={onShowEverything} />
         <ProgressionCard prefs={progressionPrefs} onChange={onProgressionPrefsChange} />
         <RestTimerCard prefs={restPrefs} onChange={onRestPrefsChange} />
         <GymReminderCard prefs={gymPrefs} onChange={onGymPrefsChange} />

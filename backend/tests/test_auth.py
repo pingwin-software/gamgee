@@ -291,6 +291,29 @@ def test_progression_prefs_are_saved_checked_and_cleared(client, auth_headers):
     assert client.get("/api/auth/me", headers=auth_headers).json()["progression_prefs"] is None
 
 
+def test_usage_profile_is_saved_checked_and_cleared(client, auth_headers):
+    # A new account has not answered the questionnaire yet.
+    assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"] is None
+
+    res = client.patch(
+        "/api/auth/preferences",
+        json={"usage_profile": {"style": "plan", "extras": ["social", "progress", "social"]}},
+        headers=auth_headers,
+    )
+    assert res.status_code == 200, res.text
+    # Stored in a fixed order, duplicates dropped.
+    assert res.json()["usage_profile"] == {"style": "plan", "extras": ["progress", "social"]}
+
+    for bad in ({"style": "whatever"}, {"style": "spot", "extras": ["juggling"]}, {"style": "spot", "extras": "body"}):
+        assert client.patch("/api/auth/preferences", json={"usage_profile": bad}, headers=auth_headers).status_code == 422
+
+    # Another preference leaves it alone; an explicit null clears it.
+    client.patch("/api/auth/preferences", json={"primary_color": "#28D1FF"}, headers=auth_headers)
+    assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"]["style"] == "plan"
+    client.patch("/api/auth/preferences", json={"usage_profile": None}, headers=auth_headers)
+    assert client.get("/api/auth/me", headers=auth_headers).json()["usage_profile"] is None
+
+
 def test_a_session_in_use_gets_a_fresh_token(client, auth_headers):
     res = client.post("/api/auth/refresh", headers=auth_headers)
     assert res.status_code == 200, res.text

@@ -17,9 +17,12 @@ interface Props {
   onDeleteTemplate: (id: number) => Promise<boolean>;
   onSetupPlan:    () => void;
   onBack:         () => void;
+  /** False for people who only follow a plan: no one-off card, plan and
+   * templates only. */
+  allowOneOff?:   boolean;
 }
 
-export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToday, onLoadTemplate, onNewTemplate, onEditTemplate, onDeleteTemplate, onSetupPlan, onBack }: Props) {
+export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToday, onLoadTemplate, onNewTemplate, onEditTemplate, onDeleteTemplate, onSetupPlan, onBack, allowOneOff = true }: Props) {
   const t = useTxt();
   const todayKey  = getTodayKey();
   const todayMeta = WEEK_DAYS.find(d => d.key === todayKey)!;
@@ -39,22 +42,32 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
         <div style={{ width: 72 }} />
       </div>
 
-      <div className="wizard-title">{t("How do you want to train?", "What's the plan, bro?", "What's the move, bestie?")}</div>
+      <div className="wizard-title">
+        {allowOneOff
+          ? t("How do you want to train?", "What's the plan, bro?", "What's the move, bestie?")
+          : t("Your plan", "The plan, bro", "Your era")}
+      </div>
       <div className="wizard-sub">
-        {t(
-          "Build a one-off workout or follow your weekly regime.",
-          "Build a one-off or run your weekly regime. Either way, we lift.",
-          "Build a one-off or serve your weekly regime. Either way, we serve."
-        )}
+        {allowOneOff
+          ? t(
+              "Build a one-off workout or follow your weekly regime.",
+              "Build a one-off or run your weekly regime. Either way, we lift.",
+              "Build a one-off or serve your weekly regime. Either way, we serve."
+            )
+          : t(
+              "Today's workout from your weekly regime, or one of your templates.",
+              "Run today's regime or grab a template. Either way, we lift.",
+              "Serve today's regime or grab a template. Either way, we serve."
+            )}
       </div>
 
-      <OnboardingHint hintKey="mode" title={t("Two ways to train", "Two ways to roll", "Two ways to serve")}>
+      {allowOneOff && <OnboardingHint hintKey="mode" title={t("Two ways to train", "Two ways to roll", "Two ways to serve")}>
         {t(
           "One-off: plan today's exercises up front, save them as a reusable template, and add more ad-hoc once you're logging. Weekly regime: set the same routine on the same days once and we'll auto-load it.",
           "One-off: plan your lifts up front, save 'em as a template, and toss in more ad-hoc mid-workout. Weekly regime: lock the same routine on the same days, auto-load forever.",
           "One-off: plan your moves up front, save 'em as a template, and add more ad-hoc mid-workout. Weekly regime: lock the same routine on the same days, auto-load forever."
         )}
-      </OnboardingHint>
+      </OnboardingHint>}
 
       {/* Today's active plan */}
       {todayPlan?.enabled && focusDef && (
@@ -108,14 +121,16 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
             {t(`${todayMeta.label} is a rest day.`, `${todayMeta.label} is rest day per the Swoly Bible.`, `${todayMeta.label} is rest day — rest is also girlbossing.`)}
           </div>
           <div className="wm-rest-sub">
-            {t("Going rogue? Build a one-off workout below.", "Going off-script? Respect. Pick your own workout below.", "Going off-script? Iconic. Pick your own workout below.")}
+            {allowOneOff
+              ? t("Going rogue? Build a one-off workout below.", "Going off-script? Respect. Pick your own workout below.", "Going off-script? Iconic. Pick your own workout below.")
+              : t("Want to train anyway? Start one of your templates below.", "Can't sit still? Run a template below.", "Can't sit still? Serve a template below.")}
           </div>
         </div>
       )}
 
       {/* Mode cards */}
       <div className="wm-options">
-        <button type="button" className="focus-card" onClick={onSingle} style={{ gridColumn: "1 / -1" }}>
+        {allowOneOff && <button type="button" className="focus-card" onClick={onSingle} style={{ gridColumn: "1 / -1" }}>
           <div className="focus-icon"><Zap size={24} /></div>
           <div className="focus-name">{t("One-Off", "Go Rogue", "Off-Script")}</div>
           <div className="focus-desc">
@@ -125,7 +140,7 @@ export default function WizardMode({ weeklyPlan, templates, onSingle, onLoadToda
               "Pick your moves up front. Save 'em as a template, add more ad-hoc as you go."
             )}
           </div>
-        </button>
+        </button>}
 
         <button type="button" className="focus-card" onClick={onSetupPlan} style={{ gridColumn: "1 / -1" }}>
           <div className="focus-icon"><Calendar size={24} /></div>

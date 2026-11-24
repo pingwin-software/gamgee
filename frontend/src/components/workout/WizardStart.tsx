@@ -22,6 +22,8 @@ interface Props {
   onQuickStart: (exercises: ExerciseDef[], focus: string | null, plan?: DayPlan) => void;
   /** Today's plan has no fixed exercises: open the builder with it loaded. */
   onLoadToday: (plan: DayPlan) => void;
+  /** The builder button's words (it opens the plan screen for plan-only users). */
+  buildLabel?: string;
 }
 
 /** Local `YYYY-MM-DD` of a date (never toISOString: that shifts the day). */
@@ -66,7 +68,7 @@ function WeekStrip({ history, weeklyPlan }: { history: WorkoutSession[]; weeklyP
   );
 }
 
-export default function WizardStart({ history, weeklyPlan, onStart, onQuickStart, onLoadToday }: Props) {
+export default function WizardStart({ history, weeklyPlan, onStart, onQuickStart, onLoadToday, buildLabel = "BUILD WORKOUT" }: Props) {
   const lastSession = history[0] ?? null;
   const todayPlan = dayMapForCurrentWeek(weeklyPlan)[getTodayKey()];
   const todayFocus = todayPlan?.enabled ? getFocusDef(todayPlan.focus) : null;
@@ -150,7 +152,7 @@ export default function WizardStart({ history, weeklyPlan, onStart, onQuickStart
       </div>
 
       <button className={todayFocus || lastExs.length > 0 ? "start-build" : "btn-start"} onClick={onStart} style={{ marginBottom: 12 }}>
-        BUILD WORKOUT
+        {buildLabel}
       </button>
     </div>
   );

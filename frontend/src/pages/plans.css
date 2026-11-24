@@ -167,6 +167,9 @@
   animation: pl-rise 0.28s ease both;
 }
 .pl-row .pl-name { font-size: 15px; }
+/* A template card: the row's look without its own box, inside a .pl-card. */
+.pl-row-flat { padding: 0; border: none; background: none; animation: none; }
+.pl-tpl { gap: 10px; padding: 12px; }
 
 /* ── Sheets (the request and assign dialogs) ──────────────────────────── */
 .pl-sheet { gap: 14px; border-radius: 18px; }

@@ -21,8 +21,9 @@ interface Props {
   /** Opt the user into the RPE-driven prescribe step: pick a target effort
    * per exercise and let the app generate sets/reps from your reference max. */
   onConfigureRpe: () => void;
-  /** Persist the current build (focus + exercise list) as a reusable template. */
-  onSaveTemplate: (draft: WorkoutTemplateDraft) => Promise<WorkoutTemplate | null>;
+  /** Persist the current build (focus + exercise list) as a reusable template.
+   * Left out for people who only build on the spot (no templates for them). */
+  onSaveTemplate?: (draft: WorkoutTemplateDraft) => Promise<WorkoutTemplate | null>;
   history:    WorkoutSession[];
   cardio:     CardioPlan;
   setCardio:  (c: CardioPlan) => void;
@@ -41,6 +42,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
   const handleSaveTemplate = async () => {
     const name = templateName.trim();
     if (!name) return;
+    if (!onSaveTemplate) return;
     const saved = await onSaveTemplate({
       name,
       focus,
@@ -298,7 +300,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
               )}
 
               {/* Save the current build as a reusable template. */}
-              {savingTemplate ? (
+              {onSaveTemplate && (savingTemplate ? (
                 <div className="tpl-save-row">
                   <input
                     className="search-input tpl-save-input"
@@ -327,7 +329,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
                     ? t("Saved as template ✓", "Saved as template ✓", "Saved as template ✓")
                     : t("Save as template", "Save as template", "Save as template")}
                 </button>
-              )}
+              ))}
             </div>
           )}
         </div>

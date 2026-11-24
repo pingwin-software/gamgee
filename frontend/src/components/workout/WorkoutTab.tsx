@@ -9,6 +9,7 @@ import WizardBuild from "./WizardBuild";
 import WizardPrescribe from "./WizardPrescribe";
 import WizardWeeklySetup from "./WizardWeeklySetup";
 import WizardTemplate from "./WizardTemplate";
+import { buildsOnTheSpot, followsPlans, wizardBackStep, type UsageProfile } from "../../usageProfile";
 import ActiveWorkout from "./ActiveWorkout";
 
 interface Props {
@@ -62,6 +63,8 @@ interface Props {
   finishWorkout:   () => void;
   cancelWorkout:   () => void;
   applyProgressionAll: () => void;
+  /** The questionnaire answers: which workout steps to offer. */
+  usage?:          UsageProfile | null;
 }
 
 export default function WorkoutTab({
@@ -70,7 +73,14 @@ export default function WorkoutTab({
   weeklyPlan, setWeeklyPlan, templates, onSaveTemplate, onUpdateTemplate, onDeleteTemplate, onLoadTemplate, progressionOverrides, restPrefs, bodyweight, wizardTransition, authFetch, onLoadToday,
   startFromWizard, onQuickStart, suggestion, onStartSuggestion, onDismissSuggestion, prescribeInitialConfigs, startFromPrescribe, addExercise, removeExercise,
   updateSet, setSetRpe, toggleSet, addSet, removeSet, toggleExerciseLock, isNewPr, finishWorkout, cancelWorkout, applyProgressionAll,
+  usage = null,
 }: Props) {
+  // On-the-spot only: no plan screen, straight from the start to the focus
+  // pick, no weekly plan or templates. Plan only: the start opens the plan
+  // screen, without the one-off option.
+  const onTheSpot = buildsOnTheSpot(usage);
+  const plans     = followsPlans(usage);
+  const buildBackStep = wizardBackStep(4, usage);
   const prevStepRef = useRef(wStep);
   const goingBack   = wStep < prevStepRef.current;
   prevStepRef.current = wStep;
@@ -149,8 +159,9 @@ export default function WorkoutTab({
           )}
           <WizardStart
             history={history}
-            weeklyPlan={weeklyPlan}
-            onStart={() => setWStepQuake(1)}
+            weeklyPlan={plans ? weeklyPlan : null}
+            onStart={() => setWStepQuake(plans ? 1 : 2)}
+            buildLabel={onTheSpot ? "BUILD WORKOUT" : "MY PLAN & TEMPLATES"}
             onQuickStart={(exs, f, plan) => { triggerQuake(); onQuickStart(exs, f, plan); }}
             onLoadToday={onLoadTodayQuake}
           />
@@ -171,6 +182,7 @@ export default function WorkoutTab({
             onDeleteTemplate={onDeleteTemplate}
             onSetupPlan={() => setWStepQuake(6)}
             onBack={() => setWStepQuake(0)}
+            allowOneOff={onTheSpot}
           />
         </div>
       )}
@@ -181,7 +193,7 @@ export default function WorkoutTab({
           <WizardFocus
             focus={focus}
             setFocus={setFocus}
-            onBack={() => setWStepQuake(1)}
+            onBack={() => setWStepQuake(wizardBackStep(2, usage))}
             onNext={() => setWStepQuake(4)}
           />
         </div>
@@ -194,12 +206,12 @@ export default function WorkoutTab({
             focus={focus}
             planned={planned}
             setPlanned={setPlanned}
-            onBack={() => setWStepQuake(2)}
+            onBack={() => setWStepQuake(buildBackStep)}
             onStart={startFromWizardQuake}
             cardio={cardio}
             setCardio={setCardio}
             onConfigureRpe={() => setWStepQuake(5)}
-            onSaveTemplate={onSaveTemplate}
+            onSaveTemplate={plans ? onSaveTemplate : undefined}
             history={history}
           />
         </div>
@@ -226,7 +238,6 @@ export default function WorkoutTab({
             initial={weeklyPlan}
             onPersist={setWeeklyPlan}
             onDone={() => setWStepQuake(1)}
-            templates={templates}
             authFetch={authFetch}
           />
         </div>

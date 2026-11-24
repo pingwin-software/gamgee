@@ -52,6 +52,10 @@ class User(Base):
     # jumps, skip-ahead, what to do when slipping). Shape is the client's
     # ProgressionPrefs; null = the client's defaults.
     progression_prefs = Column(JSONB, nullable=True)
+    # First-run questionnaire answers: how workouts are made (on the spot, from
+    # a plan, both) and which extras are wanted. Drives which pages and wizard
+    # steps the client shows; null = not answered yet (the client asks).
+    usage_profile = Column(JSONB, nullable=True)
     # Gym location + training-reminder preferences. When a home gym is saved
     # (lat/lng), the client can detect when the user is physically there and
     # surface a "start your usual training" prompt. `gym_radius_m` is the

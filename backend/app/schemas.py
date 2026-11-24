@@ -109,6 +109,9 @@ class UserOut(BaseModel):
     gym_radius_m: int | None = None
     training_reminders_enabled: bool = True
     progression_prefs: dict[str, Any] | None = None
+    # What the user said they use Gamgee for (first-run questionnaire); the
+    # client hides the pages and steps they don't need. null = not asked yet.
+    usage_profile: dict[str, Any] | None = None
     created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
@@ -235,6 +238,25 @@ class UserPreferences(BaseModel):
                 raise ValueError("onSlip must be step, percent or hold")
             out["onSlip"] = value["onSlip"]
         return out
+
+    # What the app is used for: {"style": "spot"|"plan"|"both", "extras":
+    # [subset of progress, body, social, coach]}. Omit to leave alone; null
+    # clears it, so the questionnaire is asked again.
+    usage_profile: dict[str, Any] | None = None
+
+    @field_validator("usage_profile")
+    @classmethod
+    def _usage_profile(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        style = value.get("style")
+        if style not in ("spot", "plan", "both"):
+            raise ValueError("style must be spot, plan or both")
+        extras = value.get("extras", [])
+        allowed = ("progress", "body", "social", "coach")
+        if not isinstance(extras, list) or any(e not in allowed for e in extras):
+            raise ValueError(f"extras must be a list drawn from {', '.join(allowed)}")
+        return {"style": style, "extras": [e for e in allowed if e in extras]}
 
     # RPE→step multiplier overrides. Use {} to clear back to the client default
     # table; omit to leave the existing value untouched.

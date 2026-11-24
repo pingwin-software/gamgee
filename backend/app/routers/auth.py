@@ -167,6 +167,8 @@ def update_preferences(
         current_user.rpe_multipliers = body.rpe_multipliers or None
     if "progression_prefs" in body.model_dump(exclude_unset=True):
         current_user.progression_prefs = body.progression_prefs or None
+    if "usage_profile" in body.model_dump(exclude_unset=True):
+        current_user.usage_profile = body.usage_profile
     db.commit()
     db.refresh(current_user)
     return current_user
