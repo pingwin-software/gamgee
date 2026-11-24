@@ -128,13 +128,7 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
       <div className="wz-hdr">
         <button className="wz-back" onClick={onBack}><ArrowLeft size={13} /> BACK</button>
         <span className="wz-focus-label"><Gauge size={13} /> RPE SETUP</span>
-        <button
-          className="wz-next"
-          onClick={() => onStart(configs)}
-          disabled={!allReady}
-        >
-          START <ChevronRight size={13} />
-        </button>
+        <span className="wz-hdr-end" aria-hidden="true" />
       </div>
 
       <div className="prescribe-session">
@@ -268,9 +262,6 @@ export default function WizardPrescribe({ planned, prs, history, initialConfigs,
       </div>
 
       <div className="prescribe-footer">
-        <button className="wz-back" onClick={onBack}>
-          {t("Switch to manual entry", "Skip RPE, do it manually", "Skip RPE, manual mode")}
-        </button>
         <button className="wz-next" onClick={() => onStart(configs)} disabled={!allReady}>
           {t("START WORKOUT", "START THE GRIND", "START IT")} <ChevronRight size={13} />
         </button>

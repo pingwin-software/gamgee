@@ -1,9 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Zap, ClipboardList, Trophy, Heart, Brain, User, LogOut, Menu, X, Shield, Wrench, Users, Bell, MessageSquare, ChevronDown, HelpCircle, GraduationCap, MessagesSquare, Calendar, Settings, Sparkles, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Zap, ClipboardList, Trophy, Heart, Brain, User, Wrench, Users, Bell, GraduationCap, MessagesSquare, Calendar, TrendingUp } from "lucide-react";
 import "../simple.css";
 import { fmtClock } from "../utils";
 import { useTxt } from "../context/ToneContext";
-import { useOnboarding } from "../context/OnboardingContext";
 
 interface Props {
   active:       boolean;
@@ -20,31 +19,15 @@ interface Props {
   assignmentCount?: number;
   tab:          string;
   setTab:       (t: string) => void;
-  onLogout:     () => void;
   onLogoClick?: () => void;
-  isAdmin?:     boolean;
-  notifBell?:   ReactNode;
-  onOpenFeedback?: () => void;
-  onOpenWhatsNew?: () => void;
   /** The pages to show (usageProfile.ts); sections left empty are dropped. */
   pages?:       Set<string>;
 }
 
-export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogout, onLogoClick, isAdmin, notifBell, onOpenFeedback, onOpenWhatsNew, pages }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+export default function AppHeader({ active, elapsed, wStep, historyCount, prCount, coachCount, buddyCount, unreadNotif, unreadChat = 0, isTrainer = false, traineeCount = 0, assignmentCount = 0, tab, setTab, onLogoClick, pages }: Props) {
   const [lastPage, setLastPage] = useState<Record<string, string>>({});
   const t = useTxt();
-  const { openWelcome } = useOnboarding();
   const workoutLabel = active ? "ACTIVE" : wStep > 0 ? "BUILD" : "WORKOUT";
-
-  // Help/tour walks through the workout-wizard flow, so land the user on the
-  // workout home screen first — otherwise the tour overlays don't match what's
-  // visible behind them.
-  const openHelp = () => {
-    onLogoClick?.();
-    openWelcome();
-  };
 
   // Every page, by key. Pages are grouped into five sections (below); the
   // sections are the top-level navigation, the pages the strip under it.
@@ -64,72 +47,46 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
     { key: "profile",       Icon: User,          label: "ME",          badge: null },
   ];
 
-  type MenuItem = { key: string };
-  type MenuGroup = { id: string; label: string; Icon: typeof Zap; items: MenuItem[] };
+  type PageItem = { key: string };
+  type Section = { id: string; label: string; Icon: typeof Zap; items: PageItem[] };
 
-  const planItems: MenuItem[] = [{ key: "regimes" }, { key: "coaching" }];
+  const planItems: PageItem[] = [{ key: "regimes" }, { key: "coaching" }];
   if (isTrainer) planItems.push({ key: "trainees" });
   // Only the pages the user's answers call for (Workout and Me always stay);
   // a section with none of them left is not shown at all.
-  const shown = (items: MenuItem[]) => (pages ? items.filter(i => pages.has(i.key)) : items);
-  const sections: MenuGroup[] = ([
+  const shown = (items: PageItem[]) => (pages ? items.filter(i => pages.has(i.key)) : items);
+  const sections: Section[] = ([
     { id: "train",    label: "Train",    Icon: Zap,        items: [{ key: "workout" }, { key: "exercises" }] },
     { id: "progress", label: "Progress", Icon: TrendingUp, items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
     { id: "social",   label: "Social",   Icon: Users,      items: [{ key: "buddies" }, { key: "chat" }, { key: "notifications" }] },
     { id: "plans",    label: "Plans",    Icon: Calendar,   items: planItems },
     { id: "me",       label: "Me",       Icon: User,       items: [{ key: "profile" }] },
-  ] as MenuGroup[])
+  ] as Section[])
     .map(g => ({ ...g, items: shown(g.items) }))
     .filter(g => g.items.length > 0);
-  const menuStructure = sections;
-  const isGroup = (_e: MenuGroup): _e is MenuGroup => true;
 
   const tabByKey = Object.fromEntries(tabs.map(t => [t.key, t]));
 
-  // Auto-expand whichever group contains the active tab so the user can see where they are.
   const groupForTab = (key: string) => sections.find(g => g.items.some(i => i.key === key))?.id;
   const currentSection = sections.find(g => g.id === groupForTab(tab)) ?? sections[0];
   // A section's badge counts only what is waiting for the user (unread chat
   // and alerts, a regime assigned to them), not how many
   // workouts or PRs a page holds.
   const WAITING = new Set(["chat", "notifications", "regimes"]);
-  const badgeOf = (g: MenuGroup) =>
+  const badgeOf = (g: Section) =>
     g.items.reduce((sum, i) => sum + (WAITING.has(i.key) && typeof tabByKey[i.key]?.badge === "number" ? (tabByKey[i.key].badge as number) : 0), 0);
   // A section reopens on the page it was last left on.
-  const openSection = (g: MenuGroup) => {
+  const openSection = (g: Section) => {
     if (g.id === currentSection.id) return;
     setTab(lastPage[g.id] && g.items.some(i => i.key === lastPage[g.id]) ? lastPage[g.id] : g.items[0].key);
   };
-  // The page strip steps aside while a workout is being built or logged.
+  // The page strip steps aside while a workout is being built or logged; the
+  // dock only while it is being built, so a lift can be checked in History or
+  // a buddy answered mid-workout (the header timer shows it is still running).
   const focused = tab === "workout" && (active || wStep > 0);
+  const building = tab === "workout" && !active && wStep > 0;
 
-  const handleTabSelect = (key: string) => {
-    setTab(key);
-    setMenuOpen(false);
-  };
-
-  const toggleGroup = (id: string) =>
-    setOpenGroups(prev => ({ ...prev, [id]: !(prev[id] ?? id === groupForTab(tab)) }));
-
-  const isGroupOpen = (id: string) => openGroups[id] ?? id === groupForTab(tab);
-
-  const renderMenuItem = (key: string, nested = false) => {
-    const def = tabByKey[key];
-    if (!def) return null;
-    const { Icon, label, badge } = def;
-    return (
-      <button
-        key={key}
-        className={`mobile-nav-item${nested ? " mobile-nav-item-nested" : ""}${tab === key ? " active" : ""}`}
-        onClick={() => handleTabSelect(key)}
-      >
-        <Icon size={18} />
-        <span>{label}</span>
-        {badge !== null && <span className="tab-badge">{badge}</span>}
-      </button>
-    );
-  };
-
+  const showStrip = currentSection.items.length > 1 && !focused;
   const activeTabDef = tabs.find(t => t.key === tab);
   const sectionId = currentSection.id;
   useEffect(() => {
@@ -152,43 +109,11 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
               <div className="logo-sub">{t("Workout Tracker", "Built Different (Allegedly)", "She's Built That Way")}</div>
             </div>
           </button>
+          {/* The page name only where the page strip does not already say it. */}
           {active
             ? <div className="timer-pill"><Zap size={14} />{fmtClock(elapsed)}</div>
-            : <div className="hdr-current-tab">{activeTabDef?.label}</div>
+            : <div className="hdr-current-tab">{showStrip ? null : activeTabDef?.label}</div>
           }
-          <div className="hdr-actions">
-            {notifBell}
-            <button
-              className="logout-btn hdr-settings-btn"
-              onClick={() => setTab("settings")}
-              title={t("Settings", "Settings", "Settings")}
-              aria-label="Settings"
-            >
-              <Settings size={15} />
-              <span className="logout-label">Settings</span>
-            </button>
-            <button className="logout-btn hdr-help-btn" onClick={openHelp} title={t("Help & tour", "Help & tour", "Help & tour")}>
-              <HelpCircle size={15} />
-              <span className="logout-label">Help</span>
-            </button>
-            {isAdmin && (
-              <a href="/admin" className="logout-btn" title="Admin panel" style={{ textDecoration: "none" }}>
-                <Shield size={15} />
-                <span className="logout-label">Admin</span>
-              </a>
-            )}
-            <button className="logout-btn" onClick={onLogout} title="Logout">
-              <LogOut size={15} />
-              <span className="logout-label">Logout</span>
-            </button>
-            <button
-              className={`hamburger-btn${menuOpen ? " open" : ""}`}
-              onClick={() => setMenuOpen(o => !o)}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-            >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
         </div>
         <div className="tabs">
           {sections.map(g => {
@@ -202,7 +127,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
             );
           })}
         </div>
-        {currentSection.items.length > 1 && !focused && (
+        {showStrip && (
           <div className="subtabs" role="tablist" aria-label={currentSection.label}>
             {currentSection.items.map(i => {
               const def = tabByKey[i.key];
@@ -216,87 +141,13 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
             })}
           </div>
         )}
-        {menuOpen && (
-          <nav className="mobile-nav">
-            {menuStructure.map(entry => {
-              if (!isGroup(entry)) return null;
-              if (entry.items.length === 1) return renderMenuItem(entry.items[0].key);
-              const open = isGroupOpen(entry.id);
-              const groupBadge = badgeOf(entry);
-              return (
-                <div key={entry.id} className={`mobile-nav-group${open ? " open" : ""}`}>
-                  <button
-                    className="mobile-nav-item mobile-nav-group-header"
-                    onClick={() => toggleGroup(entry.id)}
-                    aria-expanded={open}
-                  >
-                    <span className="mobile-nav-group-label">{entry.label}</span>
-                    {groupBadge > 0 && !open && <span className="tab-badge">{groupBadge}</span>}
-                    <ChevronDown size={18} className="mobile-nav-chevron" />
-                  </button>
-                  {open && (
-                    <div className="mobile-nav-group-items">
-                      {entry.items.map(i => renderMenuItem(i.key, true))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            <div className="mobile-nav-divider" />
-            <button
-              className="mobile-nav-item"
-              onClick={() => { setMenuOpen(false); openHelp(); }}
-            >
-              <HelpCircle size={18} />
-              <span>Help &amp; tour</span>
-            </button>
-            {onOpenWhatsNew && (
-              <button
-                className="mobile-nav-item"
-                onClick={() => { setMenuOpen(false); onOpenWhatsNew(); }}
-              >
-                <Sparkles size={18} />
-                <span>What's new</span>
-              </button>
-            )}
-            {onOpenFeedback && (
-              <button
-                className="mobile-nav-item"
-                onClick={() => { setMenuOpen(false); onOpenFeedback(); }}
-              >
-                <MessageSquare size={18} />
-                <span>Send Feedback</span>
-              </button>
-            )}
-            {isAdmin && (
-              <a
-                href="/admin"
-                className="mobile-nav-item mobile-nav-admin"
-                onClick={() => setMenuOpen(false)}
-                style={{ textDecoration: "none" }}
-              >
-                <Shield size={18} />
-                <span>Admin</span>
-              </a>
-            )}
-            <button
-              className="mobile-nav-item mobile-nav-logout"
-              onClick={() => { setMenuOpen(false); onLogout(); }}
-            >
-              <LogOut size={18} />
-              <span>Logout</span>
-            </button>
-          </nav>
-        )}
       </div>
-      {menuOpen && (
-        <div className="mobile-nav-backdrop" onClick={() => setMenuOpen(false)} />
-      )}
       {/* Phones: the five sections in a dock floating at the bottom, under the
           thumb. One solid pill glides to the picked section, stretching as it
-          goes; the mark it lands on jumps. The dock steps aside while a
-          workout is being built or logged. */}
-      {!focused && (
+          goes; the mark it lands on jumps. It is the only navigation on a
+          phone (no menu repeats it), and steps aside while a workout is being
+          built. */}
+      {!building && (
         <nav className="bottom-nav" aria-label="Sections">
           <div className="bottom-nav-track" style={{ ["--tab" as string]: sections.findIndex(g => g.id === currentSection.id), ["--tabs" as string]: sections.length }}>
             <span className="bottom-nav-glider" aria-hidden="true">

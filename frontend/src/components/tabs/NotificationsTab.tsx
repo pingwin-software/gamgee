@@ -146,7 +146,6 @@ export default function NotificationsTab({
     }
   };
 
-  const totalCount   = merged.length;
   const unreadInList = merged.filter(n => !n.read).length;
   const kindCounts = KINDS
     .map(k => ({ kind: k, count: merged.filter(n => n.kind === k).length }))
@@ -154,23 +153,13 @@ export default function NotificationsTab({
 
   return (
     <div className="tab-anim so-root">
-      <div className="so-head">
-        <div className="so-head-text">
-          <div className="so-head-title">
-            <Bell size={22} aria-hidden="true" /> Alerts
-          </div>
-          <div className="so-head-sub">
-            {totalCount === 0
-              ? t("Nothing here yet", "Nothing yet", "Nothing yet, bestie")
-              : unreadInList > 0 ? `${unreadInList} unread of ${totalCount}` : `${totalCount} in total, all read`}
-          </div>
-        </div>
-        {unreadCount > 0 && (
+      {unreadCount > 0 && (
+        <div className="so-head">
           <button type="button" className="so-act so-act-main so-act-fit" onClick={() => handleMarkAll()}>
             <CheckCheck size={18} aria-hidden="true" /> Mark all read
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="seg so-seg" role="group" aria-label="Show">
         <button

@@ -33,7 +33,6 @@ import CoachingTab from "./components/tabs/CoachingTab";
 import TraineesTab from "./components/tabs/TraineesTab";
 import RegimesTab from "./components/tabs/RegimesTab";
 import LiveSessionViewer from "./components/LiveSessionViewer";
-import NotificationBell from "./components/NotificationBell";
 import FeedbackModal from "./components/FeedbackModal";
 import WhatsNewModal from "./whatsnew/WhatsNewModal";
 import {
@@ -1387,24 +1386,9 @@ export default function WorkoutTracker({
         isTrainer={isTrainer}
         traineeCount={trainerLinks.filter(l => l.role === "trainer" && l.status === "accepted").length}
         assignmentCount={assignments.filter(a => a.trainee_id === currentUserId).length}
-        tab={tab} setTab={setTab} onLogout={logout} isAdmin={isAdmin}
+        tab={tab} setTab={setTab}
         onLogoClick={() => { setTab("workout"); setWStep(0); }}
-        onOpenFeedback={() => setFeedbackOpen(true)}
-        onOpenWhatsNew={() => setWhatsNew(WHATS_NEW)}
         pages={pages}
-        notifBell={pages.has("notifications") &&
-          <NotificationBell
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkRead={markNotifRead}
-            onMarkAll={markAllNotifRead}
-            onDelete={deleteNotif}
-            onGoToBuddies={() => setTab("buddies")}
-            onGoToChat={goToChat}
-            onViewAll={() => setTab("notifications")}
-            refresh={refreshNotifications}
-          />
-        }
       />
       {active && <StatsBar exercises={exercises} doneSets={doneSets} />}
       {!isVerified && !verifyHidden && !(tab === "workout" && (active || wStep > 0)) && (
@@ -1543,7 +1527,7 @@ export default function WorkoutTracker({
           <>
             <ProfileTab username={username} name={name} history={history} isAdmin={isAdmin} />
             <div id="me-settings" className="me-settings">
-              <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} progressionPrefs={progressionPrefs} onProgressionPrefsChange={updateProgressionPrefs} usageProfile={usageProfile} onEditUsage={() => setUsageAsk("edit")} onShowEverything={() => updateUsageProfile(EVERYTHING)} />
+              <SettingsTab name={name} email={email} gender={gender} bodyweightKg={bodyweightKg} heightCm={heightCm} token={token} primaryColor={primaryColor} onColorChange={setPrimaryColor} onProfileUpdate={(n, e, g, bw, ht) => { setName(n); setEmail(e); setGender(g); setBodyweightKg(bw); setHeightCm(ht); }} toneMode={toneMode} onToneChange={setToneMode} restPrefs={restPrefs} onRestPrefsChange={updateRestPrefs} gymPrefs={gymPrefs} onGymPrefsChange={updateGymPrefs} wizardTransition={wizardTransition} onWizardTransitionChange={updateWizardTransition} reducedMotion={reducedMotion} onReducedMotionChange={updateReducedMotion} theme={theme} onThemeChange={updateTheme} authFetch={authFetch} progressionPrefs={progressionPrefs} onProgressionPrefsChange={updateProgressionPrefs} usageProfile={usageProfile} onEditUsage={() => setUsageAsk("edit")} onShowEverything={() => updateUsageProfile(EVERYTHING)} onReplayTour={() => { setTab("workout"); setWStep(0); }} onOpenWhatsNew={() => setWhatsNew(WHATS_NEW)} onOpenFeedback={() => setFeedbackOpen(true)} isAdmin={isAdmin} onLogout={logout} />
             </div>
           </>
         )}

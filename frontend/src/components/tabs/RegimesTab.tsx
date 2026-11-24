@@ -224,9 +224,6 @@ export default function RegimesTab({ authFetch, weeklyPlan, setWeeklyPlan, showT
               "No programs yet. Answer a few questions and get a week built for your gains.",
               "No eras yet. Answer a few questions and get a week built just for you.",
             )}</p>
-            <button type="button" className="pl-btn pl-btn-main" onClick={() => setBuilding(true)}>
-              <Wand2 size={18} /> Run the questionnaire
-            </button>
           </div>
         )}
 

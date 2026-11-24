@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info } from "lucide-react";
+import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info, Sparkles, MessageSquare, Shield, LogOut } from "lucide-react";
 import { useTxt, type ToneMode } from "../../context/ToneContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import {
@@ -54,6 +54,12 @@ interface Props {
   usageProfile:             UsageProfile | null;
   onEditUsage:              () => void;
   onShowEverything:         () => void;
+  /** The tour walks the workout screen, so it opens from there. */
+  onReplayTour:             () => void;
+  onOpenWhatsNew:           () => void;
+  onOpenFeedback:           () => void;
+  isAdmin:                  boolean;
+  onLogout:                 () => void;
 }
 
 /** One group of settings: a row that opens. Closed, the page is a short list
@@ -899,7 +905,7 @@ function UsageCard({ profile, onEdit, onShowEverything }: {
   );
 }
 
-function OnboardingCard() {
+function OnboardingCard({ onReplayTour }: { onReplayTour: () => void }) {
   const t = useTxt();
   const { openWelcome, resetHints, dismissedHints } = useOnboarding();
   const [hintsReset, setHintsReset] = useState(false);
@@ -916,7 +922,7 @@ function OnboardingCard() {
         {t("Tour & hints", "Tour & hints", "Tour & hints")}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <button type="button" className="auth-toggle" style={{ textAlign: "left" }} onClick={openWelcome}>
+        <button type="button" className="auth-toggle" style={{ textAlign: "left" }} onClick={() => { onReplayTour(); openWelcome(); }}>
           {t("Replay welcome tour", "Replay welcome tour", "Replay welcome tour")}
         </button>
         <button
@@ -1062,6 +1068,7 @@ export default function SettingsTab({
   theme, onThemeChange,
   authFetch, progressionPrefs, onProgressionPrefsChange,
   usageProfile, onEditUsage, onShowEverything,
+  onReplayTour, onOpenWhatsNew, onOpenFeedback, isAdmin, onLogout,
 }: Props) {
   const t = useTxt();
 
@@ -1111,12 +1118,21 @@ export default function SettingsTab({
       </Group>
 
       <Group id="guidance" title={t("Guidance", "Guidance", "Guidance")} Icon={Compass}>
-        <OnboardingCard />
+        <OnboardingCard onReplayTour={onReplayTour} />
       </Group>
 
       <Group id="about" title={t("About", "About", "About")} Icon={Info}>
         <AboutCard authFetch={authFetch} />
       </Group>
+
+      {/* The few things that are not a page or a setting: one row, at the end
+          of Me, instead of a menu that also repeated every page. */}
+      <div className="me-actions">
+        <button type="button" className="chip-btn" onClick={onOpenWhatsNew}><Sparkles size={15} /> What's new</button>
+        <button type="button" className="chip-btn" onClick={onOpenFeedback}><MessageSquare size={15} /> Send feedback</button>
+        {isAdmin && <a className="chip-btn" href="/admin"><Shield size={15} /> Admin</a>}
+        <button type="button" className="chip-btn me-logout" onClick={onLogout}><LogOut size={15} /> Log out</button>
+      </div>
     </div>
   );
 }

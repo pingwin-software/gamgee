@@ -133,9 +133,6 @@ export default function WorkoutComplete({ session, onDone, onSetRpe }: Props) {
       </div>
 
       <div className="complete-actions">
-        <button className="btn-secondary" onClick={onDone}>
-          <X size={14} /> SKIP REST
-        </button>
         <button className="btn-finish" onClick={onDone}>
           <Check size={14} /> {allDone ? t("ALL DONE", "CRUSHED IT", "ATE THAT") : "FINISH"}
         </button>

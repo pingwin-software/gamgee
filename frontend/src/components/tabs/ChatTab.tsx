@@ -453,9 +453,6 @@ export default function ChatTab({
                   "So quiet, bestie. Message a buddy or your coach."
                 )}
               </div>
-              <button type="button" className="ch-big-btn" onClick={() => setNewConvOpen(true)}>
-                <MessageSquarePlus size={18} /> New chat
-              </button>
             </div>
           )
         ) : (

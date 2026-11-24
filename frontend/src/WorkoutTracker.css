@@ -330,7 +330,6 @@ html, body { background: var(--bg); }
   position: sticky; top: 0; z-index: 100;
 }
 .hdr-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.hdr-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .hdr-brand {
   display: flex; align-items: center; gap: 9px;
   background: transparent; border: none; padding: 0; margin: 0;
@@ -382,18 +381,6 @@ html, body { background: var(--bg); }
   border-radius: 10px; padding: 1px 5px; min-width: 16px; text-align: center; line-height: 1.4;
 }
 
-/* ── HAMBURGER & MOBILE NAV ── */
-.hamburger-btn {
-  display: none;
-  align-items: center; justify-content: center;
-  width: 44px; height: 44px; flex-shrink: 0;
-  background: none; border: 1px solid var(--border); border-radius: 6px;
-  color: var(--muted); cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.hamburger-btn:hover, .hamburger-btn.open { border-color: var(--muted); color: var(--text); }
-
 .hdr-current-tab {
   display: none;
   flex: 1; text-align: center;
@@ -401,7 +388,7 @@ html, body { background: var(--bg); }
   letter-spacing: 2px; text-transform: uppercase; color: var(--text);
 }
 
-/* Mobile header overrides — hamburger mode */
+/* Mobile header overrides */
 @media (max-width: 480px) {
   .hdr { padding: max(10px, env(safe-area-inset-top)) 12px 0; }
   .hdr-top { margin-bottom: 10px; }
@@ -409,86 +396,10 @@ html, body { background: var(--bg); }
   .hdr-brand-text { display: none; }
   .timer-pill { font-size: 14px; padding: 3px 8px; letter-spacing: 1px; flex: 1; justify-content: center; }
   .tab { padding: 5px 8px; }
-  /* Replace tabs with hamburger */
+  /* The bottom dock is the navigation on phones. */
   .tabs { display: none; }
-  .hamburger-btn { display: flex; }
   .hdr-current-tab { display: block; }
 }
-
-.mobile-nav {
-  margin: 0 -12px;
-  padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border);
-  animation: fadeIn 0.15s ease;
-  display: flex; flex-direction: column;
-}
-@media (min-width: 481px) { .mobile-nav { display: none; } }
-
-/* Base row shared by top-level items, nested items and the action buttons.
-   No per-row borders — hierarchy comes from size/colour/indent + rounded
-   hover/active pills, so the list reads cleanly instead of as a dense grid. */
-.mobile-nav-item {
-  display: flex; align-items: center; gap: 13px; width: 100%;
-  padding: 12px 14px;
-  background: transparent; border: none; border-radius: 9px;
-  color: var(--text); font-family: 'Nunito', sans-serif;
-  font-size: 13px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
-  cursor: pointer; text-align: left;
-  transition: background 0.15s, color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.mobile-nav-item > span { flex: 1; }
-.mobile-nav-item svg { flex-shrink: 0; color: var(--muted); transition: color 0.15s; }
-.mobile-nav-item .tab-badge { flex: 0 0 auto; }
-.mobile-nav-item:hover { background: var(--s2); color: var(--text); }
-.mobile-nav-item:hover svg { color: var(--text); }
-.mobile-nav-item.active { color: var(--accent); background: var(--ad); }
-.mobile-nav-item.active svg { color: var(--accent); }
-
-.mobile-nav-logout { color: var(--red); margin-top: 2px; }
-.mobile-nav-logout svg { color: var(--red); }
-.mobile-nav-logout:hover { color: var(--red); background: rgba(200,68,68,0.10); }
-.mobile-nav-logout:hover svg { color: var(--red); }
-
-.mobile-nav-divider { height: 1px; background: var(--border); margin: 7px 6px; }
-
-/* Collapsible group: the header is a small, tracked-out section label — clearly
-   a category, not a tappable destination like the rows around it. */
-.mobile-nav-group { margin: 1px 0; }
-.mobile-nav-group-header {
-  padding: 12px 14px;
-  color: var(--muted);
-  font-size: 12px; font-weight: 800; letter-spacing: 2px;
-}
-.mobile-nav-group-header:hover { background: var(--s2); color: var(--text); }
-.mobile-nav-group-label { flex: 1; }
-.mobile-nav-chevron { color: var(--muted); transition: transform 0.2s ease; opacity: 0.65; }
-.mobile-nav-group.open > .mobile-nav-group-header { color: var(--text); }
-.mobile-nav-group.open .mobile-nav-chevron { transform: rotate(180deg); opacity: 1; }
-
-/* Nested items hang off a vertical rail so they read as children of the group. */
-.mobile-nav-group-items {
-  margin: 1px 0 4px 26px;
-  padding-left: 8px;
-  border-left: 2px solid var(--border);
-  display: flex; flex-direction: column;
-  animation: fadeIn 0.15s ease;
-}
-.mobile-nav-item-nested {
-  padding: 10px 12px;
-  font-size: 12px; letter-spacing: 0.6px;
-  color: var(--muted);
-}
-.mobile-nav-item-nested svg { width: 16px; height: 16px; }
-.mobile-nav-item-nested:hover { color: var(--text); }
-.mobile-nav-item-nested.active { color: var(--accent); }
-
-.mobile-nav-backdrop {
-  position: fixed; inset: 0; z-index: 99;
-  background: rgba(0,0,0,0.35);
-  animation: fadeIn 0.15s ease;
-}
-@media (min-width: 481px) { .mobile-nav-backdrop { display: none; } }
 
 /* ── STATS BAR ── */
 .stats-bar { display: flex; background: var(--s2); border-bottom: 1px solid var(--border); }
@@ -860,6 +771,8 @@ html, body { background: var(--bg); }
 .focus-name { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text); margin-bottom: 3px; }
 .focus-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 .wz-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+/* Balances BACK where a step's one forward action sits at the end of the page. */
+.wz-hdr-end { min-width: 64px; }
 .wz-back {
   font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
   letter-spacing: 1px; text-transform: uppercase; background: transparent;
@@ -947,7 +860,7 @@ html, body { background: var(--bg); }
 .prescribe-preview-warmup { color: var(--muted); }
 
 .prescribe-footer {
-  display: flex; gap: 8px; justify-content: space-between; align-items: center;
+  display: flex; gap: 8px; justify-content: flex-end; align-items: center;
   margin-top: 14px; padding-top: 10px;
   border-top: 1px solid var(--border);
 }
@@ -1899,15 +1812,6 @@ html, body { background: var(--bg); }
 .pw-checklist li.ok  { color: #2e7d32; }
 .pw-checklist li.bad { color: var(--muted); }
 .pw-checklist .pw-mark { width: 0.85rem; text-align: center; font-weight: 700; }
-.logout-btn {
-  background: none; border: 1px solid var(--border); border-radius: 6px;
-  color: var(--muted); cursor: pointer; padding: 0.35rem 0.55rem;
-  display: flex; align-items: center; gap: 5px; transition: all 0.15s; flex-shrink: 0;
-}
-.logout-btn:hover { border-color: var(--muted); color: var(--text); }
-.logout-label { font-size: 0.78rem; }
-@media (max-width: 480px) { .logout-btn { display: none; } }
-
 /* ── WORKOUT COMPLETE / STRETCH ── */
 .complete-screen {
   text-align: center; padding: 24px 12px 12px;
@@ -2284,89 +2188,6 @@ html, body { background: var(--bg); }
   background: var(--ad2); border-color: var(--accent); color: var(--accent);
 }
 
-/* ── Notification bell ──────────────────────────────────────────────── */
-.notif-wrap { position: relative; }
-.notif-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; flex-shrink: 0; border-radius: 6px;
-  background: none; border: 1px solid var(--border); color: var(--muted);
-  cursor: pointer; position: relative; padding: 0; transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-@media (max-width: 480px) {
-  .notif-btn { width: 40px; height: 40px; }
-}
-.notif-btn:hover { color: var(--text); border-color: var(--muted); }
-.notif-btn.has-unread { color: var(--accent); border-color: var(--accent); }
-.notif-badge {
-  position: absolute; top: -4px; right: -4px;
-  background: var(--accent); color: #000; font-family: 'Nunito', sans-serif;
-  font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 999px;
-  border: 1.5px solid var(--bg);
-  min-width: 16px; line-height: 1.2; text-align: center;
-}
-.notif-panel {
-  position: absolute; right: 0; top: calc(100% + 8px);
-  width: min(360px, calc(100vw - 24px));
-  max-height: 70vh; overflow-y: auto;
-  background: var(--s1); border: 1px solid var(--border); border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); z-index: 200;
-  animation: fadeUp 0.15s ease both;
-}
-/* On mobile the bell sits left of the hamburger, so an absolute right:0
-   panel can extend past the viewport's left edge. Pin to both sides instead. */
-@media (max-width: 480px) {
-  .notif-panel {
-    position: fixed;
-    top: calc(var(--hdr-h) - 4px);
-    left: 12px; right: 12px;
-    width: auto;
-  }
-}
-.notif-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-}
-.notif-hdr .auth-toggle {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
-  letter-spacing: 0.08em;
-}
-.notif-list { display: flex; flex-direction: column; }
-.notif-item {
-  display: flex; gap: 10px; padding: 10px 14px;
-  border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s;
-  align-items: flex-start;
-}
-.notif-item:last-child { border-bottom: none; }
-.notif-item:hover { background: var(--s2); }
-.notif-item.unread { background: var(--ad); }
-.notif-item.unread:hover { background: var(--ad2); }
-.notif-icon {
-  width: 28px; height: 28px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 8px; background: var(--s2); color: var(--accent);
-}
-.notif-body { flex: 1; min-width: 0; }
-.notif-msg {
-  font-size: 13px; color: var(--text); line-height: 1.35;
-  word-wrap: break-word;
-}
-.notif-meta {
-  font-size: 12px; color: var(--muted); margin-top: 3px;
-  font-family: 'Nunito', sans-serif; letter-spacing: 0.04em;
-}
-.notif-del {
-  background: none; border: none; color: var(--muted); cursor: pointer;
-  font-size: 18px; line-height: 1; padding: 0 4px; flex-shrink: 0;
-}
-.notif-del:hover { color: var(--text); }
-.notif-empty {
-  padding: 28px 16px; text-align: center; color: var(--muted);
-  font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-
 .buddy-icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 8px;
@@ -2548,16 +2369,6 @@ html, body { background: var(--bg); }
   text-transform: uppercase;
 }
 
-/* ── Notifications full-page view ──────────────────────────────────── */
-.notif-view-all {
-  display: block; width: 100%; padding: 10px 14px;
-  background: var(--s2); border: none; border-top: 1px solid var(--border);
-  color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 700;
-  font-family: 'Nunito', sans-serif; letter-spacing: 0.06em;
-  text-transform: uppercase; transition: background 0.12s;
-}
-.notif-view-all:hover { background: var(--ad); }
-
 /* ── Feedback modal ──────────────────────────────────────────────────── */
 .fb-modal { max-width: 520px; }
 .fb-kind-row {
@@ -2695,21 +2506,6 @@ html, body { background: var(--bg); }
   transition: color 0.15s, background 0.15s;
 }
 .onb-hint-close:hover { color: var(--text); background: var(--ad2); }
-
-.hdr-help-btn { display: inline-flex; }
-@media (max-width: 640px) {
-  .hdr-help-btn { display: none; }
-}
-
-/* Settings gear stays visible from landscape upward, where the hamburger menu
-   isn't shown (the hamburger hides at >=481px). */
-.hdr-settings-btn { display: inline-flex; }
-.hdr-settings-btn.active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
-  background: var(--ad);
-}
-@media (max-width: 480px) { .hdr-settings-btn { display: none; } }
 
 /* ── REST TIMER (per-exercise progress bar that doubles as the add-set CTA) ── */
 .rest-block {

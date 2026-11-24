@@ -39,6 +39,10 @@
 }
 .chip-btn:hover { border-color: var(--accent); }
 .chip-btn.on { background: var(--ad2); border-color: var(--accent); color: var(--accent); }
+/* The end of Me: What's new, feedback, admin, log out. */
+.me-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.me-actions .chip-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; }
+.me-actions .me-logout { margin-left: auto; color: var(--red, #FF6B6B); }
 .disclose {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   width: 100%; min-height: 44px; margin-top: 6px; padding: 0;
@@ -333,7 +337,7 @@ button.focus-card { font: inherit; color: inherit; width: 100%; display: block; 
 .week-label, .start-card-kicker, .bottom-nav-label, .prog-sample-label { font-size: 11px; }
 .start-card-sub, .subtab, .prescribe-field-label { font-size: 12px; }
 @media (max-width: 480px), (pointer: coarse) {
-  button, [role="button"], select, a.logout-btn, a.mobile-nav-item,
+  button, [role="button"], select, a.chip-btn,
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.step-inp) {
     min-height: 44px;
   }

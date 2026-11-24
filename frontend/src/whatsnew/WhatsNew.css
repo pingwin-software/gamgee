@@ -138,6 +138,21 @@
 .wn-ya-gone { width: 0; opacity: 0; animation: wn-ya-gone 5s ease-in-out infinite; }
 @keyframes wn-ya-tap { 0%, 14% { transform: scale(1); } 20% { transform: scale(0.95); } 28%, 100% { transform: scale(1); } }
 @keyframes wn-ya-tick { 0%, 18% { transform: scale(0); } 26%, 100% { transform: scale(1); } }
+/* oneWay: the menu button shrinks out of the header; base style is gone. */
+.wn-ow { width: 220px; display: flex; flex-direction: column; gap: 14px; }
+.wn-ow-hdr {
+  display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 10px;
+  border-radius: 10px; background: var(--s2); border: 1px solid var(--border);
+}
+.wn-ow-logo { width: 18px; height: 18px; border-radius: 5px; background: var(--accent); }
+.wn-ow-menu {
+  display: grid; place-items: center; width: 0; height: 26px; overflow: hidden; opacity: 0;
+  border-radius: 6px; border: 1px solid var(--border); color: var(--muted);
+  animation: wn-ow-gone 5s ease-in-out infinite;
+}
+.wn-ow-nav .on { animation: wn-ow-pick 5s ease-in-out infinite; }
+@keyframes wn-ow-gone { 0%, 30% { width: 26px; opacity: 1; transform: scale(1); } 46%, 100% { width: 0; opacity: 0; transform: scale(0.4); } }
+@keyframes wn-ow-pick { 0%, 55% { transform: scale(1); } 62% { transform: scale(1.35); } 70%, 100% { transform: scale(1); } }
 @keyframes wn-ya-gone { 0%, 42% { width: 14px; opacity: 1; } 58%, 100% { width: 0; opacity: 0; } }
 
 /* ── Quick start ──────────────────────────────────────────────────────── */

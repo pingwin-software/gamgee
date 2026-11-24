@@ -177,13 +177,7 @@ export default function WizardBuild({ focus, planned, setPlanned, onBack, onStar
         <span className="wz-focus-label">
           <FocusIcon size={16} /> {focusDef.name.toUpperCase()}
         </span>
-        <button
-          className="wz-next"
-          onClick={() => onStart(true)}
-          disabled={planned.length === 0}
-        >
-          START <ChevronRight size={16} />
-        </button>
+        <span className="wz-hdr-end" aria-hidden="true" />
       </div>
 
       <OnboardingHint hintKey="build" step="STEP 3" title={t("Stack your exercises", "Stack your lifts", "Stack your moves")}>

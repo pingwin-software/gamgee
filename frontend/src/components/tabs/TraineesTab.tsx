@@ -213,11 +213,6 @@ export default function TraineesTab({
           <div className="pl-empty">
             <span className="pl-empty-icon"><GraduationCap size={26} /></span>
             <p>No trainees yet. Invite someone, or wait for a request from your public profile.</p>
-            {!inviteOpen && (
-              <button type="button" className="pl-btn pl-btn-main" onClick={() => setInviteOpen(true)}>
-                <UserPlus size={18} /> Invite a trainee
-              </button>
-            )}
           </div>
         ) : (
           <div className="pl-grid">
