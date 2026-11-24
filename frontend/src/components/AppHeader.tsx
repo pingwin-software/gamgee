@@ -95,7 +95,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
 
   return (
     <>
-      <div className="hdr">
+      <div className={`hdr${showStrip ? " hdr-strip" : ""}`}>
         <div className="hdr-top">
           <button
             type="button"
@@ -112,7 +112,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
           {/* The page name only where the page strip does not already say it. */}
           {active
             ? <div className="timer-pill"><Zap size={14} />{fmtClock(elapsed)}</div>
-            : <div className="hdr-current-tab">{showStrip ? null : activeTabDef?.label}</div>
+            : !showStrip && <div className="hdr-current-tab">{activeTabDef?.label}</div>
           }
         </div>
         <div className="tabs">

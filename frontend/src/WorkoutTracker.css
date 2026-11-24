@@ -399,6 +399,11 @@ html, body { background: var(--bg); }
   /* The bottom dock is the navigation on phones. */
   .tabs { display: none; }
   .hdr-current-tab { display: block; }
+  /* One row: the logo, then the section's pages beside it. */
+  .hdr { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; padding-bottom: 10px; }
+  .hdr-top { flex: 1 1 100%; margin-bottom: 0; }
+  .hdr-strip .hdr-top { flex: 0 0 auto; }
+  .hdr-strip .subtabs { flex: 1 1 0; min-width: 0; margin: 0 -12px 0 0; padding: 0 12px 0 0; }
 }
 
 /* ── STATS BAR ── */
