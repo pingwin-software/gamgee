@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Zap, ClipboardList, Trophy, Heart, Brain, User, Wrench, Users, Bell, GraduationCap, MessagesSquare, Calendar, TrendingUp } from "lucide-react";
+import { Zap, ClipboardList, Trophy, Heart, Brain, User, Wrench, Users, Bell, GraduationCap, MessagesSquare, Calendar, History } from "lucide-react";
 import "../simple.css";
 import { fmtClock } from "../utils";
 import { useTxt } from "../context/ToneContext";
@@ -34,7 +34,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
   const tabs = [
     { key: "workout",       Icon: Zap,           label: workoutLabel,  badge: null },
     { key: "exercises",     Icon: Wrench,        label: "EXERCISES",   badge: null },
-    { key: "history",       Icon: ClipboardList, label: "HISTORY",     badge: historyCount || null },
+    { key: "history",       Icon: ClipboardList, label: "SESSIONS",    badge: historyCount || null },
     { key: "prs",           Icon: Trophy,        label: "PRs",         badge: prCount || null },
     { key: "coach",         Icon: Brain,         label: "TRENDS",      badge: coachCount || null },
     { key: "health",        Icon: Heart,         label: "BODY",        badge: null },
@@ -57,7 +57,7 @@ export default function AppHeader({ active, elapsed, wStep, historyCount, prCoun
   const shown = (items: PageItem[]) => (pages ? items.filter(i => pages.has(i.key)) : items);
   const sections: Section[] = ([
     { id: "train",    label: "Train",    Icon: Zap,        items: [{ key: "workout" }, { key: "exercises" }] },
-    { id: "progress", label: "Progress", Icon: TrendingUp, items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
+    { id: "progress", label: "History",  Icon: History,    items: [{ key: "history" }, { key: "prs" }, { key: "coach" }, { key: "health" }] },
     { id: "social",   label: "Social",   Icon: Users,      items: [{ key: "buddies" }, { key: "chat" }, { key: "notifications" }] },
     { id: "plans",    label: "Plans",    Icon: Calendar,   items: planItems },
     { id: "me",       label: "Me",       Icon: User,       items: [{ key: "profile" }] },

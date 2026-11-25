@@ -36,10 +36,10 @@ test("an impromptu lifter gets only what they need", async ({ page }) => {
   await answer(page, [/Impromptu/], /decide myself/, [], [/See my progress/]);
 
   expect(saved).toContainEqual({ usage_profile: { ways: ["spot"], progression: "manual", fixedStepKg: 2.5, logging: [], extras: ["progress"] } });
-  // Train, Progress and Me; no Social, no Plans. No suggestions, so no Trends.
-  await expect(page.locator(".tabs .tab")).toHaveText(["TRAIN", "PROGRESS", "ME"]);
-  await page.locator(".tabs .tab", { hasText: "PROGRESS" }).click();
-  await expect(page.locator(".subtabs .subtab")).toHaveText(["HISTORY", "PRs"]);
+  // Train, History and Me; no Social, no Plans. No suggestions, so no Trends.
+  await expect(page.locator(".tabs .tab")).toHaveText(["TRAIN", "HISTORY", "ME"]);
+  await page.locator(".tabs .tab", { hasText: "HISTORY" }).click();
+  await expect(page.locator(".subtabs .subtab")).toHaveText(["SESSIONS", "PRs"]);
 
   // No plan screen: building goes straight to picking a focus, and back again.
   await page.locator(".tabs .tab", { hasText: "TRAIN" }).click();
@@ -61,7 +61,7 @@ test("a templates-only lifter sees their templates, nothing else", async ({ page
   await page.goto("/");
   await answer(page, [/Templates/], /Same jump/, [/Rest timer/], []);
 
-  await expect(page.locator(".tabs .tab")).toHaveText(["TRAIN", "PROGRESS", "PLANS", "ME"]);
+  await expect(page.locator(".tabs .tab")).toHaveText(["TRAIN", "HISTORY", "PLANS", "ME"]);
   await page.getByRole("button", { name: "MY TEMPLATES" }).click();
   await expect(page.getByText("Your templates", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /One-Off/ })).toHaveCount(0);

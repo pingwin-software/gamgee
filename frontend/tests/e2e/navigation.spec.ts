@@ -15,17 +15,17 @@ test("the five sections and their pages", async ({ page }) => {
   const tabs = page.locator(".tabs .tab");
   await expect(tabs).toHaveCount(5);
 
-  await tabs.filter({ hasText: "PROGRESS" }).click();
-  await expect(tabs.filter({ hasText: "PROGRESS" })).toHaveClass(/active/);
+  await tabs.filter({ hasText: "HISTORY" }).click();
+  await expect(tabs.filter({ hasText: "HISTORY" })).toHaveClass(/active/);
   const pages = page.locator(".subtabs .subtab");
-  await expect(pages.filter({ hasText: "HISTORY" })).toHaveClass(/active/);
+  await expect(pages.filter({ hasText: "SESSIONS" })).toHaveClass(/active/);
 
   await pages.filter({ hasText: "PRs" }).click();
   await expect(pages.filter({ hasText: "PRs" })).toHaveClass(/active/);
 
   // A section reopens on the page it was left on.
   await tabs.filter({ hasText: "SOCIAL" }).click();
-  await tabs.filter({ hasText: "PROGRESS" }).click();
+  await tabs.filter({ hasText: "HISTORY" }).click();
   await expect(page.locator(".subtabs .subtab").filter({ hasText: "PRs" })).toHaveClass(/active/);
 
   // Me is profile and settings on one page.
