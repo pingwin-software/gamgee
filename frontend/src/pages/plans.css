@@ -174,7 +174,7 @@
 /* ── Sheets (the request and assign dialogs) ──────────────────────────── */
 .pl-sheet { gap: 14px; border-radius: 18px; }
 .pl-sheet-title { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.3; color: var(--text); }
-.pl-picks { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto; padding: 2px; }
+.pl-picks { display: flex; flex-direction: column; gap: 8px; padding: 2px; }
 .pl-pick {
   display: flex; flex-direction: column; gap: 10px; width: 100%; min-height: 64px; padding: 12px;
   border-radius: 14px; cursor: pointer; text-align: left; font: inherit; color: var(--text);

@@ -2090,34 +2090,84 @@ html, body { background: var(--bg); }
   display: inline-block; margin-left: 8px; font-size: 12px; color: var(--muted);
   letter-spacing: 1px; text-transform: uppercase; font-weight: 700;
 }
-.cx-muscle-section {
-  background: var(--s1); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px; max-height: 180px; overflow-y: auto;
+/* Muscle picker: tap the drawing, then the muscles of that group. Every
+   part grows with the sheet; the sheet scrolls, never a box inside it. */
+.cx-mark-seg { margin-bottom: 10px; }
+.cx-mark-seg .seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.cx-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block;
+  border: 2px solid var(--accent);
 }
-.cx-muscle-group + .cx-muscle-group { margin-top: 10px; }
-.cx-muscle-group-label {
-  font-size: 12px; color: var(--muted); letter-spacing: 1.5px;
-  text-transform: uppercase; margin-bottom: 5px; font-weight: 800;
+.cx-dot.primary { background: var(--accent); }
+.cx-dot.secondary { background: color-mix(in srgb, var(--primary) 35%, transparent); }
+.cx-dot.group { border-color: #E8981E; background: color-mix(in srgb, #E8981E 35%, transparent); }
+.cx-dot-off { border-color: var(--border); }
+.seg-btn.on .cx-dot { border-color: currentColor; }
+.seg-btn.on .cx-dot.primary { background: currentColor; }
+
+.cx-map-card {
+  border-radius: 16px; padding: 12px 8px 10px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(120% 80% at 50% 35%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%),
+    var(--s1);
 }
-.cx-muscle-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.cx-map { display: flex; justify-content: center; }
+.cx-map .body-map-wrap { margin-bottom: 4px; gap: 18px; }
+.cx-map .body-lbl { font-size: 11px; }
+.cx-map [role="button"] { transition: fill-opacity 0.15s, stroke-opacity 0.15s; }
+.cx-map [role="button"]:focus { outline: none; }
+.cx-map [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cx-legend {
+  display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+}
+.cx-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.cx-map-hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+
+.cx-group-panel {
+  margin-top: 10px; padding: 12px; border-radius: 14px;
+  background: var(--s1); border: 1px solid color-mix(in srgb, #E8981E 45%, var(--border));
+  animation: fadeUp 0.22s ease both;
+}
+.cx-group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cx-group-name { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: var(--text); }
+.cx-group-sub { flex: 1; font-size: 12px; color: var(--muted); }
+.cx-group-close {
+  width: 36px; height: 36px; display: grid; place-items: center; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--s2); color: var(--muted); cursor: pointer;
+}
+.cx-group-close:hover { color: var(--text); border-color: var(--muted); }
+
+.cx-muscle-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .cx-muscle-chip {
-  padding: 4px 9px; background: transparent; border: 1px solid var(--border);
-  border-radius: 999px; color: var(--muted); cursor: pointer;
-  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600;
-  transition: all 0.12s; -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 14px; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 999px; color: var(--text); cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
 }
-.cx-muscle-chip:hover:not(:disabled) {
-  border-color: var(--accent); color: var(--text);
-}
+.cx-muscle-chip:hover { border-color: var(--accent); }
+.cx-muscle-chip:active { transform: scale(0.96); }
 .cx-muscle-chip.primary {
-  background: var(--accent); border-color: var(--accent);
-  color: #0a0804; font-weight: 800;
+  background: var(--accent); border-color: var(--accent); color: #04161E; font-weight: 800;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
 }
-.cx-muscle-chip.secondary {
-  background: var(--ad2); border-color: var(--accent); color: var(--accent);
+.cx-muscle-chip.primary .cx-dot { border-color: #04161E; background: #04161E; }
+.cx-muscle-chip.secondary { background: var(--ad2); border-color: var(--accent); color: var(--accent); }
+
+.cx-picked-wrap { margin-top: 12px; }
+.cx-picked-label {
+  font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
 }
-.cx-muscle-chip.disabled,
-.cx-muscle-chip:disabled { opacity: 0.3; cursor: not-allowed; }
+.cx-picked { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .cx-group-panel { animation: none; }
+  .cx-muscle-chip, .cx-map [role="button"] { transition: none; }
+}
+:root[data-reduced-motion="1"] .cx-group-panel { animation: none; }
 .cx-instructions {
   resize: vertical; min-height: 88px; line-height: 1.45;
   font-size: 14px; font-weight: 500;

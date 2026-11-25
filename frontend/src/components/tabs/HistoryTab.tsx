@@ -23,7 +23,6 @@ interface Props {
 
 /** Monday first, as on the workout page's week strip. */
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
-const HEAT_WEEKS = 4;
 
 /** Local `YYYY-MM-DD` of a date (never toISOString: that shifts the day). */
 const dayOf = (d: Date) =>
@@ -80,10 +79,8 @@ function splitOf(w: WorkoutSession): { name: string; sets: number }[] {
 
 export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdate }: Props) {
   const t = useTxt();
-  const [view,           setView]           = useState<"list" | "calendar">("list");
   const [expanded,       setExpanded]       = useState<Set<string>>(new Set());
   const [calMonth,       setCalMonth]       = useState(() => new Date());
-  const [selectedDay,    setSelectedDay]    = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const [jump,           setJump]           = useState<{ id: string; n: number } | null>(null);
 
@@ -115,8 +112,6 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     ...Array.from({ length: daysInMo }, (_, i) => i + 1),
   ];
 
-  const selectedSessions = selectedDay ? (workoutByDay[selectedDay] ?? []) : [];
-
   // The header's numbers: weeks in a row with a workout (this week may still be
   // empty without breaking it), sessions this month, sessions in all.
   const stats = useMemo(() => {
@@ -129,17 +124,6 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     const thisMonth = history.filter(w => dayOf(new Date(w.date)).slice(0, 7) === ym).length;
     return { streak, thisMonth };
   }, [history]);
-
-  // The last four weeks, Monday to Sunday, ending with this week.
-  const heatDays = useMemo(() => {
-    const start = mondayOf(new Date());
-    start.setDate(start.getDate() - 7 * (HEAT_WEEKS - 1));
-    return Array.from({ length: HEAT_WEEKS * 7 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return { iso: dayOf(d), num: d.getDate() };
-    });
-  }, [today]);
 
   /** How full a day was, by sets: one of three shades. */
   const levelOf = (iso: string) => {
@@ -185,7 +169,7 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     );
   }
 
-  const renderSession = (w: WorkoutSession, inList = false) => {
+  const renderSession = (w: WorkoutSession) => {
     const isOpen = expanded.has(w.id);
     const sets   = setCount(w);
     const vol    = volumeOf(w);
@@ -194,12 +178,12 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     const Icon   = focus?.icon ?? (allCardio ? Heart : Dumbbell);
     const split  = splitOf(w);
     const total  = split.reduce((a, s) => a + s.sets, 0);
-    const bodyId = `hx-b-${inList ? "l" : "c"}-${w.id}`;
+    const bodyId = `hx-b-${w.id}`;
     return (
       <div
         key={w.id}
-        id={inList ? `hx-s-${w.id}` : undefined}
-        className={`hx-card${isOpen ? " open" : ""}${inList && jump?.id === w.id ? " flash" : ""}`}
+        id={`hx-s-${w.id}`}
+        className={`hx-card${isOpen ? " open" : ""}${jump?.id === w.id ? " flash" : ""}`}
       >
         <div className="hx-card-top">
           <button
@@ -286,7 +270,7 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
     const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     const head = label !== lastMonth ? <h3 key={`m-${label}`} className="hx-month">{label}</h3> : null;
     lastMonth = label;
-    return head ? [head, renderSession(w, true)] : [renderSession(w, true)];
+    return head ? [head, renderSession(w)] : [renderSession(w)];
   });
 
   return (
@@ -309,87 +293,40 @@ export default function HistoryTab({ history, prs, bodyweight, onDelete, onUpdat
         </div>
       </div>
 
-      <div className="seg" role="group" aria-label="How to show your sessions">
-        <button type="button" className={`seg-btn${view === "list" ? " on" : ""}`} aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
-        <button type="button" className={`seg-btn${view === "calendar" ? " on" : ""}`} aria-pressed={view === "calendar"} onClick={() => setView("calendar")}>Calendar</button>
+      {/* One calendar, a month at a time, above the one list: a filled day
+          opens its sessions in the list below. */}
+      <div className="hx-cal">
+        <div className="hx-cal-nav">
+          <button type="button" className="hx-round" onClick={prevMonth} aria-label="Previous month"><ChevronLeft size={20} /></button>
+          <span className="hx-cal-month" aria-live="polite">{monthLabel}</span>
+          <button type="button" className="hx-round" onClick={nextMonth} aria-label="Next month"><ChevronRight size={20} /></button>
+        </div>
+        <div className="hx-grid7" aria-hidden="true">
+          {DAYS.map((d, i) => <div key={i} className="hx-dow">{d}</div>)}
+        </div>
+        <div className="hx-grid7">
+          {calCells.map((day, i) => {
+            if (!day) return <div key={i} className="hx-cal-pad" />;
+            const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const n   = workoutByDay[iso]?.length ?? 0;
+            const lvl = levelOf(iso);
+            return (
+              <button
+                key={i} type="button"
+                className={`hx-day${lvl ? ` lvl${lvl}` : ""}${iso === today ? " today" : ""}${iso > today ? " future" : ""}`}
+                disabled={n === 0}
+                onClick={() => jumpToDay(iso)}
+                aria-label={`${longDay(iso)}: ${n === 0 ? "no workout" : n === 1 ? "1 workout" : `${n} workouts`}`}
+              >
+                {day}
+                {n > 1 && <span className="hx-day-count">{n}</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {view === "list" && (
-        <>
-          <div className="hx-heat">
-            <div className="hx-heat-head">
-              <span className="hx-heat-title">Last {HEAT_WEEKS} weeks</span>
-              <span className="hx-heat-hint">Tap a filled day to jump to it</span>
-            </div>
-            <div className="hx-grid7" aria-hidden="true">
-              {DAYS.map((d, i) => <div key={i} className="hx-dow">{d}</div>)}
-            </div>
-            <div className="hx-grid7">
-              {heatDays.map(d => {
-                const n = workoutByDay[d.iso]?.length ?? 0;
-                const lvl = levelOf(d.iso);
-                const future = d.iso > today;
-                return (
-                  <button
-                    key={d.iso} type="button"
-                    className={`hx-day${lvl ? ` lvl${lvl}` : ""}${d.iso === today ? " today" : ""}${future ? " future" : ""}`}
-                    disabled={n === 0}
-                    onClick={() => jumpToDay(d.iso)}
-                    aria-label={`${longDay(d.iso)}: ${n === 0 ? "no workout" : n === 1 ? "1 workout" : `${n} workouts`}`}
-                  >
-                    {d.num}
-                    {n > 1 && <span className="hx-day-count">{n}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="hx-list">{listRows}</div>
-        </>
-      )}
-
-      {view === "calendar" && (
-        <div className="hx-cal">
-          <div className="hx-cal-nav">
-            <button type="button" className="hx-round" onClick={prevMonth} aria-label="Previous month"><ChevronLeft size={20} /></button>
-            <span className="hx-cal-month" aria-live="polite">{monthLabel}</span>
-            <button type="button" className="hx-round" onClick={nextMonth} aria-label="Next month"><ChevronRight size={20} /></button>
-          </div>
-          <div className="hx-grid7" aria-hidden="true">
-            {DAYS.map((d, i) => <div key={i} className="hx-dow">{d}</div>)}
-          </div>
-          <div className="hx-grid7">
-            {calCells.map((day, i) => {
-              if (!day) return <div key={i} className="hx-cal-pad" />;
-              const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const n     = workoutByDay[iso]?.length ?? 0;
-              const lvl   = levelOf(iso);
-              const isSel = iso === selectedDay;
-              return (
-                <button
-                  key={i} type="button"
-                  className={`hx-day${lvl ? ` lvl${lvl}` : ""}${iso === today ? " today" : ""}${isSel ? " sel" : ""}${iso > today ? " future" : ""}`}
-                  disabled={n === 0}
-                  aria-pressed={n > 0 ? isSel : undefined}
-                  onClick={() => setSelectedDay(isSel ? null : iso)}
-                  aria-label={`${longDay(iso)}: ${n === 0 ? "no workout" : n === 1 ? "1 workout" : `${n} workouts`}`}
-                >
-                  {day}
-                  {n > 1 && <span className="hx-day-count">{n}</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedSessions.length > 0 ? (
-            <div className="hx-cal-sessions">
-              {selectedSessions.map(w => renderSession(w))}
-            </div>
-          ) : (
-            <p className="hx-cal-note">Tap a filled day to see what you did.</p>
-          )}
-        </div>
-      )}
+      <div className="hx-list">{listRows}</div>
 
       {editingSession && (
         <EditWorkoutModal

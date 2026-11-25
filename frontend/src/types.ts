@@ -164,7 +164,13 @@ export type ThemeMode = "system" | "dark" | "light";
 export const DEFAULT_THEME: ThemeMode = "dark";
 
 export interface MetricDef { id: string; label: string; unit: string; color: string; step: number; min: number; max: number; }
-export interface BodyMapProps { active?: ActiveMuscles; preview?: ActiveMuscles; focusMuscles?: ActiveMuscles; onHoverMuscle?: (mid: string | null) => void; }
+export interface BodyMapProps {
+  active?: ActiveMuscles; preview?: ActiveMuscles; focusMuscles?: ActiveMuscles; onHoverMuscle?: (mid: string | null) => void;
+  /** Makes every muscle tappable (the custom-lift editor picks muscles this way). */
+  onPickMuscle?: (mid: string) => void;
+  /** Size relative to the default 90 x 162 px. */
+  scale?: number;
+}
 
 // ── Buddy system ────────────────────────────────────────────────────────────
 export type BuddyStatus = "pending_out" | "pending_in" | "accepted";

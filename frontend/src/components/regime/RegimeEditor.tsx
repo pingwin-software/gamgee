@@ -150,7 +150,8 @@ export default function RegimeEditor({ authFetch, regime, onSaved, onCancel }: P
     const q = pickQuery.trim().toLowerCase();
     const have = new Set(day.exerciseIds ?? []);
     const base = ALL_EX.filter(e => !have.has(e.id));
-    if (!q) return base.slice(0, 60);
+    // A short list that grows with the page (never a box to scroll inside): search narrows it.
+    if (!q) return base.slice(0, 12);
     return base
       .filter(e => e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q))
       .slice(0, 60);
@@ -534,7 +535,7 @@ export default function RegimeEditor({ authFetch, regime, onSaved, onCancel }: P
                       </button>
                     )}
                   </div>
-                  <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {pickResults.map(ex => (
                       <button
                         key={ex.id}

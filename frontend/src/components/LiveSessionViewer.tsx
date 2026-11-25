@@ -127,7 +127,7 @@ export default function LiveSessionViewer({ session, authFetch, onClose, refresh
                 No sets logged yet. They appear as your trainee marks each set done.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 240, overflowY: "auto" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {events.map(ev => (
                   <div
                     key={ev.id}
