@@ -763,16 +763,15 @@ html, body { background: var(--bg); }
 .focus-card.selected { border-color: var(--accent); background: var(--ad2); transform: translateY(-1px); }
 .focus-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 54px; height: 54px; border-radius: 14px;
-  background: var(--ad); color: var(--accent);
+  width: 54px; height: 54px; border-radius: 14px; color: var(--accent);
   margin-bottom: 13px;
   transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 /* Force a consistent, touch-friendly icon size regardless of the per-icon
    `size` prop the wizard steps pass to their icons. */
 .focus-icon svg { width: 30px; height: 30px; }
-.focus-card:hover .focus-icon { background: var(--ad2); transform: scale(1.04); }
-.focus-card.selected .focus-icon { background: var(--accent); color: var(--bg); }
+.focus-card:hover .focus-icon { transform: scale(1.04); }
+.focus-card.selected .focus-icon { color: var(--accent); }
 .focus-name { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text); margin-bottom: 3px; }
 .focus-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 .wz-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
@@ -1825,7 +1824,6 @@ html, body { background: var(--bg); }
 .complete-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 72px; height: 72px; border-radius: 50%;
-  background: color-mix(in srgb, var(--green) 20%, transparent);
   color: var(--green); margin-bottom: 14px;
 }
 .complete-hero {
@@ -2472,7 +2470,6 @@ html, body { background: var(--bg); }
 .onb-hero-icon {
   flex-shrink: 0; width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--ad); border: 1px solid var(--ad2);
   color: var(--accent); border-radius: 9px;
 }
 .onb-hero-title {

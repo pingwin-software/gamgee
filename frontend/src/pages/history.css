@@ -76,10 +76,9 @@
   display: flex; align-items: center; gap: 12px; text-align: left;
   background: none; border: none; color: var(--text);
 }
-.hx-card-toggle:hover .hx-card-icon { background: var(--primary); color: #000; }
+.hx-card-toggle:hover .hx-card-icon { color: var(--primary); }
 .hx-card-icon {
-  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center;
-  background: var(--ad2); color: var(--accent); transition: background 0.15s, color 0.15s;
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; color: var(--accent); transition: background 0.15s, color 0.15s;
 }
 .hx-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 .hx-card-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
@@ -129,8 +128,7 @@
 /* ── Records ──────────────────────────────────────────────────────────── */
 .hx-pr-head { display: flex; align-items: center; gap: 12px; }
 .hx-pr-cup {
-  width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0; display: grid; place-items: center;
-  background: var(--primary); color: #000; animation: hx-pop 0.35s ease both;
+  width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0; display: grid; place-items: center; color: var(--primary); animation: hx-pop 0.35s ease both;
 }
 .hx-pr-count { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1.2; }
 .hx-pr-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }

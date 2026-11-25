@@ -49,8 +49,7 @@
   font-size: 13px; line-height: 1.5; color: var(--text); overflow-wrap: anywhere;
 }
 .pl-icon {
-  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0;
-  background: var(--ad2); color: var(--accent);
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: var(--accent);
 }
 
 /* ── Pills and tags ───────────────────────────────────────────────────── */
@@ -142,8 +141,7 @@
 .pl-empty p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; max-width: 36ch; }
 .pl-empty .pl-btn { flex: 0 0 auto; padding: 0 20px; }
 .pl-empty-icon {
-  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--ad); color: var(--accent);
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--accent);
 }
 
 /* ── Fields ───────────────────────────────────────────────────────────── */

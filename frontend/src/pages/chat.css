@@ -135,8 +135,7 @@
   background: var(--s1); border: 1px dashed var(--border);
 }
 .ch-empty-icon {
-  display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%;
-  background: var(--ad2); color: var(--accent);
+  display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; color: var(--accent);
 }
 .ch-empty-text { max-width: 30ch; font-size: 15px; line-height: 1.45; color: var(--text); }
 .ch-big-btn {
