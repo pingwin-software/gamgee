@@ -22,13 +22,7 @@
 .hx-stat-num { font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
 .hx-stat-label { font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.25; }
 
-/* ── Last four weeks ──────────────────────────────────────────────────── */
-.hx-heat {
-  padding: 12px; border-radius: 14px; background: var(--s1); border: 1px solid var(--border);
-}
-.hx-heat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.hx-heat-title { font-size: 13px; font-weight: 800; color: var(--text); }
-.hx-heat-hint { font-size: 12px; color: var(--muted); }
+/* ── The calendar: one month, a day per cell ─────────────────────────── */
 .hx-grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
 .hx-dow { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; padding-bottom: 2px; }
 .hx-day {
@@ -47,12 +41,10 @@
 .hx-day:not(:disabled):hover { border-color: var(--accent); transform: translateY(-1px); }
 .hx-day:not(:disabled):active { transform: scale(0.94); }
 .hx-day.today { border-color: var(--accent); opacity: 1; box-shadow: 0 0 0 3px var(--ad2); }
-.hx-day.sel { border-color: var(--text); }
 .hx-day-count {
   position: absolute; top: 2px; right: 4px; font-size: 11px; font-weight: 800; line-height: 1;
 }
 
-/* ── Month view ───────────────────────────────────────────────────────── */
 .hx-cal { padding: 12px; border-radius: 14px; background: var(--s1); border: 1px solid var(--border); }
 .hx-cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .hx-cal-month { font-size: 16px; font-weight: 800; color: var(--text); text-align: center; }
@@ -64,8 +56,6 @@
 }
 .hx-round:hover { border-color: var(--accent); color: var(--accent); }
 .hx-cal-pad { min-height: 44px; }
-.hx-cal-note { margin: 12px 2px 0; font-size: 12px; color: var(--muted); text-align: center; }
-.hx-cal-sessions { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 
 /* ── Session card ─────────────────────────────────────────────────────── */
 .hx-list { display: flex; flex-direction: column; gap: 10px; }
@@ -288,7 +278,7 @@
 
 /* Small phones: tighter gutters so seven 44 px days always fit. */
 @media (max-width: 380px) {
-  .hx-heat, .hx-cal { padding: 10px 8px; }
+  .hx-cal { padding: 10px 8px; }
   .hx-grid7 { gap: 3px; }
   .hx-pr-val { font-size: 30px; }
 }
