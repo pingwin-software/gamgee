@@ -3,7 +3,7 @@ import type { MuscleShape, BodyMapProps } from "../types";
 import { MI } from "../data/muscles";
 import { BODY_PATH, FM, BM, FRONT_LINES, BACK_LINES } from "../data/bodymap";
 
-export default function BodyMap({ active = {}, preview = {}, focusMuscles, onHoverMuscle }: BodyMapProps) {
+export default function BodyMap({ active = {}, preview = {}, focusMuscles, onHoverMuscle, onPickMuscle, scale = 1 }: BodyMapProps) {
   const [hovMid, setHovMid] = useState<string | null>(null);
 
   const bodyPath = BODY_PATH;
@@ -70,7 +70,7 @@ export default function BodyMap({ active = {}, preview = {}, focusMuscles, onHov
 
     return (
       <div className="body-view">
-        <svg viewBox="0 0 100 180" width={90} height={162} style={{ display: "block", overflow: "visible" }}>
+        <svg viewBox="0 0 100 180" width={90 * scale} height={162 * scale} style={{ display: "block", overflow: "visible" }}>
           <defs>
             <filter id={`glow-${id}`} x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="3" result="blur"/>
@@ -115,9 +115,19 @@ export default function BodyMap({ active = {}, preview = {}, focusMuscles, onHov
                 strokeOpacity: mStrokeOpacity(s.mid),
                 strokeWidth:   mStrokeW(s.mid),
                 filter:        act ? `url(#glow-${id})` : undefined,
-                style:         { cursor: "default" } as React.CSSProperties,
+                // Unfilled shapes only take taps on their outline unless told to take them everywhere.
+                style:         (onPickMuscle ? { cursor: "pointer", pointerEvents: "all" } : { cursor: "default" }) as React.CSSProperties,
                 onMouseEnter:  () => { setHovMid(s.mid); onHoverMuscle?.(s.mid); },
                 onMouseLeave:  () => { setHovMid(null);  onHoverMuscle?.(null);  },
+                ...(onPickMuscle ? {
+                  role: "button",
+                  tabIndex: 0,
+                  "aria-label": MI[s.mid]?.n ?? s.mid,
+                  onClick: () => onPickMuscle(s.mid),
+                  onKeyDown: (e: React.KeyboardEvent) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPickMuscle(s.mid); }
+                  },
+                } : {}),
               };
 
               if ("d" in s) return <path key={i} d={s.d} {...sharedProps} />;
@@ -135,6 +145,7 @@ export default function BodyMap({ active = {}, preview = {}, focusMuscles, onHov
                 strokeOpacity={0.10}
                 strokeWidth={0.28}
                 strokeLinecap="round"
+                pointerEvents="none"
               />
             ))}
           </g>
