@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardList, Timer, Dumbbell, Layers, Weight, Trophy, ChevronDown, ChevronLeft, ChevronRight,
   Pencil, Flame, CalendarCheck, Heart,
-} from "lucide-react";
+} from "../../icons";
 import type { WorkoutSession, PRDict } from "../../types";
 import { fmtDate, fmtDur } from "../../utils";
 import { ALL_EX, EM } from "../../data/exercises";

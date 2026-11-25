@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { User } from "lucide-react";
+import { User } from "../../icons";
 import type { WorkoutSession } from "../../types";
 import { fmtDate, fmtDur } from "../../utils";
 import { MI } from "../../data/muscles";

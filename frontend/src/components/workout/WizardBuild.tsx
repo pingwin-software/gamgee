@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronRight, Check, X, Search, Star, Plus, Zap, Shuffle, Wrench, Gauge, Bookmark } from "lucide-react";
+import { ArrowLeft, ChevronRight, Check, X, Search, Star, Plus, Zap, Shuffle, Wrench, Gauge, Bookmark } from "../../icons";
 import type { CardioPlan, ExerciseDef, SuggExercise, WorkoutSession, WorkoutTemplate, WorkoutTemplateDraft } from "../../types";
 import { CardioInline } from "./WizardCardio";
 import { GROUPS, getActive, muscleGroups } from "../../constants";

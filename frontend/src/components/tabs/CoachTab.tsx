@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   Brain, ChevronRight, Footprints, TrendingUp, TrendingDown, Equal, Compass, Flag, Target,
-  type LucideIcon,
-} from "lucide-react";
+  type IconType,
+} from "../../icons";
 import type { ExerciseDef, WorkoutSession, ProgressionOverride } from "../../types";
 import { ALL_EX } from "../../data/exercises";
 import { analyzeEx, analyzeCardio, type AnalysisResult, type CardioAnalysisResult } from "../../analysis";
@@ -38,7 +38,7 @@ type Filter = "up" | "flat" | "down";
 
 /** How each status reads on the page: a word and an icon, with the colour
  * only backing them up. Keyed by the analyzer's status label. */
-const TONES: Record<string, { tone: Tone; word: string; Icon: LucideIcon }> = {
+const TONES: Record<string, { tone: Tone; word: string; Icon: IconType }> = {
   "PROGRESSING": { tone: "up",    word: "Gaining",  Icon: TrendingUp },
   "HOLDING":     { tone: "flat",  word: "Holding",  Icon: Equal },
   "BACKING OFF": { tone: "down",  word: "Slipping", Icon: TrendingDown },
@@ -47,7 +47,7 @@ const TONES: Record<string, { tone: Tone; word: string; Icon: LucideIcon }> = {
 };
 const toneOf = (label: string) => TONES[label] ?? TONES.BASELINE;
 
-const FILTERS: { id: Filter; word: string; Icon: LucideIcon }[] = [
+const FILTERS: { id: Filter; word: string; Icon: IconType }[] = [
   { id: "up",   word: "Gaining",  Icon: TrendingUp },
   { id: "flat", word: "Holding",  Icon: Equal },
   { id: "down", word: "Slipping", Icon: TrendingDown },

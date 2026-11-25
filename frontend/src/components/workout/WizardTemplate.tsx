@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Check, X, Search, Star, Plus, Wrench, Bookmark } from "lucide-react";
+import { ArrowLeft, Check, X, Search, Star, Plus, Wrench, Bookmark } from "../../icons";
 import type { ExerciseDef, SuggExercise, WorkoutSession, WorkoutTemplate, WorkoutTemplateDraft } from "../../types";
 import { GROUPS, getActive, muscleGroups } from "../../constants";
 import { MI } from "../../data/muscles";

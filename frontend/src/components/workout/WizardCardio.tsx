@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Heart, Sunrise, Sunset, ArrowLeftRight, Ban } from "lucide-react";
+import { ArrowLeft, ChevronRight, Heart, Sunrise, Sunset, ArrowLeftRight, Ban } from "../../icons";
 import type { CardioPlan, CardioSlot, CardioTiming } from "../../types";
 import { EX } from "../../data/exercises";
 import { useTxt } from "../../context/ToneContext";

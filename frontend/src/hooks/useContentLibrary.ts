@@ -90,7 +90,7 @@ function mergeQuotes(rows: QuoteRow[]) {
 // Merge backend tips with static defaults. Backend wins on overlap.
 function mergeTips(rows: TipRow[]) {
   if (rows.length === 0) return TIPS_STATIC;
-  // The frontend tips type carries a lucide icon component; the backend just
+  // The frontend tips type carries an icon component (src/icons.tsx); the backend just
   // gives us the icon name. Look up the icon by name and fall back to the
   // matching static entry if we can't resolve it.
   const byId: Record<string, typeof TIPS_STATIC[number]> = {};

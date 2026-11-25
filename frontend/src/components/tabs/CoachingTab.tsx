@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Check, MessageSquare, GraduationCap, Award, ClipboardList, CalendarCheck, Clock, Send, UserPlus, Users } from "lucide-react";
+import { Search, Check, MessageSquare, GraduationCap, Award, ClipboardList, CalendarCheck, Clock, Send, UserPlus, Users } from "../../icons";
 import type { TrainerPublic, TrainerLink, RegimeAssignment } from "../../types";
 import { useTxt } from "../../context/ToneContext";
 import { ConfirmButton, PlanAvatar, WeekDots } from "./RegimesTab";

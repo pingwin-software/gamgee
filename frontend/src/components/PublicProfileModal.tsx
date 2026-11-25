@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   X as XIcon, Trophy, Flame, Calendar, Dumbbell, Heart, Sparkles, MessageCircle,
-} from "lucide-react";
+} from "../icons";
 import type { PublicProfile, PublicProfileMemory } from "../types";
 import { fmtDate, fmtShortDate } from "../utils";
 import { useTxt } from "../context/ToneContext";

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Minus, Check } from "lucide-react";
+import { Plus, Minus, Check } from "../../icons";
 import type { RestPrefs } from "../../types";
 import { playTimerAlarm, vibrateAlarm } from "../../sound";
 

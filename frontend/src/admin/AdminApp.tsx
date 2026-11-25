@@ -1136,7 +1136,7 @@ function TipsPage({ authFetch }: { authFetch: AuthFetch }) {
                 onChange={e => setForm(f => ({ ...f, id: e.target.value }))} />
             </Field>
           )}
-          <Field label="Icon (lucide name, e.g. Timer, Beef, Target)">
+          <Field label="Icon (name from src/icons.tsx, e.g. Timer, Beef, Target)">
             <input className="adm-input" value={form.icon}
               onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
           </Field>

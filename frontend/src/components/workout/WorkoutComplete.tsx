@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, ArrowRight, Heart, X, Clock, Flame } from "lucide-react";
+import { Check, ArrowRight, Heart, X, Clock, Flame } from "../../icons";
 import EffortPicker from "../EffortPicker";
 import type { WorkoutSession } from "../../types";
 import { EM } from "../../data/exercises";

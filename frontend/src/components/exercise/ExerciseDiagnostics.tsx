@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, X, Compass, RotateCcw, Minus, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Check, X, Compass, RotateCcw, Minus, Plus, Pencil } from "../../icons";
 import type { WorkoutSession, ProgressionOverride } from "../../types";
 import { analyzeEx } from "../../analysis";
 import { STATUS, UPPER_IDS } from "../../constants";

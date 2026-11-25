@@ -1,6 +1,6 @@
 import type { ExerciseDef, ExerciseType, CustomExerciseDef } from "../types";
-import type { LucideIcon } from "lucide-react";
-import { Dumbbell, ArrowDown, Crosshair, PersonStanding, Flame, Heart, Hand, User, Wrench } from "lucide-react";
+import type { IconType } from "../icons";
+import { Dumbbell, ArrowDown, Crosshair, PersonStanding, Flame, Heart, Hand, User, Wrench } from "../icons";
 
 export const EM: Record<string, { p: string[]; s: string[] }> = {
   bench:        { p: ["lower_pec", "upper_pec"],                              s: ["front_delt", "tricep_lat", "tricep_med"] },
@@ -499,7 +499,7 @@ export const TYPE_COLOR: Record<ExerciseType, string> = {
   timed:    "#7B9FE0",
 };
 
-export const CAT_ICON: Record<string, LucideIcon> = {
+export const CAT_ICON: Record<string, IconType> = {
   Push:      Dumbbell,
   Pull:      ArrowDown,
   Shoulders: Crosshair,

@@ -1,4 +1,4 @@
-import { Calendar, Zap, ArrowLeft, Bookmark, Plus, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Zap, ArrowLeft, Bookmark, Plus, Pencil, Trash2 } from "../../icons";
 import type { DayPlan, WeeklyPlan, WorkoutTemplate } from "../../types";
 import { WEEK_DAYS, getTodayKey, dayMapForCurrentWeek } from "../../data/weeklyPlan";
 import { getFocusDef } from "../../data/focuses";

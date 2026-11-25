@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "../icons";
 import "../simple.css";
 
 /** A whole number changed with big minus and plus buttons: quicker and more

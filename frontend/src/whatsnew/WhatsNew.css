@@ -139,6 +139,18 @@
 @keyframes wn-ya-tap { 0%, 14% { transform: scale(1); } 20% { transform: scale(0.95); } 28%, 100% { transform: scale(1); } }
 @keyframes wn-ya-tick { 0%, 18% { transform: scale(0); } 26%, 100% { transform: scale(1); } }
 /* oneWay: the menu button shrinks out of the header; base style is gone. */
+/* freshIcons: tiles pop in one by one; base style is the end state. */
+.wn-fi { display: flex; gap: 12px; }
+.wn-fi-tile {
+  width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--ad); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); color: var(--accent);
+  animation: wn-fi-pop 4s cubic-bezier(0.34, 1.56, 0.64, 1) infinite both;
+}
+@keyframes wn-fi-pop {
+  0%, 6% { transform: scale(0.4); opacity: 0; }
+  18%, 88% { transform: none; opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
 .wn-ow { width: 220px; display: flex; flex-direction: column; gap: 14px; }
 .wn-ow-hdr {
   display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 10px;

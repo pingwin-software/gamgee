@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Bookmark, Calendar, CalendarCheck, Check, ChevronUp, Dumbbell, Pencil, Play, Plus, Trash2, Wand2, X,
-} from "lucide-react";
+} from "../../icons";
 import type { CSSProperties, ReactNode } from "react";
 import type { DayPlan, Regime, WeeklyPlan, WeekPlanDay, WeekPlan, WorkoutTemplate } from "../../types";
 import { weeklyPlanFromWeeks } from "../../data/weeklyPlan";

@@ -1,4 +1,4 @@
-import { MapPin, Clock, CalendarClock, X, Dumbbell } from "lucide-react";
+import { MapPin, Clock, CalendarClock, X, Dumbbell } from "../../icons";
 import type { TrainingSuggestion } from "../../types";
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Save, Search, X, Plus, Settings2, Check, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Search, X, Plus, Settings2, Check, Copy, Trash2 } from "../../icons";
 import type {
   Regime, DayPlan, WeekPlanDay, ExerciseConfig, ExerciseDef, WeekPlan, WorkoutTemplate,
 } from "../../types";

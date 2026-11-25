@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Dumbbell, ArrowDown, PersonStanding, ChevronsUp, ChevronsDown, Zap, Flame, Activity, Target, Trophy, Heart, Star, Shield, Bike, Mountain, Wind, Timer, Swords } from "lucide-react";
+import type { IconType } from "../icons";
+import { Dumbbell, ArrowDown, PersonStanding, ChevronsUp, ChevronsDown, Zap, Flame, Activity, Target, Trophy, Heart, Star, Shield, Bike, Mountain, Wind, Timer, Swords } from "../icons";
 import type { FocusDef, CustomFocusDef } from "../types";
 
 export const FOCUS: Record<string, FocusDef> = {
@@ -132,7 +132,7 @@ export const FOCUS: Record<string, FocusDef> = {
   },
 };
 
-export const ICON_OPTIONS: { name: string; icon: LucideIcon }[] = [
+export const ICON_OPTIONS: { name: string; icon: IconType }[] = [
   { name: "Dumbbell",       icon: Dumbbell       },
   { name: "Flame",          icon: Flame          },
   { name: "Zap",            icon: Zap            },

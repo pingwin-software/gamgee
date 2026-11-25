@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import {
   Heart, Plus, Minus, Trash2, ChevronDown, Scale, Percent, Ruler, Shirt, BicepsFlexed,
   Footprints, HeartPulse, Pill, Activity, ArrowUpRight, ArrowDownRight, ArrowRight,
-  type LucideIcon,
-} from "lucide-react";
+  type IconType,
+} from "../../icons";
 import {
   ResponsiveContainer, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
@@ -15,7 +15,7 @@ import { useTxt } from "../../context/ToneContext";
 import "../../simple.css";
 import "../../pages/progress.css";
 
-const ICONS: Record<string, LucideIcon> = {
+const ICONS: Record<string, IconType> = {
   weight: Scale, body_fat: Percent, waist: Ruler, chest: Shirt, hips: Activity,
   bicep: BicepsFlexed, thigh: Footprints, resting_hr: HeartPulse, zinc: Pill,
 };

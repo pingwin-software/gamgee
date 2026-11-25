@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Plus, Check, Target } from "lucide-react";
+import { Eye, Plus, Check, Target } from "../icons";
 import type { SuggCardProps } from "../types";
 import { MI } from "../data/muscles";
 import { EXERCISE_INFO } from "../data/exerciseInfo";

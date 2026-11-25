@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Dumbbell, Layers, Square, TrendingUp, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Dumbbell, Layers, Square, TrendingUp, X } from "../../icons";
 import type { ExerciseDef, WorkoutExercise, WorkoutSet, PRDict, WorkoutSession, RestPrefs, ProgressionOverride } from "../../types";
 import { analyzeEx } from "../../analysis";
 import ExerciseCard from "./ExerciseCard";

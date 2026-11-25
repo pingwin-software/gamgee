@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bookmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bookmark, Pencil, Plus, Trash2 } from "../../icons";
 import type { WorkoutTemplate } from "../../types";
 import { getFocusDef } from "../../data/focuses";
 import { useTemplates } from "../../context/TemplatesContext";

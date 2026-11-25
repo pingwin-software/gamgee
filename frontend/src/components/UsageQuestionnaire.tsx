@@ -2,14 +2,14 @@ import { useState } from "react";
 import {
   Zap, Calendar, Bookmark, TrendingUp, Heart, Users, GraduationCap, Check, LayoutGrid,
   Sparkles, Ruler, PenLine, Timer, Gauge, Bike,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+} from "../icons";
+import type { IconType } from "../icons";
 import {
   EVERYTHING, FIXED_STEPS, type UsageExtra, type UsageLog, type UsageProfile, type UsageProgression, type UsageWay,
 } from "../usageProfile";
 import "./UsageQuestionnaire.css";
 
-type Choice<K extends string> = { key: K; Icon: LucideIcon; title: string; sub: string };
+type Choice<K extends string> = { key: K; Icon: IconType; title: string; sub: string };
 
 const WAYS: Choice<UsageWay>[] = [
   { key: "regime",    Icon: Calendar, title: "A weekly regime", sub: "Each weekday's workout is set in advance (Mon chest, Wed back…). Open the app and today's is ready." },

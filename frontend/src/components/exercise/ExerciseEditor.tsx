@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Copy, FlipHorizontal2, Layers, Pause, Play, Plus, RotateCcw,
   Save, Trash2, Wand2,
-} from "lucide-react";
+} from "../../icons";
 import {
   DEFAULT_BARBELL_HUB_R,
   DEFAULT_BARBELL_LENGTH,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { X } from "../../icons";
 import type { ActiveMuscles, CustomExerciseDef, ExerciseType } from "../../types";
 import BodyMap from "../BodyMap";
 import { MI } from "../../data/muscles";

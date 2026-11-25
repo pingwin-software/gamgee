@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronRight, ChevronDown, Gauge, AlertCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronDown, Gauge, AlertCircle, RotateCcw } from "../../icons";
 import type { ExerciseDef, ExerciseConfig, PRDict, WorkoutSession } from "../../types";
 import { prescribeExercise } from "../../analysis";
 import { MI } from "../../data/muscles";

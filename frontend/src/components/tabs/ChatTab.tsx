@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import {
   Send, MessageSquarePlus, GraduationCap, Users, ChevronLeft, MessagesSquare, Hand, X,
-} from "lucide-react";
+} from "../../icons";
 import type { ChatMessage, Conversation, Buddy, TrainerLink } from "../../types";
 import { fmtDate } from "../../utils";
 import { useTxt } from "../../context/ToneContext";
