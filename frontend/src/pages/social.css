@@ -105,8 +105,7 @@ button.so-person { cursor: pointer; }
   display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 36px 16px; text-align: center;
 }
 .so-empty-icon {
-  width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--ad); color: var(--accent);
+  width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; color: var(--accent);
 }
 .so-empty-text { max-width: 30ch; font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--muted); }
 .so-note { font-size: 13px; line-height: 1.45; color: var(--muted); }
