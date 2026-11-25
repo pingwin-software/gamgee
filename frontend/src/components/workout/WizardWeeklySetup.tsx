@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, Moon, Wrench, Sparkles, Search, X, Heart, Eye, Plus, Copy, Trash2, Gauge } from "lucide-react";
+import { ArrowLeft, Check, Moon, Wrench, Sparkles, Search, X, Heart, Eye, Plus, Copy, Trash2, Gauge } from "../../icons";
 import EffortPicker from "../EffortPicker";
 import type { WeekPlanDay, WeeklyPlan, DayPlan, WeekPlan, Regime, ExerciseDef, ExerciseConfig } from "../../types";
 import { WEEK_DAYS } from "../../data/weeklyPlan";

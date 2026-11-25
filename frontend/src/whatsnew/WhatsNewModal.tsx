@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "../icons";
 import WhatsNewArt from "./WhatsNewArt";
 import { WHATS_NEW_COPY, type WhatsNewEntry } from "./whatsNew";
 import "./WhatsNew.css";

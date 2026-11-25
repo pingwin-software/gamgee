@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Flame, Play, RotateCcw } from "lucide-react";
+import { Check, Flame, Play, RotateCcw } from "../../icons";
 import type { DayPlan, ExerciseDef, WeeklyPlan, WorkoutSession } from "../../types";
 import { fmtDate, fmtDur } from "../../utils";
 import { WEEK_DAYS, dayMapForCurrentWeek, getTodayKey } from "../../data/weeklyPlan";

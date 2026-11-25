@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Plus, Trash2, Pencil, BookOpen, ChevronDown, Dumbbell, Timer, HeartPulse, Sparkles,
-} from "lucide-react";
+} from "../../icons";
 import type { CustomExerciseDef, ExerciseType } from "../../types";
 import { MI } from "../../data/muscles";
 import { getCustomExercises, deleteCustomExercise } from "../../data/exercises";

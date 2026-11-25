@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info, Sparkles, MessageSquare, Shield, LogOut } from "lucide-react";
+import { Bell, BellOff, Timer, MapPin, ChevronDown, UserRound, Palette, Dumbbell, BellRing, Compass, ShieldCheck, Info, Sparkles, MessageSquare, Shield, LogOut } from "../../icons";
 import { useTxt, type ToneMode } from "../../context/ToneContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Sparkles, RefreshCw, Save, Calendar, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, RefreshCw, Save, Calendar, Check, ArrowLeft } from "../../icons";
 import type { RegimeQuestionnaire, RegimeDraft, Regime, WeekPlanDay } from "../../types";
 
 const GOALS: Array<{ id: RegimeQuestionnaire["goal"]; label: string; desc: string }> = [

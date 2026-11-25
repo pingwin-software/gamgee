@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Zap, ClipboardList, Trophy, Heart, Brain, User, Wrench, Users, Bell, GraduationCap, MessagesSquare, Calendar, History } from "lucide-react";
+import { Zap, ClipboardList, Trophy, Heart, Brain, User, Wrench, Users, Bell, GraduationCap, MessagesSquare, Calendar, History } from "../icons";
 import "../simple.css";
 import { fmtClock } from "../utils";
 import { useTxt } from "../context/ToneContext";

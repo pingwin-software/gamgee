@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Pause, Play } from "lucide-react";
+import { X, Pause, Play } from "../../icons";
 import ExerciseAnimation from "./ExerciseAnimation";
 import { snapshotMotion } from "../../data/motionStorage";
 import { EXERCISE_INFO } from "../../data/exerciseInfo";

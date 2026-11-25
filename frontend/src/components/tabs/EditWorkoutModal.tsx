@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2, Check, Minus } from "lucide-react";
+import { X, Plus, Trash2, Check, Minus } from "../../icons";
 import type { WorkoutSession, WorkoutExercise, WorkoutSet, ExerciseDef } from "../../types";
 import { ALL_EX } from "../../data/exercises";
 import { fmtDate } from "../../utils";

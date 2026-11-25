@@ -32,6 +32,9 @@
 .seg-btn:hover { color: var(--text); }
 .seg-btn.on { background: var(--primary); color: #000; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Icons (src/icons.tsx, Phosphor duotone): the soft layer, stronger than
+   Phosphor's 20 % so the two tones read at 16 to 26 px. */
+.gi [opacity="0.2"] { opacity: 0.4; }
 .chip-btn {
   min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer;
   background: var(--s2); border: 1px solid var(--border); color: var(--text);

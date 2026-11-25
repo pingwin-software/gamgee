@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dumbbell, Trophy, Activity, Brain, KeyRound } from "lucide-react";
+import { Dumbbell, Trophy, Activity, Brain, KeyRound } from "../icons";
 import { PasskeyCancelled, passkeysSupported, usePasskey } from "../passkeys";
 import "../whatsnew/WhatsNew.css";
 import { useTxt } from "../context/ToneContext";

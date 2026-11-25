@@ -8,7 +8,7 @@
  * in this browser, dated after the day it joined: a newcomer is not handed
  * the history.
  */
-export type WhatsNewId = "oneWay" | "yourApp" | "freshPages" | "progression" | "quickStart" | "passkeys";
+export type WhatsNewId = "freshIcons" | "oneWay" | "yourApp" | "freshPages" | "progression" | "quickStart" | "passkeys";
 
 export interface WhatsNewEntry {
   /** Stable: it is what "seen" remembers. */
@@ -18,6 +18,7 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  { id: "freshIcons", date: "2026-11-25" },
   { id: "oneWay", date: "2026-11-24" },
   { id: "yourApp", date: "2026-11-24" },
   { id: "freshPages", date: "2026-11-22" },
@@ -28,6 +29,11 @@ export const WHATS_NEW: readonly WhatsNewEntry[] = [
 
 /** Title and a few lines per entry. `**words**` show in bold. */
 export const WHATS_NEW_COPY: Record<WhatsNewId, { title: string; body: string }> = {
+  freshIcons: {
+    title: "New icons, who dis",
+    body:
+      "Every icon in Gamgee got swapped for a **two-tone** set with a bit more personality: a real **barbell**, a **fire** for streaks, a shield that actually looks like it means it. Same buttons, same places, just **easier to spot** at a glance between sets. Also: **Progress** is now called **History**, and the calendar and the list of sessions finally live on one page.",
+  },
   oneWay: {
     title: "Less clutter, same app",
     body:

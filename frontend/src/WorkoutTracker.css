@@ -769,7 +769,7 @@ html, body { background: var(--bg); }
   transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 /* Force a consistent, touch-friendly icon size regardless of the per-icon
-   `size` prop the wizard steps pass to their lucide icons. */
+   `size` prop the wizard steps pass to their icons. */
 .focus-icon svg { width: 30px; height: 30px; }
 .focus-card:hover .focus-icon { background: var(--ad2); transform: scale(1.04); }
 .focus-card.selected .focus-icon { background: var(--accent); color: var(--bg); }

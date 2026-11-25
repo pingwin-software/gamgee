@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, Send, Bug, Lightbulb, MessageCircle } from "lucide-react";
+import { MessageSquare, Send, Bug, Lightbulb, MessageCircle } from "../icons";
 
 type FeedbackKind = "bug" | "feature" | "general";
 type AuthFetch = (url: string, opts?: RequestInit) => Promise<Response>;

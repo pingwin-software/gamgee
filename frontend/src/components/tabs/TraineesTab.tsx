@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, Send, UserPlus, MessageSquare, Activity, Check, Clock, ClipboardList, Bell, ChevronUp, Dumbbell } from "lucide-react";
+import { GraduationCap, Send, UserPlus, MessageSquare, Activity, Check, Clock, ClipboardList, Bell, ChevronUp, Dumbbell } from "../../icons";
 import type { TrainerLink, Regime, RegimeAssignment, LiveSession } from "../../types";
 import { useTxt } from "../../context/ToneContext";
 import { ConfirmButton, PlanAvatar, WeekDots } from "./RegimesTab";

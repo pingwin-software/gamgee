@@ -1,5 +1,5 @@
 import type { CoachingTip } from "../types";
-import { Timer, TrendingUp, Beef, Moon, RefreshCw, Droplets, Target, HeartPulse } from "lucide-react";
+import { Timer, TrendingUp, Beef, Moon, RefreshCw, Droplets, Target, HeartPulse } from "../icons";
 
 export const TIPS: CoachingTip[] = [
   {

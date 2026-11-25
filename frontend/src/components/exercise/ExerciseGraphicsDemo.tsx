@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pause, Pencil, Play, RotateCcw } from "lucide-react";
+import { Pause, Pencil, Play, RotateCcw } from "../../icons";
 import ExerciseAnimation from "./ExerciseAnimation";
 import type { ExerciseMotion } from "../../data/exerciseMotions";
 import { EXERCISE_INFO } from "../../data/exerciseInfo";

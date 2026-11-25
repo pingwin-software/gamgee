@@ -1,4 +1,4 @@
-import { X, Lightbulb } from "lucide-react";
+import { X, Lightbulb } from "../icons";
 import type { ReactNode } from "react";
 import { useOnboarding } from "../context/OnboardingContext";
 

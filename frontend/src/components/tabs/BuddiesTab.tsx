@@ -4,7 +4,7 @@ import {
   Trophy, Flame, Zap, Play, LogOut, Crown, Medal, ChevronDown,
   Dumbbell, Radio, Clock,
   MessageCircle,
-} from "lucide-react";
+} from "../../icons";
 import type {
   Buddy, UserSearchResult, ScoreboardRow, MotivatePreset, LiveSession,
 } from "../../types";

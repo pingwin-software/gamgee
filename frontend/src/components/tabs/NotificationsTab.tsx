@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bell, BellOff, Check, Trash2, Trophy, Zap, Send, UserPlus, Users, Dumbbell,
   CheckCheck, MessageSquare, GraduationCap, Calendar,
-} from "lucide-react";
+} from "../../icons";
 import type { AppNotification, NotificationKind } from "../../types";
 import { useTxt } from "../../context/ToneContext";
 import "../../simple.css";

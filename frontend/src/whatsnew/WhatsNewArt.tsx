@@ -1,4 +1,4 @@
-import { Calendar, Check, Fingerprint, KeyRound, Menu, Play, TrendingUp, User, Users, Zap } from "lucide-react";
+import { Bell, Calendar, Check, Dumbbell, Fingerprint, Flame, KeyRound, Menu, Play, ShieldCheck, TrendingUp, User, Users, Zap } from "../icons";
 import type { WhatsNewId } from "./whatsNew";
 
 /**
@@ -9,12 +9,26 @@ import type { WhatsNewId } from "./whatsNew";
 export default function WhatsNewArt({ demo }: { demo: WhatsNewId }) {
   return (
     <div className="wn-art" aria-hidden="true">
+      {demo === "freshIcons" && <FreshIconsArt />}
       {demo === "oneWay" && <OneWayArt />}
       {demo === "yourApp" && <YourAppArt />}
       {demo === "freshPages" && <FreshPagesArt />}
       {demo === "progression" && <ProgressionArt />}
       {demo === "quickStart" && <QuickStartArt />}
       {demo === "passkeys" && <PasskeysArt />}
+    </div>
+  );
+}
+
+/** Four of the new two-tone icons, popping in one after another. */
+function FreshIconsArt() {
+  return (
+    <div className="wn-fi">
+      {[Dumbbell, Flame, ShieldCheck, Bell].map((I, i) => (
+        <span key={i} className="wn-fi-tile" style={{ animationDelay: `${i * 0.25}s` }}>
+          <I size={28} />
+        </span>
+      ))}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Check, Circle, Play, Square, TrendingUp, Plus, Minus, Eye, Gauge, Lock, Unlock } from "lucide-react";
+import { X, Check, Circle, Play, Square, TrendingUp, Plus, Minus, Eye, Gauge, Lock, Unlock } from "../../icons";
 import type { WorkoutExercise, PersonalRecord, WorkoutSet, RestPrefs } from "../../types";
 import type { AnalysisResult } from "../../analysis";
 import { rpeToRir, rirToRpe } from "../../utils";

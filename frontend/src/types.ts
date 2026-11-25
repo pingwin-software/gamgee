@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { IconType } from "./icons";
 
 export type MuscleLevel = "primary" | "secondary";
 export type ActiveMuscles = Record<string, MuscleLevel>;
@@ -7,7 +7,7 @@ export type ExerciseType = "strength" | "timed" | "cardio";
 export interface MuscleInfo { n: string; g: string; }
 export interface ExerciseDef { id: string; name: string; type: ExerciseType; cat?: string; is_assisted?: boolean; }
 export interface SuggExercise extends ExerciseDef { isFocus?: boolean; score?: number; newP?: string[]; ovP?: string[]; newS?: string[]; }
-export interface FocusDef { name: string; icon: LucideIcon; desc: string; exIds: string[]; }
+export interface FocusDef { name: string; icon: IconType; desc: string; exIds: string[]; }
 /** A single set in an active workout.
  *
  * `prefilled` marks values that came from a "reapply last session" / regime
@@ -57,7 +57,7 @@ export interface ProgressionOverride { weight: number; reps: number; }
 export interface MuscleDef { mid: string; cx: number; cy: number; rx: number; ry: number; rotate?: number; }
 export interface MusclePathDef { mid: string; d: string; }
 export type MuscleShape = MuscleDef | MusclePathDef;
-export interface CoachingTip { icon: LucideIcon; title: string; body: string; bodyBro?: string; bodyGrl?: string; }
+export interface CoachingTip { icon: IconType; title: string; body: string; bodyBro?: string; bodyGrl?: string; }
 export interface CustomFocusDef { id: string; name: string; iconName: string; desc: string; }
 export interface CustomExerciseDef { id: string; name: string; type: ExerciseType; cat: string; primary: string[]; secondary: string[]; instructions?: string; }
 export interface BodyMetric { id: number; metric_type: string; value: number; unit: string; date: string; note?: string | null; }

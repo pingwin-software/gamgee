@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, TrendingUp } from "lucide-react";
+import { ChevronDown, TrendingUp } from "../icons";
 import Stepper from "./Stepper";
 import { analyzeEx } from "../analysis";
 import {

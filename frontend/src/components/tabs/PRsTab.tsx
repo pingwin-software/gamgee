@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Trash2, Trophy, Medal, Sparkles, Heart, CalendarDays } from "lucide-react";
+import { Trash2, Trophy, Medal, Sparkles, Heart, CalendarDays } from "../../icons";
 import type { PRDict, PersonalRecord } from "../../types";
 import { fmtDate, orm1 } from "../../utils";
 import { ALL_EX, EM } from "../../data/exercises";

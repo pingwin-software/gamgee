@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Activity, Dumbbell, Clock } from "lucide-react";
+import { X, Activity, Dumbbell, Clock } from "../icons";
 import type { LiveSession, LiveSetEvent } from "../types";
 import { fmtClock } from "../utils";
 

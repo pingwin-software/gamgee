@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { X, ChevronRight, Plus, Trash2 } from "../../icons";
 import { FOCUS, ICON_OPTIONS, getCustomFocuses, saveCustomFocuses } from "../../data/focuses";
 import type { CustomFocusDef } from "../../types";
 import { useTxt } from "../../context/ToneContext";

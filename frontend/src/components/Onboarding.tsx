@@ -1,4 +1,4 @@
-import { Zap, Target, Activity, Trophy, X, Sparkles } from "lucide-react";
+import { Zap, Target, Activity, Trophy, X, Sparkles } from "../icons";
 import { useOnboarding } from "../context/OnboardingContext";
 import { useTxt } from "../context/ToneContext";
 
