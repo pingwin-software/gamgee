@@ -47,24 +47,20 @@ export default function CustomExerciseModal({ onClose, onCreated, editing }: Pro
   const [secondary, setSecondary]       = useState<Set<string>>(new Set(editing?.secondary ?? []));
   const [instructions, setInstructions] = useState(editing?.instructions ?? "");
 
-  const togglePrimary = (mid: string) => {
-    const next = new Set(primary);
+  // One list of muscles; the switch above it says what a tap marks. A muscle
+  // is primary or secondary, never both, so marking it one clears the other.
+  const [marking, setMarking] = useState<"primary" | "secondary">("primary");
+  const toggleMuscle = (mid: string) => {
+    const [mine, setMine, other, setOther] = marking === "primary"
+      ? [primary, setPrimary, secondary, setSecondary]
+      : [secondary, setSecondary, primary, setPrimary];
+    const next = new Set(mine);
     if (next.has(mid)) next.delete(mid);
     else {
       next.add(mid);
-      // A muscle can be primary OR secondary, never both
-      if (secondary.has(mid)) {
-        const s = new Set(secondary); s.delete(mid); setSecondary(s);
-      }
+      if (other.has(mid)) { const o = new Set(other); o.delete(mid); setOther(o); }
     }
-    setPrimary(next);
-  };
-
-  const toggleSecondary = (mid: string) => {
-    if (primary.has(mid)) return;
-    const next = new Set(secondary);
-    if (next.has(mid)) next.delete(mid); else next.add(mid);
-    setSecondary(next);
+    setMine(next);
   };
 
   const canSave = name.trim().length > 0 && primary.size > 0;
@@ -130,8 +126,16 @@ export default function CustomExerciseModal({ onClose, onCreated, editing }: Pro
         </select>
 
         <div className="cf-modal-icon-label">
-          {t("Primary muscles", "Primary muscles")}
-          <span className="cx-hint">{t("required", "pick one+")}</span>
+          {t("Muscles", "Muscles")}
+          <span className="cx-hint">{t("one primary at least", "pick one+ primary")}</span>
+        </div>
+        <div className="seg cx-mark-seg" role="group" aria-label="A tap marks">
+          <button type="button" className={`seg-btn${marking === "primary" ? " on" : ""}`} aria-pressed={marking === "primary"} onClick={() => setMarking("primary")}>
+            Primary{primary.size > 0 ? ` (${primary.size})` : ""}
+          </button>
+          <button type="button" className={`seg-btn${marking === "secondary" ? " on" : ""}`} aria-pressed={marking === "secondary"} onClick={() => setMarking("secondary")}>
+            Secondary{secondary.size > 0 ? ` (${secondary.size})` : ""}
+          </button>
         </div>
         <div className="cx-muscle-section">
           {groupedMuscles.map(([group, muscles]) => (
@@ -142,33 +146,9 @@ export default function CustomExerciseModal({ onClose, onCreated, editing }: Pro
                   <button
                     key={m.mid}
                     type="button"
-                    className={`cx-muscle-chip${primary.has(m.mid) ? " primary" : ""}`}
-                    onClick={() => togglePrimary(m.mid)}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="cf-modal-icon-label" style={{ marginTop: 12 }}>
-          {t("Secondary muscles", "Secondary muscles")}
-          <span className="cx-hint">{t("optional", "optional")}</span>
-        </div>
-        <div className="cx-muscle-section">
-          {groupedMuscles.map(([group, muscles]) => (
-            <div key={group} className="cx-muscle-group">
-              <div className="cx-muscle-group-label">{group}</div>
-              <div className="cx-muscle-chips">
-                {muscles.map(m => (
-                  <button
-                    key={m.mid}
-                    type="button"
-                    className={`cx-muscle-chip${secondary.has(m.mid) ? " secondary" : ""}${primary.has(m.mid) ? " disabled" : ""}`}
-                    onClick={() => toggleSecondary(m.mid)}
-                    disabled={primary.has(m.mid)}
+                    className={`cx-muscle-chip${primary.has(m.mid) ? " primary" : secondary.has(m.mid) ? " secondary" : ""}`}
+                    aria-pressed={primary.has(m.mid) || secondary.has(m.mid)}
+                    onClick={() => toggleMuscle(m.mid)}
                   >
                     {m.label}
                   </button>
